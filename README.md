@@ -90,3 +90,38 @@ Triển khai sau khi các quy trình và cấu trúc dữ liệu đã vận hàn
 3. **Giai đoạn 3 - Mạng lưới:** Quản lý CTV, Thực tập sinh, KOL/KOC, nộp video, quản lý chiến dịch và đối soát đơn.
 4. **Giai đoạn 4 - Khách hàng & Đối tác:** Tích lũy hạng thẻ (Thân thiết/VIP), chương trình Khách hàng hạnh phúc, cổng quà tặng và đối tác chiến lược.
 5. **Giai đoạn 5 - AI Agent:** Kết nối các AI Agent theo quy trình đã ổn định, thiết lập ngưỡng ủy quyền, nhật ký giám sát và cơ chế chuyển ngoại lệ.
+
+##**7. Kiến trúc Công nghệ đề xuất (Tech Stack)**
+<p align="center">
+  <!-- Frontend & Core -->
+  <img src="https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <br/>
+  <!-- Backend & Architecture -->
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white" alt="pnpm" />
+  <br/>
+  <!-- Database & Queue -->
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Prisma_ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/BullMQ-brown?style=for-the-badge&logo=bull&logoColor=white" alt="BullMQ" />
+  <br/>
+  <!-- Storage, DevOps & AI -->
+  <img src="https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare R2" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Google_Gemini-8E75C2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Google Gemini" />
+</p>
+Để đáp ứng bài toán một website chung tích hợp cả cổng bán hàng bên ngoài lẫn hệ thống phân quyền, đối soát hoa hồng và LMS bên trong, hệ thống được kiến trúc theo chuẩn Module hóa:
+
+| Tầng hệ thống | Công nghệ đề xuất | Lý do & Vai trò kỹ thuật |
+| :--- | :--- | :--- |
+| **Frontend** | **Next.js (React, TypeScript, Tailwind CSS)** | • Tối ưu SEO và tốc độ tải trang cho Storefront bán hàng công khai.<br>• Dùng Route Groups (`(storefront)`, `(training)`, `(workspace)`, `(admin)`) để quản lý đa phân vùng trên cùng một domain. |
+| **Backend API** | **NestJS (TypeScript)** | • Kiến trúc Modular quản lý rõ ràng từng phân hệ (`Auth`, `LMS`, `LeadRouting`, `Affiliate`, `Loyalty`).<br>• Custom Guards xử lý chặn quyền bán chi tiết tới từng SKU sản phẩm (ngưỡng 90%). |
+| **Cơ sở dữ liệu** | **PostgreSQL (với Prisma ORM)** | • Đảm bảo chuẩn giao dịch ACID cho đối soát hoa hồng và tự động hạ hạng khi hoàn/trả.<br>• Quản trị quan hệ dữ liệu đa tầng (`Single Profile - Multi-Role`) an toàn.<br>• Lưu trữ linh hoạt đề thi, metadata kịch bản qua kiểu dữ liệu `JSONB`. |
+| **Hàng đợi & Caching** | **Redis + BullMQ** | • Xử lý phân bổ lead theo ca trực và tải việc.<br>• Chạy ngầm tác vụ tính lại tích lũy đơn hàng, đối soát hoa hồng và cache trạng thái quyền SKU. |
+| **Lưu trữ Tệp** | **Cloudflare R2 / AWS S3** | • Lưu trữ tài liệu đào tạo, video bài thực hành của KOC/học viên, ảnh quà tặng đối tác. |
+| **Tích hợp AI** | **Google Gemini API** | • Tích hợp các Service chấm sơ bộ bài kiểm tra, gợi ý tư vấn và phân tích phản hồi. |
