@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Thiên Khuê S — Mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF;font-family:"Be Vietnam Pro",system-ui,sans-serif;color:#14213D}
+a{color:#14213D}a:hover{color:#2B59E6}
+@keyframes tkUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes tkSpin{to{transform:rotate(360deg)}}
+@keyframes tkShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes tkPulse{0%,100%{box-shadow:0 10px 24px rgba(43,89,230,.28)}50%{box-shadow:0 14px 34px rgba(43,89,230,.45)}}
+.tk-up{animation:tkUp .9s cubic-bezier(.2,.7,.2,1) both}
+.tk-d1{animation-delay:.12s}.tk-d2{animation-delay:.24s}.tk-d3{animation-delay:.36s}
+.tk-lift{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s ease}
+.tk-lift:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(20,33,61,.12)}
+.tk-btn{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
+.tk-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.tk-btn:active{transform:translateY(0) scale(.98)}
+.tk-pulse{animation:tkPulse 2.8s ease-in-out infinite}
+.tk-flow{background-size:220% 220%!important;animation:tkShift 14s ease infinite}
+.tk-spin{animation:tkSpin 18s linear infinite;transform-origin:center}
+a:focus-visible,button:focus-visible{outline:3px solid #FFD166;outline-offset:3px}
+@supports (animation-timeline: view()){.tk-reveal{animation:tkUp linear both;animation-timeline:view();animation-range:entry 0% cover 28%}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 4300px; overflow: hidden; background: #FFFFFF; font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #14213D; display: flex; flex-direction: column">
+
+<div style="background: #2B59E6; color: #FFFFFF; font-size: 11px; text-align: center; padding: 10px 16px; letter-spacing: 0.4px">Freeship từ 450.000đ · Đổi trả 7 ngày · COD</div>
+
+<header style="height: 60px; padding: 0 8px; display: grid; grid-template-columns: 88px minmax(0, 1fr) 88px; align-items: center; border-bottom: 1px solid #DCE6F5; background: #FFFFFF">
+<button type="button" onClick="{{ openMenu }}" aria-label="Mở menu" style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #14213D">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 7h18"></path><path d="M3 12h18"></path><path d="M3 17h12"></path></svg>
+</button>
+<span style="text-align: center; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 17px; letter-spacing: 4px">THIÊN KHUÊ <span style="color: #2B59E6">S</span></span>
+<div style="display: flex; justify-content: flex-end">
+<a href="https://lyno.vn/" aria-label="Tìm kiếm" style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg></a>
+<a href="https://lyno.vn/" aria-label="Giỏ hàng" style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 8h14l-1 13H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg></a>
+</div>
+</header>
+
+<!-- HERO -->
+<section style="position: relative; height: 620px; background: #FFFFFF; overflow: hidden">
+<img src="/_blob/4b4847eb9f355166403f0828228ebe93" alt="Người mẫu mặc áo khoác trắng trên nền trắng" style="position: absolute; left: 0; bottom: 0; width: 100%; height: 72%; object-fit: cover; object-position: 92% bottom">
+<div style="position: absolute; left: 20px; right: 20px; top: 32px; display: flex; flex-direction: column; gap: 14px; color: #14213D">
+<span style="align-self: flex-start; padding: 6px 12px; border-radius: 999px; background: #E8EEFF; color: #2B59E6; font-size: 11px; font-weight: 700">BST [Tên] · [Mùa]</span>
+<h1 class="tk-up tk-d1" style="margin: 0; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 39px; line-height: 1; font-weight: 700; letter-spacing: -0.02em">Khí chất <span style="color: #2B59E6; background: linear-gradient(transparent 62%, #FFD166 62%, #FFD166 90%, transparent 90%)">không cần lên tiếng.</span></h1>
+<a href="https://lyno.vn/" class="tk-btn" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 48px; padding: 0 26px; background: #2B59E6; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 999px">Mua bộ sưu tập</a>
+</div>
+</section>
+
+<!-- Danh mục cuộn ngang -->
+<div style="display: flex; gap: 8px; padding: 18px 20px; overflow-x: auto; border-bottom: 1px solid #DCE6F5">
+<a href="https://lyno.vn/" style="flex-shrink: 0; min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; border: 1px solid #14213D; text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase">Sơ mi</a>
+<a href="https://lyno.vn/" style="flex-shrink: 0; min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; border: 1px solid #8FA3C4; text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase">Áo kiểu</a>
+<a href="https://lyno.vn/" style="flex-shrink: 0; min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; border: 1px solid #8FA3C4; text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase">Đầm</a>
+<a href="https://lyno.vn/" style="flex-shrink: 0; min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; border: 1px solid #8FA3C4; text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase">Blazer</a>
+<a href="https://lyno.vn/" style="flex-shrink: 0; min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; border: 1px solid #2B59E6; color: #2B59E6; text-decoration: none; font-size: 12px; letter-spacing: 1px; text-transform: uppercase">Khăn lụa</a>
+</div>
+
+<!-- Hai dòng -->
+<section class="tk-reveal" style="padding: 48px 20px 0; display: flex; flex-direction: column; gap: 36px">
+<a href="https://lyno.vn/" style="text-decoration: none; display: flex; flex-direction: column; gap: 12px">
+<div style="height: 420px; background: #E3EDFB; display: flex; align-items: center; justify-content: center; color: #5A6680; font-size: 12px">[Ảnh dòng cơ bản]</div>
+<span style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #2B59E6">Dòng cơ bản · S — 3XL</span>
+<span style="font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 25px; line-height: 1.1; letter-spacing: -0.02em">Dễ mặc, dễ phối, không lỗi mốt</span>
+</a>
+<a href="https://lyno.vn/" style="text-decoration: none; display: flex; flex-direction: column; gap: 12px">
+<div style="height: 420px; background: #D3E3F8; display: flex; align-items: center; justify-content: center; color: #4A5672; font-size: 12px">[Ảnh dòng họa tiết &amp; đầm]</div>
+<span style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #2B59E6">Họa tiết · Áo kiểu · Đầm</span>
+<span style="font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 25px; line-height: 1.1; letter-spacing: -0.02em">Điểm nhấn cho những cuộc gặp quan trọng</span>
+</a>
+</section>
+
+<!-- Mới về 2x2 -->
+<section class="tk-reveal" style="padding: 64px 20px 0; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid #DCE6F5; padding-bottom: 12px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.02em">Mới về</h2>
+<a href="https://lyno.vn/" style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; border-bottom: 1px solid #14213D">Xem tất cả</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px">
+<sc-for list="{{ products }}" as="p" hint-placeholder-count="4">
+<a href="https://lyno.vn/" style="text-decoration: none; display: flex; flex-direction: column; gap: 8px">
+<div style="position: relative; aspect-ratio: 3 / 4; background: #E3EDFB; display: flex; align-items: center; justify-content: center; color: #5A6680; font-size: 11px">[Ảnh]
+<sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 8px; left: 8px; padding: 4px 8px; background: #FFFFFF; color: #14213D; font-size: 10px; letter-spacing: 1px; text-transform: uppercase">{{ p.badge }}</span></sc-if>
+</div>
+<span style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #5A6680">{{ p.line }}</span>
+<span style="font-size: 14px; line-height: 1.4">{{ p.name }}</span>
+<span style="font-size: 14px; color: #2B59E6; font-weight: 500">{{ p.price }}</span>
+</a>
+</sc-for>
+</div>
+</section>
+
+<!-- Thiên Khuê -->
+<section class="tk-reveal tk-flow" style="margin-top: 64px; background: linear-gradient(120deg, #1C3FAF 0%, #3346C8 50%, #6A3FC9 100%); color: #FFFFFF">
+<svg width="100%" height="40" aria-hidden="true" style="display: block"><defs><pattern id="silkM" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M20 4 L36 20 L20 36 L4 20 Z" fill="none" stroke="#FFFFFF" stroke-width="0.7"></path><path d="M4 20 Q20 12 36 20" fill="none" stroke="#FFFFFF" stroke-width="0.5"></path><circle cx="20" cy="20" r="1.2" fill="#FFFFFF"></circle></pattern></defs><rect width="100%" height="40" fill="url(#silkM)"></rect></svg>
+<div style="padding: 48px 20px 56px; display: flex; flex-direction: column; gap: 18px">
+<span style="font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #FFD166">Khăn lụa Thiên Khuê</span>
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 35px; font-weight: 700; line-height: 1.02; letter-spacing: -0.02em">Nét hoàn thiện<br><span style="font-style: normal">bằng lụa.</span></h2>
+<div style="display: flex; gap: 10px">
+<div style="flex: 1; height: 260px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; color: #EAF2FF; font-size: 11px">[Khăn 1]</div>
+<div style="flex: 1; height: 260px; background: rgba(255,255,255,0.26); display: flex; align-items: center; justify-content: center; color: #EAF2FF; font-size: 11px; margin-top: 28px">[Khăn 2]</div>
+</div>
+<span style="font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 18px; color: #FFD166; letter-spacing: -0.02em">350.000đ — 546.000đ</span>
+<a href="https://lyno.vn/" style="display: flex; align-items: center; justify-content: center; min-height: 50px; background: #FFD166; color: #14213D; text-decoration: none; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; border-radius: 2px">Xem khăn lụa</a>
+</div>
+</section>
+
+<!-- Cùng Thiên Khuê S -->
+<section class="tk-reveal" style="padding: 56px 20px; display: flex; flex-direction: column">
+<span style="font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #2B59E6; padding-bottom: 10px">Cùng Thiên Khuê S</span>
+<h2 style="margin: 0 0 20px; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 29px; font-weight: 700; letter-spacing: -0.02em">Hơn cả mua sắm</h2>
+<a href="Main.dc.html" style="min-height: 64px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 18px; letter-spacing: -0.02em">Khách hàng VIP <span aria-hidden="true">→</span></a>
+<a href="Main.dc.html" style="min-height: 64px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 18px; letter-spacing: -0.02em">Thân thiện <span aria-hidden="true">→</span></a>
+<a href="Main.dc.html" style="min-height: 64px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 18px; letter-spacing: -0.02em">Hạnh phúc CEO / Đối tác <span aria-hidden="true">→</span></a>
+<a href="Main.dc.html" style="min-height: 64px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #DCE6F5; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 18px; letter-spacing: -0.02em">Đào tạo <span aria-hidden="true">→</span></a>
+<a href="LMS.dc.html" style="margin-top: 20px; padding: 22px; border-radius: 18px; background: #2B59E6; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; gap: 8px"><span style="align-self: flex-start; padding: 5px 10px; border-radius: 999px; background: #FFD166; color: #14213D; font-size: 11px; font-weight: 700">Học viện Thiên Khuê S</span><span style="font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 25px; line-height: 1.05; letter-spacing: -0.02em">Yêu thời trang? <span style="color: #FFD166">Học để làm nghề.</span></span><span style="font-size: 13px; font-weight: 600">Học thử miễn phí →</span></a>
+</section>
+
+<footer style="margin-top: auto; background: #14213D; color: #C9D6EC; padding: 40px 20px 48px; display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.8">
+<span style="font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 18px; letter-spacing: 4px; color: #FFFFFF">THIÊN KHUÊ S</span>
+<span>Zalo/Hotline 0968 463 986 (9h–22h)<br>140A Lê Văn Sỹ, P.10, Q.Phú Nhuận, TP.HCM</span>
+<span style="font-size: 11px; color: #8FA3C4">LYNO thuộc Công ty CP SX &amp; XNK HNC. Khăn lụa Thiên Khuê thuộc Công ty TNHH TM &amp; DV Thiên Khuê.</span>
+</footer>
+
+<!-- MENU DRAWER -->
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; top: 0; left: 0; width: 390px; height: 844px; background: #FFFFFF; z-index: 10; display: flex; flex-direction: column">
+<div style="height: 60px; padding: 0 8px 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DCE6F5">
+<span style="font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 17px; letter-spacing: 4px">THIÊN KHUÊ <span style="color: #2B59E6">S</span></span>
+<button type="button" onClick="{{ closeMenu }}" aria-label="Đóng menu" style="width: 44px; height: 44px; border: none; background: transparent; cursor: pointer; color: #14213D; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg></button>
+</div>
+<nav aria-label="Menu" style="padding: 12px 20px; display: flex; flex-direction: column">
+<a href="https://lyno.vn/" style="min-height: 56px; display: flex; align-items: center; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 22px; letter-spacing: -0.02em">Bộ sưu tập</a>
+<a href="https://lyno.vn/" style="min-height: 56px; display: flex; align-items: center; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 22px; letter-spacing: -0.02em">Sơ mi</a>
+<a href="https://lyno.vn/" style="min-height: 56px; display: flex; align-items: center; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 22px; letter-spacing: -0.02em">Áo kiểu</a>
+<a href="https://lyno.vn/" style="min-height: 56px; display: flex; align-items: center; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 22px; letter-spacing: -0.02em">Váy &amp; Quần</a>
+<a href="https://lyno.vn/" style="min-height: 56px; display: flex; align-items: center; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 22px; letter-spacing: -0.02em">Đầm &amp; Blazer</a>
+<a href="https://lyno.vn/" style="min-height: 56px; display: flex; align-items: center; border-bottom: 1px solid #DCE6F5; text-decoration: none; font-family: 'Bricolage Grotesque', 'Be Vietnam Pro', sans-serif; font-size: 22px; color: #2B59E6; letter-spacing: -0.02em">Khăn lụa Thiên Khuê</a>
+</nav>
+<div style="padding: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase">
+<a href="Main.dc.html" style="min-height: 40px; display: flex; align-items: center; text-decoration: none; color: #4A5672">Thành viên VIP</a>
+<a href="Main.dc.html" style="min-height: 40px; display: flex; align-items: center; text-decoration: none; color: #4A5672">Doanh nghiệp &amp; đối tác</a>
+<a href="LMS.dc.html" style="min-height: 40px; display: flex; align-items: center; text-decoration: none; color: #4A5672">Học viện</a>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":4300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { menu: false };
+  }
+  renderVals() {
+    const products = [
+      { line: 'Sơ mi công sở', badge: 'S — 3XL', name: '[Tên mẫu sơ mi]', price: '[Giá sale]' },
+      { line: 'Sơ mi lụa', badge: 'Mới', name: '[Tên mẫu sơ mi lụa]', price: '[Giá sale]' },
+      { line: 'Blazer', badge: '', name: '[Tên mẫu blazer]', price: '[Giá bán]' },
+      { line: 'Khăn lụa', badge: 'Thiên Khuê', name: '[Tên mẫu khăn]', price: '[Giá bán]' }
+    ].map((p) => ({ ...p, hasBadge: !!p.badge }));
+    return {
+      products,
+      menuOpen: !!(this.state && this.state.menu),
+      openMenu: () => this.setState({ menu: true }),
+      closeMenu: () => this.setState({ menu: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
