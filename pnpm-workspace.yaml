@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm 10+ chan script cai dat mac dinh — chi cho phep goi can build (prisma engine, esbuild cua tsx, sharp cua next)
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  prisma: true
+  esbuild: true
+  sharp: true
+  "@nestjs/core": true
+  unrs-resolver: true

@@ -125,3 +125,21 @@ Triển khai sau khi các quy trình và cấu trúc dữ liệu đã vận hàn
 | **Hàng đợi & Caching** | **Redis + BullMQ** | • Xử lý phân bổ lead theo ca trực và tải việc.<br>• Chạy ngầm tác vụ tính lại tích lũy đơn hàng, đối soát hoa hồng và cache trạng thái quyền SKU. |
 | **Lưu trữ Tệp** | **Cloudflare R2 / AWS S3** | • Lưu trữ tài liệu đào tạo, video bài thực hành của KOC/học viên, ảnh quà tặng đối tác. |
 | **Tích hợp AI** | **Google Gemini API** | • Tích hợp các Service chấm sơ bộ bài kiểm tra, gợi ý tư vấn và phân tích phản hồi. |
+
+## 8. Chạy local (môi trường dev)
+
+> Chi tiết đầy đủ (cổng, biến môi trường, đổi schema, module gọi nhau): `docs/KIEN-TRUC.md` mục 9.
+
+1. Bật Supabase local của CRM (`D:\intern\CRM_Lyno-\local-integration`: `npx supabase@2.118.0 start --workdir .`) và CRM api ở cổng 3220.
+2. Chép `apps/api/.env.example` → `apps/api/.env.local`, `apps/web/.env.example` → `apps/web/.env.local`, điền khoá từ `D:\intern\CRM_Lyno-\local-integration\.env.local`.
+3. Chạy:
+
+```bash
+pnpm install
+pnpm --filter api prisma:deploy   # chỉ schema thien_khue — không bao giờ đụng schema public của CRM
+pnpm --filter api seed            # idempotent
+pnpm dev                          # api http://localhost:3310/api + web http://localhost:3300
+```
+
+4. Kiểm tra: `pnpm -r typecheck`, `pnpm --filter api test`, `pnpm --filter api build`, `pnpm --filter web build`.
+5. Đăng nhập thử bằng tài khoản CRM local (mật khẩu `LynoLocal@2026`): `admin.local@lyno.test` (Quản trị viên), `manager.sales@lyno.test` (Quản lý), `employee.sales01@lyno.test` (Sale — phải học đạt mới bán), `employee.cskh01@lyno.test` (CSKH). CTV / thực tập / KOL / KOC / khách tự đăng ký ở `/dang-ky`.
