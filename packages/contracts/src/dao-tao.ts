@@ -684,6 +684,33 @@ export interface NguCanhPhieuLuyenAi {
   ma_mau: string[];
 }
 
+/** Vai nguoi xem mot phien Sales Training mo tu Thien Khue (phieu XEM) */
+export const DANH_SACH_VAI_XEM_LUYEN_AI = ["CHU", "MENTOR", "QUAN_LY"] as const;
+export type VaiXemLuyenAi = (typeof DANH_SACH_VAI_XEM_LUYEN_AI)[number];
+
+/** POST /api/dao-tao/luyen-ai/phien/:id/phieu-xem (Bearer chu phien / MENTOR / QUAN_LY) — :id = phien_luyen_ai.id cua TK */
+export interface PhieuXemLuyenAi {
+  ma_phieu: string;
+  /** Web mo tab moi bang FORM POST tu gui toi day (truong ma_phieu, access_token) — "<ST>/api/vao-tu-thien-khue/xem" */
+  url_vao: string;
+  het_han: string;
+}
+
+/** GET /api/dao-tao/luyen-ai/phieu-xem/:ma (HMAC, Sales Training goi) — phieu XEM dung mot lan, han 2 phut */
+export interface NguCanhPhieuXemLuyenAi {
+  /** Nguoi XEM (nguoi bam nut o TK) — ST phai kiem trung voi nguoi vua dang nhap bang access_token */
+  crm_user_id: string;
+  ho_so_id: string;
+  ho_ten: string;
+  vai_xem: VaiXemLuyenAi;
+  /** Phien duoc phep xem — ST chi redirect toi /luyen-tap/<phien_id_st> */
+  phien_id_st: string;
+  loai: LoaiLuyenAi;
+  khoa_hoc_ma: string;
+  /** Chu phien (nguoi hoc) — ST kiem phien_id_st thuoc dung nguoi nay */
+  chu_phien: { crm_user_id: string; ho_so_id: string; ho_ten: string };
+}
+
 /** POST /api/dao-tao/luyen-ai/ket-qua (HMAC, Sales Training goi) — idempotent theo phien_id */
 export interface KetQuaLuyenAiBody {
   ma_phieu: string;
@@ -697,6 +724,7 @@ export interface KetQuaLuyenAiBody {
   tom_tat: string;
   diem_manh: string[];
   can_cai_thien: string[];
+  /** TK chi giu khi dung "<SALES_TRAINING_URL>/luyen-tap/<phien_id>"; khac -> tu dung lai tu phien_id (uuid) hoac bo */
   link_xem: string;
   ket_thuc_luc: string;
 }
@@ -792,6 +820,8 @@ export interface TienDoLuyenAi {
  *   GET    khoa-hoc/:idHoacMa/luyen-ai       -> TienDoLuyenAi (Bearer)
  *   GET    luyen-ai/phieu/:ma                -> NguCanhPhieuLuyenAi (HMAC — chi Sales Training; het han / da dung -> 410)
  *   POST   luyen-ai/ket-qua                  -> PhanHoiKetQuaLuyenAi (HMAC — chi Sales Training; body KetQuaLuyenAiBody)
+ *   POST   luyen-ai/phien/:id/phieu-xem      -> PhieuXemLuyenAi (Bearer chu phien / MENTOR / QUAN_LY; han 2 phut)
+ *   GET    luyen-ai/phieu-xem/:ma            -> NguCanhPhieuXemLuyenAi (HMAC — chi Sales Training; dung mot lan; het han / da dung -> 410)
  * Quan tri noi dung (QUAN_LY, ADMIN, THIEN_KHUE):
  *   GET    quan-tri/khoa-hoc                 -> KhoaHocQuanTri[] + meta
  *   POST   quan-tri/khoa-hoc                 -> KhoaHocQuanTri

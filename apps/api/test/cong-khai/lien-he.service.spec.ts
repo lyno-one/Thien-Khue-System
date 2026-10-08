@@ -6,7 +6,7 @@ import type { CrmDocService } from "../../src/infrastructure/crm/crm-doc.service
 import type { NhatKyService } from "../../src/services/core.service";
 import type { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import { GuiLienHeDto, laSdtVietNam } from "../../src/dto/cong-khai/cong-khai.dto";
-import { GioiHanTheoKhoa, loaiLeadTheoTrang, nenGoiYDangKy, taoNhuCau } from "../../src/common/utils/cong-khai";
+import { GioiHanTheoKhoa, loaiLeadTheoTrang, taoNhuCau } from "../../src/common/utils/cong-khai";
 import { LienHeRepository } from "../../src/repositories/cong-khai.repository";
 import { LienHeService } from "../../src/services/cong-khai.service";
 
@@ -28,10 +28,10 @@ function taoMock(leadTrung: { id: string } | null = null) {
 const HOP_LE: GuiLienHeBody = { ho_ten: "Nguyễn Thị A", sdt: "+84 912 345 678", trang: "DAO_TAO", lo_trinh: "ctv", lua_chon: "Bán thời gian" };
 
 describe("LienHeService.gui — tao lead tu form cong khai", () => {
-  it("form dao tao hop le -> tao lead DANG_KY_HOC, SDT chuan hoa, nhu_cau doc duoc, goi y dang ky", async () => {
+  it("form dao tao hop le -> tao lead DANG_KY_HOC, SDT chuan hoa, nhu_cau doc duoc, khong goi y tao tai khoan", async () => {
     const { svc, prisma, nhatKy } = taoMock();
     const kq = await svc.gui({ ...HOP_LE, loi_nhan: "Có kênh TikTok 5k" }, "1.1.1.1");
-    expect(kq).toEqual({ da_nhan: true, goi_y_dang_ky: true });
+    expect(kq).toEqual({ da_nhan: true });
     const data = prisma.lead.create.mock.calls[0][0].data;
     expect(data).toMatchObject({ ten: "Nguyễn Thị A", sdt_chuan: "0912345678", loai: "DANG_KY_HOC", nguon: "DAO_TAO", dong_y_lien_he: true });
     expect(data.nhu_cau).toBe("Lộ trình: CTV online\nHình thức: Bán thời gian\nLời nhắn: Có kênh TikTok 5k");
@@ -90,13 +90,6 @@ describe("luat phu form lien he", () => {
     expect(loaiLeadTheoTrang("DOI_TAC")).toBe("HOP_TAC");
     expect(loaiLeadTheoTrang("VIP")).toBe("MUA_HANG");
     expect(loaiLeadTheoTrang("THAN_THIEN")).toBe("MUA_HANG");
-  });
-  it("goi y dang ky tai khoan: CTV / KOL / khac va khach; khong cho Sale (tuyen qua CRM) va doi tac", () => {
-    expect(nenGoiYDangKy("DAO_TAO", "ctv")).toBe(true);
-    expect(nenGoiYDangKy("DAO_TAO", "kol")).toBe(true);
-    expect(nenGoiYDangKy("DAO_TAO", "sale")).toBe(false);
-    expect(nenGoiYDangKy("DOI_TAC")).toBe(false);
-    expect(nenGoiYDangKy("VIP")).toBe(true);
   });
   it("taoNhuCau rong -> null", () => {
     expect(taoNhuCau({ trang: "VIP" })).toBeNull();

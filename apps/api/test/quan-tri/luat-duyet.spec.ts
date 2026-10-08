@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { LOAI_DE_XUAT_BA_BUOC as LOAI_BA_BUOC_FE, soBuocDeXuat as soBuocFe, trangThaiKichHoatLamViec, VAI_TU_CRM as VAI_TU_CRM_FE } from "@thien-khue/contracts";
 import {
-  kiemChuyenVai, kiemVaiKhongTuCrm, LOAI_DE_XUAT_BA_BUOC, loiDuyet, loiKiem, soBuocDeXuat, trangThaiBatDau, trangThaiChoDuyetDb, trangThaiHieuLuc,
+  kiemChuyenVai, kiemVaiKhongTuCrm, LOAI_DE_XUAT_BA_BUOC, LOI_VAI_TU_CRM, loiDuyet, loiKiem, soBuocDeXuat, trangThaiBatDau, trangThaiChoDuyetDb, trangThaiHieuLuc,
   VAI_TU_CRM, vaiDuyetTheoLoai, type DeXuatToiThieu
 } from "../../src/common/utils/quan-tri";
 import { kiemThuTuHang, suyNguon, tinhHoaHong } from "../../src/services/quan-tri-ap-dung.service";
@@ -55,12 +55,12 @@ describe("luat-duyet — so buoc theo loai", () => {
 });
 
 describe("luat-duyet — vai lay tu CRM", () => {
-  it("ADMIN / QUAN_LY / SALE / CSKH / THIEN_KHUE -> 400 'đổi ở CRM'; vai ngoai CRM qua duoc", () => {
-    for (const v of ["ADMIN", "QUAN_LY", "SALE", "CSKH", "THIEN_KHUE"] as const) {
-      expect(() => kiemVaiKhongTuCrm(v)).toThrow("Vai này lấy từ CRM — đổi ở CRM (Quản trị nhân sự)");
+  it("moi vai nghiep vu (ke ca CTV / THUC_TAP / KOL / KOC / MENTOR / DOI_TAC) -> 400 'lấy từ CRM'; chi KHACH qua duoc", () => {
+    for (const v of ["ADMIN", "QUAN_LY", "SALE", "CSKH", "THIEN_KHUE", "CTV", "THUC_TAP", "KOL", "KOC", "MENTOR", "DOI_TAC"] as const) {
+      expect(() => kiemVaiKhongTuCrm(v)).toThrow(LOI_VAI_TU_CRM);
       expect(() => kiemVaiKhongTuCrm(v)).toThrow(BadRequestException);
     }
-    for (const v of ["CTV", "THUC_TAP", "KOL", "KOC", "MENTOR", "DOI_TAC", "KHACH"] as const) expect(() => kiemVaiKhongTuCrm(v)).not.toThrow();
+    expect(() => kiemVaiKhongTuCrm("KHACH")).not.toThrow();
     expect(() => kiemVaiKhongTuCrm(null)).not.toThrow();
   });
 });

@@ -4,11 +4,7 @@ import {
   NHAN_TRANG_THAI_VAI,
   NHAN_VAI,
   trangThaiKichHoatLamViec,
-  VAI_CHUYEN_TU_THUC_TAP,
   type CapNhatHoSoBody,
-  type DangKyThemVaiBody,
-  type DeXuatChuyenVai,
-  type DeXuatChuyenVaiBody,
   type DieuKienKichHoat,
   type HoSoCuaToi,
   type LichSuVai,
@@ -25,9 +21,7 @@ import {
   Nhan,
   Nut,
   NutLienKet,
-  OChon,
   ONhap,
-  OVanBan,
   The,
   TheTieuDe,
   ThongBaoNoiDong,
@@ -42,11 +36,10 @@ import { TRANG_CUA_VAI, useVaiDangDung } from "./use-vai-dang-dung";
 
 /*
  * /tai-khoan — ho so cua toi, cac vai + lich su chuyen vai, chon vai dang dung, kich hoat khi hoc dat,
- * dang ky them vai, de xuat chuyen vai (thuc tap sinh), quyen SKU tom tat. Moi du lieu tu /api/ho-so/toi/*.
+ * quyen SKU tom tat. Moi du lieu tu /api/ho-so/toi/*. Vai do CRM cap — khong tu dang ky / de xuat vai o day.
  */
 
 const TONG_TRANG_THAI: Record<TrangThaiVai, TongNhan> = { DANG_HOC: "chinh", HOAT_DONG: "thanh-cong", TAM_DUNG: "canh-bao", KET_THUC: "trung-tinh" };
-const VAI_TU_DANG_KY: DangKyThemVaiBody["vai"][] = ["CTV", "THUC_TAP", "KOL", "KOC"];
 
 function NhanTrangThai({ tt }: { tt: TrangThaiVai | null }) {
   if (!tt) return <span className="text-chu-mo">—</span>;
@@ -75,7 +68,6 @@ interface DuLieu {
   toi: HoSoCuaToi;
   dieuKien: DieuKienKichHoat[];
   lichSu: LichSuVai[];
-  deXuat: DeXuatChuyenVai[];
 }
 
 export function TrangTaiKhoan() {
@@ -90,9 +82,7 @@ export function TrangTaiKhoan() {
         api.get<DieuKienKichHoat[]>("/ho-so/toi/dieu-kien-kich-hoat"),
         api.get<LichSuVai[]>("/ho-so/toi/lich-su-vai")
       ]);
-      const laThucTap = toi.vai_chi_tiet.some(v => v.vai === "THUC_TAP" && v.trang_thai !== "KET_THUC");
-      const deXuat = laThucTap ? await api.get<DeXuatChuyenVai[]>("/ho-so/toi/de-xuat-chuyen-vai") : [];
-      setDl({ toi, dieuKien, lichSu, deXuat });
+      setDl({ toi, dieuKien, lichSu });
       setLoi(null);
     } catch (e) {
       setLoi(thongDiepLoi(e));
@@ -133,10 +123,6 @@ export function TrangTaiKhoan() {
         <div className="flex min-w-0 flex-col gap-6">
           <TheVai toi={toi} />
           {dl.dieuKien.length > 0 && <TheKichHoat dieuKien={dl.dieuKien} lamMoi={lamMoi} />}
-          <TheDangKyThemVai toi={toi} lamMoi={lamMoi} />
-          {toi.vai_chi_tiet.some(v => v.vai === "THUC_TAP" && v.trang_thai !== "KET_THUC") && (
-            <TheDeXuatChuyenVai toi={toi} deXuat={dl.deXuat} lamMoi={lamMoi} />
-          )}
         </div>
       </div>
       <TheLichSu lichSu={dl.lichSu} />
@@ -328,6 +314,7 @@ function TheVai({ toi }: { toi: HoSoCuaToi }) {
           ))}
         </ul>
       )}
+      <p className="mb-0 mt-4 text-sm text-chu-phu">Vai trò do CRM cấp — liên hệ quản lý để đổi.</p>
     </The>
   );
 }
@@ -446,64 +433,6 @@ function TheQuyenSku({ toi }: { toi: HoSoCuaToi }) {
   );
 }
 
-// ---------------------------------------------------------------- dang ky them vai
-
-function TheDangKyThemVai({ toi, lamMoi }: { toi: HoSoCuaToi; lamMoi: () => Promise<void> }) {
-  const conDuoc = VAI_TU_DANG_KY.filter(v => {
-    const hc = toi.vai_chi_tiet.find(x => x.vai === v);
-    return !hc || hc.trang_thai === "KET_THUC";
-  });
-  const [vai, setVai] = useState<string>("");
-  const [ghiChu, setGhiChu] = useState("");
-  const [dangGui, setDangGui] = useState(false);
-  const [loi, setLoi] = useState<unknown>(null);
-  const [xong, setXong] = useState<string | null>(null);
-
-  if (!conDuoc.length) return null;
-
-  async function gui(e: React.FormEvent) {
-    e.preventDefault();
-    if (!vai) return;
-    setDangGui(true);
-    setLoi(null);
-    setXong(null);
-    const body: DangKyThemVaiBody = { vai: vai as DangKyThemVaiBody["vai"], ghi_chu: ghiChu.trim() || undefined };
-    try {
-      await api.post<HoSoCuaToi>("/ho-so/toi/dang-ky-vai", body);
-      setXong(`Đã đăng ký vai ${NHAN_VAI[body.vai]} — vào Học viện để bắt đầu học.`);
-      setVai("");
-      setGhiChu("");
-      await lamMoi();
-    } catch (err) {
-      setLoi(err);
-    } finally {
-      setDangGui(false);
-    }
-  }
-
-  return (
-    <The>
-      <TheTieuDe kicker="Mở rộng" tieuDe="Đăng ký thêm vai trò" moTa="Vai mới bắt đầu ở trạng thái đang học, kích hoạt khi bạn học và đạt bài kiểm tra." />
-      <form onSubmit={gui} className="flex flex-col gap-4">
-        <OChon
-          nhan="Vai trò"
-          batBuoc
-          goiYChon="Chọn vai trò"
-          luaChon={conDuoc.map(v => ({ giaTri: v, nhan: NHAN_VAI[v] }))}
-          value={vai}
-          onChange={e => setVai(e.target.value)}
-        />
-        <OVanBan nhan="Kinh nghiệm hoặc kênh của bạn" rows={3} value={ghiChu} onChange={e => setGhiChu(e.target.value)} maxLength={2000} />
-        {xong && <ThongBaoNoiDong kieu="thanh-cong">{xong}</ThongBaoNoiDong>}
-        <LoiChiTiet loi={loi} />
-        <Nut type="submit" co="nho" className="self-start" dangXuLy={dangGui} disabled={!vai}>
-          Đăng ký vai trò
-        </Nut>
-      </form>
-    </The>
-  );
-}
-
 // ---------------------------------------------------------------- kich hoat lam viec
 
 /** "Kích hoạt làm việc" chi ap cho vai phai hoc (Sale, CSKH, CTV, TTS, KOL, KOC); vai khac -> khong hien nhan */
@@ -511,89 +440,6 @@ function NhanKichHoat({ toi }: { toi: HoSoCuaToi }) {
   const tt = trangThaiKichHoatLamViec(toi.vai_chi_tiet, toi.ho_so.kich_hoat_lam_viec);
   if (tt === "KHONG_AP_DUNG") return null;
   return tt === "DA_KICH_HOAT" ? <Nhan tong="thanh-cong">Đã kích hoạt làm việc</Nhan> : <Nhan tong="canh-bao">Chưa kích hoạt (cần học đạt)</Nhan>;
-}
-
-// ---------------------------------------------------------------- de xuat chuyen vai (thuc tap sinh)
-
-const NHAN_TRANG_THAI_DE_XUAT: Record<DeXuatChuyenVai["trang_thai"], [string, TongNhan]> = {
-  CHO_KIEM: ["Chờ kiểm", "canh-bao"],
-  CHO_DUYET: ["Chờ duyệt", "chinh"],
-  DA_DUYET: ["Đã duyệt", "thanh-cong"],
-  TU_CHOI: ["Từ chối", "loi"],
-  HUY: ["Huỷ", "trung-tinh"]
-};
-
-function TheDeXuatChuyenVai({ toi, deXuat, lamMoi }: { toi: HoSoCuaToi; deXuat: DeXuatChuyenVai[]; lamMoi: () => Promise<void> }) {
-  const dangMo = deXuat.some(d => d.trang_thai === "CHO_KIEM" || d.trang_thai === "CHO_DUYET");
-  const luaChon = VAI_CHUYEN_TU_THUC_TAP.filter(v => {
-    const hc = toi.vai_chi_tiet.find(x => x.vai === v);
-    return !hc || hc.trang_thai === "KET_THUC";
-  });
-  const [vai, setVai] = useState("");
-  const [lyDo, setLyDo] = useState("");
-  const [dangGui, setDangGui] = useState(false);
-  const [loi, setLoi] = useState<unknown>(null);
-
-  async function gui(e: React.FormEvent) {
-    e.preventDefault();
-    setDangGui(true);
-    setLoi(null);
-    const body: DeXuatChuyenVaiBody = { vai_moi: vai as DeXuatChuyenVaiBody["vai_moi"], ly_do: lyDo.trim() };
-    try {
-      await api.post<DeXuatChuyenVai>("/ho-so/toi/de-xuat-chuyen-vai", body);
-      setVai("");
-      setLyDo("");
-      await lamMoi();
-    } catch (err) {
-      setLoi(err);
-    } finally {
-      setDangGui(false);
-    }
-  }
-
-  return (
-    <The>
-      <TheTieuDe
-        kicker="Thực tập sinh"
-        tieuDe="Đề xuất chuyển vai"
-        moTa="Đề xuất sang KOL / KOC được một người có thẩm quyền khác duyệt (bạn không tự duyệt). Được duyệt thì vai thực tập kết thúc và vai mới bắt đầu học. Học đạt khoá CTV thì hệ thống tự thêm vai CTV. Sale / CSKH là nhân sự, tuyển qua CRM."
-      />
-      {deXuat.length > 0 && (
-        <ul className="mb-5 mt-0 flex list-none flex-col gap-2 p-0">
-          {deXuat.map(d => {
-            const [nhan, tong] = NHAN_TRANG_THAI_DE_XUAT[d.trang_thai];
-            return (
-              <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-vien px-4 py-3 text-sm text-chu-phu">
-                <span>
-                  Sang <strong className="text-chu">{NHAN_VAI[d.du_lieu.vai_moi]}</strong> · {dinhDangNgay(d.created_at)}
-                </span>
-                <Nhan tong={tong}>{nhan}</Nhan>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      {dangMo ? (
-        <ThongBaoNoiDong>Bạn đang có một đề xuất chờ xử lý.</ThongBaoNoiDong>
-      ) : luaChon.length === 0 ? null : (
-        <form onSubmit={gui} className="flex flex-col gap-4">
-          <OChon
-            nhan="Chuyển sang"
-            batBuoc
-            goiYChon="Chọn vai trò"
-            luaChon={luaChon.map(v => ({ giaTri: v, nhan: NHAN_VAI[v] }))}
-            value={vai}
-            onChange={e => setVai(e.target.value)}
-          />
-          <OVanBan nhan="Lý do / kết quả thực tập" batBuoc rows={3} value={lyDo} onChange={e => setLyDo(e.target.value)} maxLength={1000} />
-          <LoiChiTiet loi={loi} />
-          <Nut type="submit" co="nho" className="self-start" dangXuLy={dangGui} disabled={!vai || lyDo.trim().length < 3}>
-            Gửi đề xuất
-          </Nut>
-        </form>
-      )}
-    </The>
-  );
 }
 
 // ---------------------------------------------------------------- lich su

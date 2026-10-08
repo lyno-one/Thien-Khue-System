@@ -43,10 +43,10 @@ export function BanPheDuyet() {
   const [hanhDong, setHanhDong] = useState<HanhDong | null>(null);
   const idXem = tham.get("id");
 
-  // ?lap=CHUYEN_VAI&ho_so=<id>&ten=<ho ten> — mo form tu trang ho so
+  // ?lap=CAP_QUYEN_SKU&ho_so=<id>&ten=<ho ten> — mo form tu trang ho so
   const macDinh = useMemo<MacDinhDeXuat | undefined>(() => {
     const lap = tham.get("lap");
-    if (lap !== "CHUYEN_VAI" && lap !== "CAP_QUYEN_SKU") return undefined;
+    if (lap !== "CAP_QUYEN_SKU") return undefined;
     const id = tham.get("ho_so");
     return { loai: lap, hoSo: id ? { id, ho_ten: tham.get("ten") ?? "Hồ sơ đã chọn" } : undefined };
   }, [tham]);

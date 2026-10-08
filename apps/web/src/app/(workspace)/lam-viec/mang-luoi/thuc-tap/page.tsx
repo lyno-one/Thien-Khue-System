@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { NHAN_VAI, type BaiTapTts, type DanhGiaTts, type DeXuatChuyenVaiTtsBody, type KhoaHocLoTrinhTts } from "@thien-khue/contracts";
+import type { BaiTapTts, DanhGiaTts, KhoaHocLoTrinhTts } from "@thien-khue/contracts";
 import { DangTai, HopThoai, Loi, Nut, ONhap, OChon, OVanBan, The, TheSoLieu, TheTieuDe, ThongBaoNoiDong, TieuDeTrang, Trong } from "@/components/ui";
 import { NhanBaiTap, useTaiMl, useVaiMangLuoi } from "@/features/mang-luoi/chung";
 import { api, thongDiepLoi } from "@/lib/api";
 import { dinhDangNgayGio } from "@/lib/dinh-dang";
 
-/** Thuc tap sinh: lo trinh + bai tap; mentor: cham bai + de xuat chuyen vai */
+/** Thuc tap sinh: lo trinh + bai tap; mentor: cham bai. Vai do CRM cap — khong de xuat chuyen vai o day */
 export default function TrangThucTap() {
   const q = useVaiMangLuoi();
   return (
@@ -15,7 +15,7 @@ export default function TrangThucTap() {
       <TieuDeTrang
         kicker="Thực tập sinh"
         tieuDe="Lộ trình & bài tập"
-        moTa="Học lộ trình, nộp bài tập để mentor chấm. Kết quả đánh giá là căn cứ đề xuất chuyển sang Sale, CTV hoặc KOC."
+        moTa="Học lộ trình, nộp bài tập để mentor chấm. Vai trò do CRM cấp — liên hệ quản lý để đổi."
       />
       {q.thucTap && <KhuThucTapSinh />}
       {q.mentor && <KhuMentor />}
@@ -52,15 +52,10 @@ function KhuThucTapSinh() {
   return (
     <div className="mb-10 flex flex-col gap-6">
       {danhGia.data && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <TheSoLieu nhan="Bài học đã xong" giaTri={`${danhGia.data.bai_hoc.xong}/${danhGia.data.bai_hoc.tong}`} />
           <TheSoLieu nhan="Bài kiểm tra đạt" giaTri={`${danhGia.data.kiem_tra.dat}/${danhGia.data.kiem_tra.tong}`} phu={danhGia.data.kiem_tra.diem_tb !== null ? `điểm TB ${danhGia.data.kiem_tra.diem_tb}%` : undefined} />
           <TheSoLieu nhan="Bài tập đạt" giaTri={`${danhGia.data.bai_tap.dat}/${danhGia.data.bai_tap.tong}`} phu={danhGia.data.bai_tap.cho_cham ? `${danhGia.data.bai_tap.cho_cham} bài chờ chấm` : undefined} />
-          <TheSoLieu
-            nhan="Đề xuất chuyển vai"
-            giaTri={danhGia.data.de_xuat_dang_mo.length}
-            phu={danhGia.data.de_xuat_dang_mo.map(d => NHAN_VAI[d.sang_vai]).join(", ") || "chưa có"}
-          />
         </div>
       )}
 
@@ -177,7 +172,6 @@ function KhuMentor() {
   const tts = useTaiMl(() => api.get<DanhGiaTts[]>("/mang-luoi/mentor/tts"), []);
   const baiTap = useTaiMl(() => api.get<BaiTapTts[]>("/mang-luoi/mentor/bai-tap", { trang_thai: "CHO_CHAM" }), []);
   const [cham, setCham] = useState<{ b: BaiTapTts; ket_qua: "DAT" | "CHUA_DAT"; diem: string; nhan_xet: string } | null>(null);
-  const [deXuat, setDeXuat] = useState<{ tts: DanhGiaTts; sang_vai: DeXuatChuyenVaiTtsBody["sang_vai"]; ly_do: string } | null>(null);
   const [dangGui, setDangGui] = useState(false);
   const [tb, setTb] = useState<{ kieu: "thanh-cong" | "canh-bao"; chu: string } | null>(null);
 
@@ -197,22 +191,6 @@ function KhuMentor() {
     }
   }
 
-  async function guiDeXuat() {
-    if (!deXuat) return;
-    setDangGui(true);
-    try {
-      await api.post("/mang-luoi/mentor/de-xuat-chuyen-vai", { ho_so_id: deXuat.tts.ho_so.id, sang_vai: deXuat.sang_vai, ly_do: deXuat.ly_do });
-      setTb({ kieu: "thanh-cong", chu: `Đã gửi đề xuất chuyển ${deXuat.tts.ho_so.ho_ten} sang ${NHAN_VAI[deXuat.sang_vai]} — chờ kiểm và duyệt.` });
-      setDeXuat(null);
-      await tts.taiLai();
-    } catch (e) {
-      setTb({ kieu: "canh-bao", chu: thongDiepLoi(e) });
-      setDeXuat(null);
-    } finally {
-      setDangGui(false);
-    }
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {tb && <ThongBaoNoiDong kieu={tb.kieu}>{tb.chu}</ThongBaoNoiDong>}
@@ -222,7 +200,7 @@ function KhuMentor() {
       </The>
 
       <The>
-        <TheTieuDe kicker="Mentor" tieuDe="Thực tập sinh" moTa="Đề xuất chuyển vai cần ít nhất một bài tập đạt; người kiểm và người duyệt phải khác bạn." />
+        <TheTieuDe kicker="Mentor" tieuDe="Thực tập sinh" moTa="Tiến độ học và bài tập. Đổi vai trò làm ở CRM (phòng ban / nhóm quyền của nhân sự)." />
         {tts.dangTai && !tts.data ? (
           <DangTai />
         ) : tts.loi ? (
@@ -236,12 +214,8 @@ function KhuMentor() {
                   <span className="text-sm text-chu-phu">
                     Bài học {t.bai_hoc.xong}/{t.bai_hoc.tong} · kiểm tra đạt {t.kiem_tra.dat}/{t.kiem_tra.tong} · bài tập đạt {t.bai_tap.dat}/{t.bai_tap.tong}
                     {t.bai_tap.diem_tb !== null ? ` (TB ${t.bai_tap.diem_tb})` : ""}
-                    {t.de_xuat_dang_mo.length ? ` · đang đề xuất: ${t.de_xuat_dang_mo.map(d => NHAN_VAI[d.sang_vai]).join(", ")}` : ""}
                   </span>
                 </span>
-                <Nut kieu="vien" co="nho" disabled={t.bai_tap.dat < 1} onClick={() => setDeXuat({ tts: t, sang_vai: "CTV", ly_do: "" })}>
-                  Đề xuất chuyển vai
-                </Nut>
               </li>
             ))}
           </ul>
@@ -275,32 +249,6 @@ function KhuMentor() {
             />
             <ONhap nhan="Điểm (0–100)" type="number" min={0} max={100} value={cham.diem} onChange={e => setCham({ ...cham, diem: e.target.value })} />
             <OVanBan nhan="Nhận xét" batBuoc value={cham.nhan_xet} onChange={e => setCham({ ...cham, nhan_xet: e.target.value })} />
-          </div>
-        )}
-      </HopThoai>
-
-      <HopThoai
-        mo={!!deXuat}
-        dong={() => setDeXuat(null)}
-        tieuDe="Đề xuất chuyển vai"
-        moTa={deXuat?.tts.ho_so.ho_ten}
-        rong="nho"
-        chanTrang={
-          <Nut onClick={guiDeXuat} dangXuLy={dangGui} disabled={!deXuat || deXuat.ly_do.trim().length < 5}>
-            Gửi đề xuất
-          </Nut>
-        }
-      >
-        {deXuat && (
-          <div className="flex flex-col gap-4">
-            <OChon
-              nhan="Chuyển sang"
-              value={deXuat.sang_vai}
-              onChange={e => setDeXuat({ ...deXuat, sang_vai: e.target.value as DeXuatChuyenVaiTtsBody["sang_vai"] })}
-              luaChon={(["CTV", "KOC", "KOL", "SALE", "CSKH"] as const).map(v => ({ giaTri: v, nhan: NHAN_VAI[v] }))}
-            />
-            <OVanBan nhan="Căn cứ / lý do" batBuoc value={deXuat.ly_do} onChange={e => setDeXuat({ ...deXuat, ly_do: e.target.value })} />
-            <p className="m-0 text-sm text-chu-phu">Vai mới bắt đầu ở trạng thái Đang học — cần học phần riêng theo vai trước khi hoạt động.</p>
           </div>
         )}
       </HopThoai>

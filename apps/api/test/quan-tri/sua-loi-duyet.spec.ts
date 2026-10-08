@@ -5,11 +5,12 @@ import type { NhatKyService, ThongBaoService } from "../../src/services/core.ser
 import type { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
 import type { DieuKienHocService } from "../../src/services/ho-so-vai.service";
 import { ApDungDeXuatService, nguoiLienQuanNhanh } from "../../src/services/quan-tri-ap-dung.service";
+import { LOI_VAI_TU_CRM } from "../../src/common/utils/quan-tri";
 import { ApDungDeXuatRepository } from "../../src/repositories/quan-tri.repository";
 
 /*
  * Sua loi ra soat 07/10 (docs/LOI-CAN-SUA.md):
- *  - muc 2: CHUYEN_VAI sang HOAT_DONG cho vai phai hoc LUON kiem dieu kien hoc (ke ca tu TAM_DUNG)
+ *  - CHUYEN_VAI: moi vai nghiep vu lay tu CRM -> chan ca lap lan duyet (de xuat cu)
  *  - muc 13: CHI_TRA_HOA_HONG — lap (chot danh sach) -> duyet -> ap dung DU_DIEU_KIEN -> DA_TRA, khong tra hai lan
  */
 
@@ -53,60 +54,7 @@ function taoSv(db: Record<string, unknown>, dieuKien?: Partial<DieuKienHocServic
   return { sv, nhatKy, thongBao };
 }
 
-describe("Muc 2 — CHUYEN_VAI khong lach viec hoc", () => {
-  function dbVai(trangThai: string, vai = "CTV") {
-    return {
-      ho_so: { findUnique: jest.fn(async () => ({ id: HO_SO, ho_ten: "CTV A", vai_tro: [{ vai, trang_thai: trangThai }] })) },
-      vai_tro_ho_so: { findUnique: jest.fn(async () => ({ id: "v1", trang_thai: trangThai })), upsert: jest.fn(async () => ({})), update: jest.fn() },
-      lich_su_vai_tro: { create: jest.fn(async () => ({})) }
-    };
-  }
-  const chuaDat = { kiem: jest.fn(async () => ({ dat: false, dieu_kien: [], con_thieu: ["Nhập môn — Bài kiểm tra: cần đạt ≥ 90%"] })) };
-  const daDat = { kiem: jest.fn(async () => ({ dat: true, dieu_kien: [], con_thieu: [] })) };
-
-  it("lap de xuat TAM_DUNG -> HOAT_DONG cho CTV chua hoc dat -> 400 (loi tat DANG_HOC -> TAM_DUNG -> HOAT_DONG)", async () => {
-    const db = dbVai("TAM_DUNG");
-    const { sv } = taoSv(db, chuaDat);
-    await expect(sv.chuanBi("CHUYEN_VAI", HO_SO, { vai: "CTV", trang_thai_moi: "HOAT_DONG" })).rejects.toBeInstanceOf(BadRequestException);
-    expect(chuaDat.kiem).toHaveBeenCalledWith(HO_SO, "CTV");
-  });
-
-  it("de xuat da lap truoc do van bi chan LUC DUYET neu chua dat (khong upsert vai)", async () => {
-    const db = dbVai("TAM_DUNG", "CTV");
-    const { sv } = taoSv(db, chuaDat);
-    await expect(
-      sv.apDung({ tx: db as never, dx: dx({ loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: HO_SO, du_lieu: { vai: "CTV", trang_thai_moi: "HOAT_DONG" } }), nguoiDuyetId: CEO, yKien: null })
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(db.vai_tro_ho_so.upsert).not.toHaveBeenCalled();
-    expect(db.lich_su_vai_tro.create).not.toHaveBeenCalled();
-  });
-
-  it("khong co DieuKienHocService -> fail-closed (khong kich hoat)", async () => {
-    const db = dbVai("TAM_DUNG", "KOC");
-    const { sv } = taoSv(db);
-    await expect(
-      sv.apDung({ tx: db as never, dx: dx({ loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: HO_SO, du_lieu: { vai: "KOC", trang_thai_moi: "HOAT_DONG" } }), nguoiDuyetId: CEO, yKien: null })
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(db.vai_tro_ho_so.upsert).not.toHaveBeenCalled();
-  });
-
-  it("da hoc dat -> khoi phuc TAM_DUNG -> HOAT_DONG duoc", async () => {
-    const db = dbVai("TAM_DUNG");
-    const { sv } = taoSv(db, daDat);
-    await sv.apDung({ tx: db as never, dx: dx({ loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: HO_SO, du_lieu: { vai: "CTV", trang_thai_moi: "HOAT_DONG" } }), nguoiDuyetId: CEO, yKien: null });
-    expect(db.vai_tro_ho_so.upsert).toHaveBeenCalledWith(expect.objectContaining({ update: expect.objectContaining({ trang_thai: "HOAT_DONG" }) }));
-  });
-
-  it("vai khong phai hoc (MENTOR) khong goi kiem dieu kien hoc", async () => {
-    const db = dbVai("TAM_DUNG", "MENTOR");
-    const kiem = { kiem: jest.fn() };
-    const { sv } = taoSv(db, kiem);
-    await sv.chuanBi("CHUYEN_VAI", HO_SO, { vai: "MENTOR", trang_thai_moi: "HOAT_DONG" });
-    expect(kiem.kiem).not.toHaveBeenCalled();
-  });
-});
-
-describe("Vai lay tu CRM — khong chuyen bang de xuat (lap va duyet)", () => {
+describe("CHUYEN_VAI — moi vai nghiep vu lay tu CRM: chan ca luc lap va luc duyet de xuat cu", () => {
   function dbVai(vai: string) {
     return {
       ho_so: { findUnique: jest.fn(async () => ({ id: HO_SO, ho_ten: "A", vai_tro: [{ vai, trang_thai: "TAM_DUNG" }] })) },
@@ -116,24 +64,27 @@ describe("Vai lay tu CRM — khong chuyen bang de xuat (lap va duyet)", () => {
   }
   const daDat = { kiem: jest.fn(async () => ({ dat: true, dieu_kien: [], con_thieu: [] })) };
 
-  it.each(["SALE", "CSKH", "QUAN_LY", "ADMIN", "THIEN_KHUE"])("lap CHUYEN_VAI %s -> 400 doi o CRM", async vai => {
-    const db = dbVai(vai);
-    const { sv } = taoSv(db, daDat);
-    await expect(sv.chuanBi("CHUYEN_VAI", HO_SO, { vai, trang_thai_moi: "HOAT_DONG" })).rejects.toThrow("Vai này lấy từ CRM");
-  });
+  it.each(["SALE", "CSKH", "THUC_TAP", "CTV", "KOL", "KOC", "DOI_TAC", "MENTOR", "QUAN_LY", "ADMIN", "THIEN_KHUE"])(
+    "lap CHUYEN_VAI %s -> 400 doi o CRM",
+    async vai => {
+      const db = dbVai(vai);
+      const { sv } = taoSv(db, daDat);
+      await expect(sv.chuanBi("CHUYEN_VAI", HO_SO, { vai, trang_thai_moi: "HOAT_DONG" })).rejects.toThrow(LOI_VAI_TU_CRM);
+    }
+  );
 
   it("ket thuc vai CRM kem theo (tu_vai SALE) cung bi chan", async () => {
-    const db = dbVai("KOC");
+    const db = dbVai("KHACH");
     const { sv } = taoSv(db, daDat);
-    await expect(sv.chuanBi("CHUYEN_VAI", HO_SO, { vai: "KOC", trang_thai_moi: "DANG_HOC", tu_vai: "SALE" })).rejects.toThrow("Vai này lấy từ CRM");
+    await expect(sv.chuanBi("CHUYEN_VAI", HO_SO, { vai: "KHACH", trang_thai_moi: "HOAT_DONG", tu_vai: "SALE" })).rejects.toThrow(LOI_VAI_TU_CRM);
   });
 
-  it("de xuat cu (lap truoc khi chuyen ve CRM) bi chan LUC DUYET, khong ghi vai", async () => {
-    const db = dbVai("SALE");
+  it.each(["SALE", "CTV"])("de xuat cu %s (lap truoc khi chuyen ve CRM) bi chan LUC DUYET, khong ghi vai", async vai => {
+    const db = dbVai(vai);
     const { sv } = taoSv(db, daDat);
     await expect(
-      sv.apDung({ tx: db as never, dx: dx({ loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: HO_SO, du_lieu: { vai: "SALE", trang_thai_moi: "HOAT_DONG" } }), nguoiDuyetId: CEO, yKien: null })
-    ).rejects.toThrow("Vai này lấy từ CRM");
+      sv.apDung({ tx: db as never, dx: dx({ loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: HO_SO, du_lieu: { vai, trang_thai_moi: "HOAT_DONG" } }), nguoiDuyetId: CEO, yKien: null })
+    ).rejects.toThrow(LOI_VAI_TU_CRM);
     expect(db.vai_tro_ho_so.upsert).not.toHaveBeenCalled();
     expect(db.lich_su_vai_tro.create).not.toHaveBeenCalled();
   });

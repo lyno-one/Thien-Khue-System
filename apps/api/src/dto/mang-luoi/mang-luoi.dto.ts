@@ -19,7 +19,6 @@ import {
 import type {
   CapNhatSoLieuBody,
   ChamBaiTapTtsBody,
-  DeXuatChuyenVaiTtsBody,
   DeXuatDieuChinhBody,
   DuyetNoiDungBody,
   DuyetThamGiaBody,
@@ -144,13 +143,6 @@ export class ChamBaiTapTtsDto implements ChamBaiTapTtsBody {
 export class BaiTapMentorQueryDto {
   @IsOptional() @IsIn(["CHO_CHAM", "DAT", "CHUA_DAT"]) trang_thai?: "CHO_CHAM" | "DAT" | "CHUA_DAT";
   @IsOptional() @IsUUID() ho_so_id?: string;
-}
-
-export class DeXuatChuyenVaiDto implements DeXuatChuyenVaiTtsBody {
-  @IsUUID() ho_so_id!: string;
-  @IsIn(["SALE", "CSKH", "CTV", "KOC", "KOL"]) sang_vai!: "SALE" | "CSKH" | "CTV" | "KOC" | "KOL";
-  @IsOptional() @IsIn(["DANG_HOC", "HOAT_DONG"]) trang_thai_moi?: "DANG_HOC" | "HOAT_DONG";
-  @IsString() @MinLength(5) @MaxLength(2000) ly_do!: string;
 }
 
 export class GhiNhanTheoMaDonDto implements GhiNhanTheoMaDonBody {

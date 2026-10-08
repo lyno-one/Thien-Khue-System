@@ -8,7 +8,6 @@ import {
   BaiTapMentorQueryDto,
   CapNhatChienDichDto,
   ChamBaiTapTtsDto,
-  DeXuatChuyenVaiDto,
   DeXuatDieuChinhDto,
   DuyetNoiDungDto,
   DuyetThamGiaDto,
@@ -45,12 +44,6 @@ export class MangLuoiMentorController {
   @Post("bai-tap/:id/cham")
   cham(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() body: ChamBaiTapTtsDto) {
     return this.thucTap.cham(nd, id, body);
-  }
-
-  /** Tao de_xuat_duyet CHUYEN_VAI (duyet o ban phe duyet quan tri) */
-  @Post("de-xuat-chuyen-vai")
-  deXuatChuyenVai(@NguoiDung() nd: ThongTinNguoiDung, @Body() body: DeXuatChuyenVaiDto) {
-    return this.thucTap.deXuatChuyenVai(nd, body);
   }
 }
 

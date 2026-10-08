@@ -1,54 +1,31 @@
-// Ho so cua toi, dang ky, xac minh SDT. Lop: HoSoService, XacMinhSdtService.
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from "@nestjs/common";
-import { Prisma, type Vai } from "@prisma/client";
-import type { DangKyKetQua, HoSoCuaToi, HoSoTheoSdt } from "@thien-khue/contracts";
+// Ho so cua toi, xac minh SDT. Lop: HoSoService, XacMinhSdtService.
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import type { HoSoCuaToi, HoSoTheoSdt } from "@thien-khue/contracts";
 import { chuanHoaSdt, laSdtHopLe } from "../infrastructure/crm/chuan-hoa-sdt";
 import { NhatKyService, ThongBaoService } from "./core.service";
-import { SupabaseAdminService } from "../infrastructure/supabase/supabase-admin.service";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
-import type { CapNhatHoSoDto, DangKyDto, DangKyThemVaiDto, HuyXacMinhSdtDto, XacMinhSdtDto } from "../dto/ho-so/ho-so.dto";
-import { anEmail, GioiHanTanSuat, laVaiPhaiHoc, trangThaiKhoiTao, VAI_DANG_KY } from "../common/utils/ho-so";
-import { NHAN_VAI_VN } from "../constants/ho-so.constants";
-import { HoSoRepository, VaiRepository, XacMinhSdtRepository } from "../repositories/ho-so.repository";
-import { canXetTtsLenCtv, VaiService } from "./ho-so-vai.service";
+import type { CapNhatHoSoDto, HuyXacMinhSdtDto, XacMinhSdtDto } from "../dto/ho-so/ho-so.dto";
+import { anEmail } from "../common/utils/ho-so";
+import { HoSoRepository, XacMinhSdtRepository } from "../repositories/ho-so.repository";
 
-const MOT_GIO = 60 * 60 * 1000;
-/** Ghep hinh thuc + ghi chu dang ky thanh mot dong ghi chu ho so */
-function ghiChuDangKy(vai: Vai, hinhThuc?: string, ghiChu?: string): string | null {
-  const phan = [hinhThuc ? `Hình thức: ${hinhThuc}` : null, ghiChu ? `Ghi chú: ${ghiChu}` : null].filter(Boolean);
-  return phan.length ? `[Đăng ký ${NHAN_VAI_VN[vai]}] ${phan.join(" · ")}` : null;
-}
 /**
- * Ho so cua chinh minh + dang ky (KIEN-TRUC muc 4). Danh tinh luon tu token (@NguoiDung()).
+ * Ho so cua chinh minh (KIEN-TRUC muc 4). Danh tinh luon tu token (@NguoiDung()).
+ * Khong tu tao tai khoan / tu dang ky vai: tai khoan + vai do admin tao trong CRM.
  */
 @Injectable()
 export class HoSoService {
-  private readonly logger = new Logger("HoSo");
-  /** 5 lan dang ky / IP / 15 phut; 3 lan / email / gio */
-  private readonly gioiHanIp = new GioiHanTanSuat(5, 15 * 60 * 1000);
-  private readonly gioiHanEmail = new GioiHanTanSuat(3, MOT_GIO);
-
   constructor(
     private readonly repo: HoSoRepository,
-    private readonly vaiRepo: VaiRepository,
-    private readonly supabaseAdmin: SupabaseAdminService,
-    private readonly nhatKy: NhatKyService,
-    private readonly thongBao: ThongBaoService,
-    // TTS hoc dat khoa CTV -> tu them vai CTV ngay khi tai ho so (thieu, vd test cu: bo qua)
-    @Optional() private readonly vaiSv?: VaiService
+    private readonly nhatKy: NhatKyService
   ) {}
 
   // ---------------------------------------------------------------- GET /toi
 
   /** Doc lai tu DB (khong dung nd.hoSo / nd.vai) de phan anh ngay thay doi vua ghi trong cung request */
   async layCuaToi(nd: Pick<ThongTinNguoiDung, "id" | "email">): Promise<HoSoCuaToi> {
-    let [hoSo, quyen] = await Promise.all([this.repo.layHoSoCuaToi(nd.id), this.repo.dsQuyenSku(nd.id)]);
+    const [hoSo, quyen] = await Promise.all([this.repo.layHoSoCuaToi(nd.id), this.repo.dsQuyenSku(nd.id)]);
     if (!hoSo) throw new NotFoundException("Không tìm thấy hồ sơ");
-    // Thuc tap sinh vua hoc dat khoa CTV: he thong tu them vai CTV (khong qua de xuat) roi doc lai
-    if (this.vaiSv && canXetTtsLenCtv(hoSo.vai_tro) && (await this.vaiSv.xetTtsLenCtvAnToan(nd.id))) {
-      [hoSo, quyen] = await Promise.all([this.repo.layHoSoCuaToi(nd.id), this.repo.dsQuyenSku(nd.id)]);
-      if (!hoSo) throw new NotFoundException("Không tìm thấy hồ sơ");
-    }
     return {
       id: hoSo.id,
       email: nd.email ?? hoSo.email,
@@ -119,127 +96,6 @@ export class HoSoService {
         },
         tx
       );
-    });
-  }
-
-  // ---------------------------------------------------------------- POST /dang-ky (cong khai)
-
-  /**
-   * Dang ky CTV / thuc tap sinh / KOL / KOC / khach: tao user Supabase Auth (service-role) + ho_so + vai.
-   * Vai phai hoc -> DANG_HOC (chua kich hoat lam viec); KHACH -> HOAT_DONG. Chan trung email / SDT.
-   */
-  async dangKy(dto: DangKyDto, ip: string | null, daDangNhap: ThongTinNguoiDung | undefined): Promise<DangKyKetQua> {
-    if (daDangNhap) throw new BadRequestException("Bạn đã có tài khoản — đăng ký thêm vai trò trong trang Tài khoản");
-    if (!VAI_DANG_KY.includes(dto.vai)) throw new BadRequestException("Vai trò đăng ký không hợp lệ");
-    const email = dto.email.trim().toLowerCase();
-    this.gioiHanIp.kiem(`ip:${ip ?? "khong-ro"}`);
-    this.gioiHanEmail.kiem(`email:${email}`);
-
-    const sdtChuan = this.chuanHoaSdtHopLe(dto.sdt);
-    const trungEmail = await this.repo.timTheoEmail(email);
-    if (trungEmail) throw new ConflictException("Email đã được đăng ký — hãy đăng nhập");
-    await this.kiemTrungSdt(sdtChuan, null);
-
-    const user = await this.supabaseAdmin.taoNguoiDung({ email, matKhau: dto.mat_khau, hoTen: dto.ho_ten, sdt: sdtChuan });
-    const trangThai = trangThaiKhoiTao(dto.vai);
-    try {
-      await this.repo.chayTrongGiaoDich(async tx => {
-        await this.repo.taoHoSo(
-          {
-            id: user.id,
-            ho_ten: dto.ho_ten,
-            email,
-            sdt: dto.sdt,
-            sdt_chuan: sdtChuan,
-            // SDT tu khai luc dang ky CHUA xac minh (sdt_xac_minh_luc mac dinh null) — chua noi voi du lieu khach CRM
-            ghi_chu: ghiChuDangKy(dto.vai, dto.hinh_thuc, dto.ghi_chu)
-          },
-          tx
-        );
-        await this.vaiRepo.ghiDoiVai(
-          {
-            hoSoId: user.id,
-            vai: dto.vai,
-            cu: null,
-            moi: trangThai,
-            nguoiDoiId: null,
-            lyDo: `Tự đăng ký ${NHAN_VAI_VN[dto.vai]}`,
-            nguon: "DANG_KY"
-          },
-          tx
-        );
-        await this.nhatKy.ghi(
-          {
-            hoSoId: null,
-            hanhDong: "DANG_KY",
-            doiTuong: "ho_so",
-            doiTuongId: user.id,
-            duLieu: { vai: dto.vai, trang_thai: trangThai, hinh_thuc: dto.hinh_thuc ?? null },
-            ip
-          },
-          tx
-        );
-        if (laVaiPhaiHoc(dto.vai)) {
-          await this.thongBao.gui(
-            {
-              hoSoId: user.id,
-              loai: "DAO_TAO",
-              tieuDe: "Chào mừng bạn đến Học viện Thiên Khuê S",
-              noiDung: `Hoàn thành khoá học và đạt bài kiểm tra (≥ 90%) để kích hoạt vai trò ${NHAN_VAI_VN[dto.vai]}.`,
-              lienKet: "/hoc-vien"
-            },
-            tx
-          );
-        }
-      });
-    } catch (e) {
-      // Hoan tac user Auth de nguoi dung dang ky lai duoc — tru khi ho so da duoc tao (vd JwtGuard tao khi dang nhap song song)
-      const daCo = await this.repo.timTheoId(user.id).catch(() => null);
-      if (!daCo) await this.supabaseAdmin.xoaNguoiDung(user.id);
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw new ConflictException("Email hoặc số điện thoại đã được đăng ký");
-      }
-      this.logger.error(`Đăng ký ${email} lỗi: ${e instanceof Error ? e.message : String(e)}`);
-      throw e;
-    }
-
-    return {
-      ho_so_id: user.id,
-      email,
-      vai: dto.vai,
-      trang_thai_vai: trangThai,
-      buoc_tiep: laVaiPhaiHoc(dto.vai)
-        ? "Đăng nhập rồi vào Học viện: hoàn thành khoá học và đạt bài kiểm tra để kích hoạt vai trò."
-        : "Đăng nhập để xem ưu đãi thành viên. Số điện thoại cần được CSKH gọi xác minh trước khi nối với lịch sử mua hàng."
-    };
-  }
-
-  // ---------------------------------------------------------------- POST /toi/dang-ky-vai
-
-  /** Nguoi da co tai khoan dang ky hoc them vai (CTV / TTS / KOL / KOC) — luon DANG_HOC, khong tu kich hoat */
-  async dangKyThemVai(nd: ThongTinNguoiDung, dto: DangKyThemVaiDto): Promise<void> {
-    if (!laVaiPhaiHoc(dto.vai) || !VAI_DANG_KY.includes(dto.vai)) throw new BadRequestException("Vai trò đăng ký không hợp lệ");
-    const hienCo = nd.vaiChiTiet.find(v => v.vai === dto.vai);
-    if (hienCo && hienCo.trang_thai !== "KET_THUC") throw new ConflictException("Bạn đã có vai trò này");
-    const ghiChu = ghiChuDangKy(dto.vai, dto.hinh_thuc, dto.ghi_chu);
-    await this.repo.chayTrongGiaoDich(async tx => {
-      await this.vaiRepo.ghiDoiVai(
-        {
-          hoSoId: nd.id,
-          vai: dto.vai,
-          cu: hienCo?.trang_thai ?? null,
-          moi: "DANG_HOC",
-          nguoiDoiId: nd.id,
-          lyDo: `Tự đăng ký học vai ${NHAN_VAI_VN[dto.vai]}`,
-          nguon: "DANG_KY"
-        },
-        tx
-      );
-      if (ghiChu) {
-        const cu = await this.repo.layGhiChu(nd.id, tx);
-        await this.repo.capNhat(nd.id, { ghi_chu: [cu?.ghi_chu, ghiChu].filter(Boolean).join("\n") }, tx);
-      }
-      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "DANG_KY_THEM_VAI", doiTuong: "ho_so", doiTuongId: nd.id, duLieu: { vai: dto.vai } }, tx);
     });
   }
 

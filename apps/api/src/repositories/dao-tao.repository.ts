@@ -1,6 +1,6 @@
 // Truy van Prisma cua module dao-tao. Lop: DuLieuHocRepository, QuyenSkuRepository, XetDatRepository, HocVienRepository, KiemTraRepository, ThucHanhRepository, TienDoDoiRepository, QuanTriNoiDungRepository, LuyenAiRepository.
 import { Injectable } from "@nestjs/common";
-import type { LoaiKhoaHoc, Prisma, TrangThaiThucHanh, Vai } from "@prisma/client";
+import type { LoaiKhoaHoc, MucDichPhieuLuyenAi, Prisma, TrangThaiThucHanh, Vai } from "@prisma/client";
 import { PrismaService } from "../infrastructure/prisma/prisma.service";
 import { CHON_KHOA, CHON_QUYEN_SKU, type ClientDb, type DuLieuHocVien, laUuid } from "../common/utils/dao-tao";
 
@@ -1058,10 +1058,21 @@ export class LuyenAiRepository {
     return this.prisma.phieu_luyen_ai.create({ data });
   }
 
-  /** Dung phieu MOT lan: chi ghi khi chua dung va con han. Tra so dong da ghi (0 = het han / da dung / khong co) */
-  async dungPhieu(ma: string, bayGio: Date): Promise<number> {
+  /**
+   * Don phieu het han truoc `moc`: phieu CHUA DUNG (vo dung) + phieu XEM (khong ai doc lai).
+   * GIU phieu LUYEN da dung — Sales Training nop ket qua theo ma_phieu sau khi phien ket thuc.
+   */
+  async donPhieuHetHan(moc: Date): Promise<number> {
+    const r = await this.prisma.phieu_luyen_ai.deleteMany({
+      where: { het_han: { lt: moc }, OR: [{ dung_luc: null }, { muc_dich: "XEM" }] }
+    });
+    return r.count;
+  }
+
+  /** Dung phieu MOT lan: chi ghi khi dung muc dich, chua dung va con han. Tra so dong da ghi (0 = het han / da dung / sai muc dich / khong co) */
+  async dungPhieu(ma: string, bayGio: Date, mucDich: MucDichPhieuLuyenAi = "LUYEN"): Promise<number> {
     const r = await this.prisma.phieu_luyen_ai.updateMany({
-      where: { ma, dung_luc: null, het_han: { gt: bayGio } },
+      where: { ma, muc_dich: mucDich, dung_luc: null, het_han: { gt: bayGio } },
       data: { dung_luc: bayGio }
     });
     return r.count;
@@ -1075,6 +1086,7 @@ export class LuyenAiRepository {
           select: {
             id: true,
             crm_user_id: true,
+            ho_ten: true,
             // Vai ghi vao bai thuc hanh LUYEN_AI (SALE / CSKH con hieu luc)
             vai_tro: { where: { vai: { in: ["SALE", "CSKH"] }, trang_thai: { not: "KET_THUC" } }, select: { vai: true }, orderBy: { created_at: "asc" } }
           }
@@ -1111,6 +1123,22 @@ export class LuyenAiRepository {
 
   timPhien(phienIdSt: string, db: ClientDb = this.prisma) {
     return db.phien_luyen_ai.findUnique({ where: { phien_id_st: phienIdSt } });
+  }
+
+  /** Phien theo id cua TK (phat phieu XEM) */
+  timPhienTheoId(id: string) {
+    return this.prisma.phien_luyen_ai.findUnique({
+      where: { id },
+      select: { id: true, phien_id_st: true, ho_so_id: true, khoa_hoc_id: true, loai: true }
+    });
+  }
+
+  /** Phien theo id Sales Training kem chu phien (doi phieu XEM) */
+  timPhienKemChu(phienIdSt: string) {
+    return this.prisma.phien_luyen_ai.findUnique({
+      where: { phien_id_st: phienIdSt },
+      select: { id: true, phien_id_st: true, ho_so: { select: { id: true, crm_user_id: true, ho_ten: true } } }
+    });
   }
 
   taoPhien(data: Prisma.phien_luyen_aiUncheckedCreateInput, db: ClientDb = this.prisma) {

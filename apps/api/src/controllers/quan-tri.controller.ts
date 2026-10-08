@@ -3,7 +3,6 @@ import { coMeta } from "../common/interceptors/bao-response.interceptor";
 import { CongKhai, NguoiDung, Vai } from "../common/decorators/xac-thuc.decorator";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
 import { DeXuatService, HoSoQuanTriService, TongQuanService } from "../services/quan-tri.service";
-import { VaiService } from "../services/ho-so-vai.service";
 import {
   DeXuatQueryDto,
   DoiTacQueryDto,
@@ -28,8 +27,7 @@ export class QuanTriController {
   constructor(
     private readonly tongQuan: TongQuanService,
     private readonly hoSo: HoSoQuanTriService,
-    private readonly deXuat: DeXuatService,
-    private readonly vai: VaiService
+    private readonly deXuat: DeXuatService
   ) {}
 
   @CongKhai()
@@ -44,12 +42,6 @@ export class QuanTriController {
   @Get("tong-quan")
   layTongQuan(@NguoiDung() nd: ThongTinNguoiDung) {
     return this.tongQuan.layTongQuan(nd);
-  }
-
-  /** Xet ngay moi thuc tap sinh hoc dat khoa CTV -> tu them vai CTV (khong qua de xuat; job cung quet dinh ky) */
-  @Post("thuc-tap/xet-len-ctv")
-  xetTtsLenCtv() {
-    return this.vai.quetTtsLenCtv();
   }
 
   @Get("nguoi-hoc")

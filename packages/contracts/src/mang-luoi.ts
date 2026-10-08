@@ -278,14 +278,13 @@ export interface ChamBaiTapTtsBody {
   nhan_xet: string;
 }
 
-/** Ket qua danh gia TTS — can cu de xuat chuyen vai */
+/** Ket qua danh gia TTS (tien do hoc + bai tap) */
 export interface DanhGiaTts {
   ho_so: { id: string; ho_ten: string; email: string | null };
   vai: { vai: Vai; trang_thai: TrangThaiVai }[];
   bai_tap: { tong: number; dat: number; chua_dat: number; cho_cham: number; diem_tb: number | null };
   kiem_tra: { tong: number; dat: number; diem_tb: number | null };
   bai_hoc: { xong: number; tong: number };
-  de_xuat_dang_mo: { id: string; sang_vai: Vai; trang_thai: string; created_at: string }[];
 }
 
 // ------------------------------------------------------------------ GHI NHAN DON & HOA HONG

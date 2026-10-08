@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChinhSachHienHanh, DeXuatDuyet, LoaiDeXuat, NguoiDungDongQt, PhanTrangMeta, SanPhamDongQt, TaoDeXuatBody, Vai } from "@thien-khue/contracts";
-import { DANH_SACH_VAI, NHAN_LOAI_DE_XUAT, NHAN_VAI, nhanSoBuocDeXuat, soBuocDeXuat, VAI_PHAI_HOC, VAI_TU_CRM } from "@thien-khue/contracts";
+import { NHAN_LOAI_DE_XUAT, NHAN_VAI, nhanSoBuocDeXuat, soBuocDeXuat } from "@thien-khue/contracts";
 import { useEffect, useState } from "react";
 import { HopThoai, lopDongBam, lopTab, lopThanhTab, Nut, OChon, ONhap, OVanBan, ThongBaoNoiDong } from "@/components/ui";
 import { api, thongDiepLoi } from "@/lib/api";
@@ -11,13 +11,13 @@ import { tenVai } from "./dung-chung";
 
 /*
  * Lap de xuat (nguoi de xuat = maker). 2 buoc: nguoi duyet khac nguoi de xuat. 3 buoc (chi tra hoa hong): them nguoi kiem — server chan.
- * Chuyen vai chi cho vai CRM khong co (CTV, TTS, KOL, KOC, Mentor, Doi tac...) — Sale / CSKH / Quan ly / Admin doi o CRM.
- * Loai lap tay: chuyen vai, cap / thu hoi quyen SKU, doi chinh sach (ty le hoa hong, nguong hang), chi tra hoa hong theo ky, khac.
+ * Khong co chuyen vai: moi vai lay tu CRM — doi vai = doi phong ban / quyen nhan su o CRM.
+ * Loai lap tay: cap / thu hoi quyen SKU, doi chinh sach (ty le hoa hong, nguong hang), chi tra hoa hong theo ky, khac.
  * Qua tang / voucher / don trung nguon: lap tu tab "Hàng chờ".
  */
 
-type LoaiForm = "CHUYEN_VAI" | "CAP_QUYEN_SKU" | "DOI_CHINH_SACH" | "CHI_TRA_HOA_HONG" | "KHAC";
-const LOAI_FORM: LoaiForm[] = ["CHUYEN_VAI", "CAP_QUYEN_SKU", "DOI_CHINH_SACH", "CHI_TRA_HOA_HONG", "KHAC"];
+type LoaiForm = "CAP_QUYEN_SKU" | "DOI_CHINH_SACH" | "CHI_TRA_HOA_HONG" | "KHAC";
+const LOAI_FORM: LoaiForm[] = ["CAP_QUYEN_SKU", "DOI_CHINH_SACH", "CHI_TRA_HOA_HONG", "KHAC"];
 
 /** Ky "YYYY-MM" hien tai theo gio Viet Nam */
 function kyHienTai(): string {
@@ -25,8 +25,6 @@ function kyHienTai(): string {
   return `${p.find(x => x.type === "year")?.value}-${p.find(x => x.type === "month")?.value}`;
 }
 const VAI_HOA_HONG: Vai[] = ["SALE", "CSKH", "CTV", "THUC_TAP", "KOL", "KOC"];
-/** Vai cap / chuyen duoc bang de xuat: bo vai lay tu CRM */
-const VAI_DE_XUAT: Vai[] = DANH_SACH_VAI.filter(v => !VAI_TU_CRM.includes(v));
 
 export interface MacDinhDeXuat {
   loai?: LoaiForm;
@@ -34,11 +32,8 @@ export interface MacDinhDeXuat {
 }
 
 export function FormDeXuat({ mo, dong, xong, macDinh }: { mo: boolean; dong: () => void; xong: (dx: DeXuatDuyet) => void; macDinh?: MacDinhDeXuat }) {
-  const [loai, setLoai] = useState<LoaiForm>(macDinh?.loai ?? "CHUYEN_VAI");
+  const [loai, setLoai] = useState<LoaiForm>(macDinh?.loai ?? "CAP_QUYEN_SKU");
   const [hoSo, setHoSo] = useState<{ id: string; ho_ten: string } | null>(macDinh?.hoSo ?? null);
-  const [vai, setVai] = useState<Vai>("KOC");
-  const [trangThaiVai, setTrangThaiVai] = useState("DANG_HOC");
-  const [tuVai, setTuVai] = useState<string>("");
   const [sanPham, setSanPham] = useState<{ id: string; ma: string; ten: string } | null>(null);
   const [hanhDongSku, setHanhDongSku] = useState<"HOAT_DONG" | "THU_HOI">("HOAT_DONG");
   const [chinhSach, setChinhSach] = useState<"TY_LE_HOA_HONG" | "NGUONG_HANG">("TY_LE_HOA_HONG");
@@ -56,7 +51,7 @@ export function FormDeXuat({ mo, dong, xong, macDinh }: { mo: boolean; dong: () 
 
   useEffect(() => {
     if (!mo) return;
-    setLoai(macDinh?.loai ?? "CHUYEN_VAI");
+    setLoai(macDinh?.loai ?? "CAP_QUYEN_SKU");
     setHoSo(macDinh?.hoSo ?? null);
     setLoi(null);
   }, [mo, macDinh]);
@@ -65,19 +60,11 @@ export function FormDeXuat({ mo, dong, xong, macDinh }: { mo: boolean; dong: () 
     if (mo && loai === "DOI_CHINH_SACH" && !cs) api.get<ChinhSachHienHanh>("/quan-tri/phe-duyet/chinh-sach").then(setCs).catch(() => undefined);
   }, [mo, loai, cs]);
 
-  useEffect(() => {
-    setTrangThaiVai(VAI_PHAI_HOC.includes(vai) ? "DANG_HOC" : "HOAT_DONG");
-  }, [vai]);
-
   const tyLeHienTai = cs?.ty_le_hoa_hong.find(t => t.vai === vaiHh && !t.mau_id)?.ty_le;
   const hangHienTai = cs?.hang_thanh_vien.find(h => h.hang === hang);
 
   function taoBody(): TaoDeXuatBody | string {
     const ly_do = lyDo.trim() || undefined;
-    if (loai === "CHUYEN_VAI") {
-      if (!hoSo) return "Chọn hồ sơ cần chuyển vai";
-      return { loai, doi_tuong_id: hoSo.id, du_lieu: { vai, trang_thai_moi: trangThaiVai, ...(tuVai ? { tu_vai: tuVai } : {}) }, ly_do };
-    }
     if (loai === "CAP_QUYEN_SKU") {
       if (!hoSo) return "Chọn hồ sơ";
       if (!sanPham) return "Chọn sản phẩm (mã SKU)";
@@ -168,7 +155,7 @@ export function FormDeXuat({ mo, dong, xong, macDinh }: { mo: boolean; dong: () 
           ))}
         </div>
 
-        {(loai === "CHUYEN_VAI" || loai === "CAP_QUYEN_SKU") && <ChonHoSo chon={hoSo} doi={setHoSo} />}
+        {loai === "CAP_QUYEN_SKU" && <ChonHoSo chon={hoSo} doi={setHoSo} />}
 
         {loai === "CHI_TRA_HOA_HONG" && (
           <>
@@ -178,31 +165,6 @@ export function FormDeXuat({ mo, dong, xong, macDinh }: { mo: boolean; dong: () 
               Bỏ trống hồ sơ để chi trả cho tất cả. Hệ thống chốt danh sách khoản lúc lập; khi Thiên Khuê duyệt, các khoản chuyển sang “Đã trả” — khoản nào đã trả hoặc bị trừ trong lúc chờ thì đề xuất không áp dụng, cần lập lại. Người nhận tiền không được lập, kiểm hay duyệt.
             </ThongBaoNoiDong>
           </>
-        )}
-
-        {loai === "CHUYEN_VAI" && (
-          <ThongBaoNoiDong kieu="thong-tin">
-            Vai Sale, CSKH, Quản lý, Admin lấy từ CRM — đổi ở CRM (Quản trị nhân sự). Thực tập sinh học đạt khoá CTV được hệ thống tự thêm vai CTV, không cần đề xuất.
-          </ThongBaoNoiDong>
-        )}
-
-        {loai === "CHUYEN_VAI" && (
-          <div className="grid gap-4 sm:grid-cols-3">
-            <OChon nhan="Vai" value={vai} onChange={e => setVai(e.target.value as Vai)} luaChon={VAI_DE_XUAT.map(v => ({ giaTri: v, nhan: NHAN_VAI[v] }))} />
-            <OChon
-              nhan="Trạng thái mới"
-              value={trangThaiVai}
-              onChange={e => setTrangThaiVai(e.target.value)}
-              luaChon={[
-                { giaTri: "DANG_HOC", nhan: "Đang học" },
-                { giaTri: "HOAT_DONG", nhan: "Hoạt động" },
-                { giaTri: "TAM_DUNG", nhan: "Tạm dừng" },
-                { giaTri: "KET_THUC", nhan: "Kết thúc" }
-              ]}
-              goiY={VAI_PHAI_HOC.includes(vai) ? "Vai phải học: chỉ hoạt động khi học và thi đạt ≥ 90%." : undefined}
-            />
-            <OChon nhan="Kết thúc vai cũ (tuỳ chọn)" value={tuVai} onChange={e => setTuVai(e.target.value)} goiYChon="Không" luaChon={VAI_DE_XUAT.filter(v => v !== vai).map(v => ({ giaTri: v, nhan: NHAN_VAI[v] }))} />
-          </div>
         )}
 
         {loai === "CAP_QUYEN_SKU" && (

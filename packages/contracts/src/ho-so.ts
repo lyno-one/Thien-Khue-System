@@ -166,24 +166,3 @@ export interface DieuKienKichHoat {
 export interface KichHoatBody {
   vai: Vai;
 }
-
-// ------------------------------------------------------------------ de xuat chuyen vai (DU LIEU CU — da bo: doi vai = doi phong ban o CRM)
-
-/** du_lieu luu trong de_xuat_duyet (loai CHUYEN_VAI, doi_tuong "ho_so") */
-export interface DuLieuDeXuatChuyenVai {
-  ho_so_id: string;
-  ho_ten: string;
-  tu_vai: "THUC_TAP";
-  vai_moi: Vai;
-  /** Trang thai vai moi khi duyet: vai phai hoc -> DANG_HOC */
-  trang_thai_vai_moi: TrangThaiVai;
-}
-
-export interface DeXuatChuyenVai {
-  id: string;
-  trang_thai: "CHO_KIEM" | "CHO_DUYET" | "DA_DUYET" | "TU_CHOI" | "HUY";
-  du_lieu: DuLieuDeXuatChuyenVai;
-  ly_do: string | null;
-  nguoi_de_xuat_id: string;
-  created_at: string;
-}

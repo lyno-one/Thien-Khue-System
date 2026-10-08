@@ -247,8 +247,8 @@ importers:
 
   apps/web:
     dependencies:
-      '@supabase/supabase-js':
-        specifier: ^2.117.2
+      '@supabase/auth-js':
+        specifier: 2.117.2
         version: 2.117.2
       '@thien-khue/contracts':
         specifier: workspace:*

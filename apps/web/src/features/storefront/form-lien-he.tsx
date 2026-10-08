@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useId, useState } from "react";
-import type { GuiLienHeBody, KetQuaLienHe, LoTrinhDangKy, TrangLienHe, Vai } from "@thien-khue/contracts";
-import { lopNhanTruong, lopNutChinh, lopO, Nut } from "@/components/ui";
+import type { GuiLienHeBody, KetQuaLienHe, LoTrinhDangKy, TrangLienHe } from "@thien-khue/contracts";
+import { lopNhanTruong, lopO, Nut } from "@/components/ui";
 import { api, LoiApi } from "@/lib/api";
 import { layMaGioiThieuDaLuu } from "./ma-gioi-thieu";
 import type { CauHinhForm } from "./noi-dung";
@@ -31,8 +30,6 @@ interface Props {
   form: CauHinhForm;
   loTrinh?: LoTrinhDangKy;
   maMauQuanTam?: string;
-  /** Vai goi y khi chuyen sang /dang-ky (server quyet co goi y hay khong) */
-  vaiDangKy?: Vai;
   /** Cau phu duoi tieu de */
   moTa?: string;
 }
@@ -44,7 +41,7 @@ const LOP_LOI = "text-caption text-loi";
 // Nhan boc o nhap nen o phai tra lai do dam thuong (preflight cho input ke thua font-weight)
 const LOP_O = `${lopO} font-normal`;
 
-export function FormLienHe({ trang, form, loTrinh, maMauQuanTam, vaiDangKy, moTa }: Props) {
+export function FormLienHe({ trang, form, loTrinh, maMauQuanTam, moTa }: Props) {
   const id = useId();
   const [hoTen, setHoTen] = useState("");
   const [sdt, setSdt] = useState("");
@@ -104,7 +101,6 @@ export function FormLienHe({ trang, form, loTrinh, maMauQuanTam, vaiDangKy, moTa
   }
 
   if (ketQua) {
-    const linkDangKy = `/dang-ky${vaiDangKy ? `?vai=${vaiDangKy}` : ""}`;
     return (
       <div className="flex flex-col gap-4 py-6" role="status" aria-live="polite">
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden className="text-chinh">
@@ -113,19 +109,8 @@ export function FormLienHe({ trang, form, loTrinh, maMauQuanTam, vaiDangKy, moTa
         </svg>
         <h2 className="m-0 text-h2 text-chu">Cảm ơn bạn</h2>
         <p className="m-0 text-body-lg text-chu-phu">
-          Chúng tôi đã nhận đăng ký và sẽ liên hệ qua số điện thoại hoặc Zalo bạn để lại.
+          Chúng tôi đã nhận đăng ký và sẽ liên hệ qua số điện thoại hoặc Zalo bạn để lại. Tài khoản (nếu cần) do Lyno tạo sau khi liên hệ.
         </p>
-        {ketQua.goi_y_dang_ky && (
-          <div className="flex flex-col gap-3 rounded-lg bg-chinh-nhat p-4 text-body text-chu">
-            <span>Muốn bắt đầu ngay? Tạo tài khoản để vào học và theo dõi quyền lợi trên Thiên Khuê S.</span>
-            <Link
-              href={linkDangKy}
-              className={`${lopNutChinh} self-start`}
-            >
-              Tạo tài khoản
-            </Link>
-          </div>
-        )}
         <Nut kieu="vien" onClick={guiKhac} className="self-start">
           Gửi đăng ký khác
         </Nut>

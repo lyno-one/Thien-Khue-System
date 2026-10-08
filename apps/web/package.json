@@ -9,7 +9,7 @@
     "typecheck": "pnpm --filter @thien-khue/contracts build && tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.2",
+    "@supabase/auth-js": "2.117.2",
     "@thien-khue/contracts": "workspace:*",
     "next": "~15.5.27",
     "react": "^19.1.0",

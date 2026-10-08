@@ -111,7 +111,7 @@ type NguonDon = "SALE" | "CTV" | "KOC" | "KOL";
 type HangThanhVien = "THAN_THIET" | "VIP";
 type TrangThaiQuyenSku = "HOAT_DONG" | "CAN_HOC_LAI" | "THU_HOI";
 
-/** du_lieu theo loai — body tao de xuat */
+/** du_lieu theo loai — body tao de xuat. CHUYEN_VAI: chi con DU LIEU CU (lap moi bi 400 — vai lay tu CRM) */
 export interface DuLieuQtChuyenVai {
   vai: Vai;
   trang_thai_moi: TrangThaiVai;

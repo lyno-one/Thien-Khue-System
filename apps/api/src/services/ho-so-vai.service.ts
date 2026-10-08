@@ -1,20 +1,20 @@
 // Vai + dieu kien hoc truoc khi ban. Lop: DieuKienHocService, VaiService.
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { Prisma, TrangThaiVai, Vai } from "@prisma/client";
-import type {
-  DeXuatChuyenVai, DieuKienKichHoat, DuLieuDeXuatChuyenVai, HoSoChiTiet, HoSoTomTat, LichSuVai, PhanTrangMeta, VaiChuyenTuThucTap
-} from "@thien-khue/contracts";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import type { TrangThaiVai, Vai } from "@prisma/client";
+import type { DieuKienKichHoat, HoSoChiTiet, HoSoTomTat, LichSuVai, PhanTrangMeta } from "@thien-khue/contracts";
 import { DieuKienHocRepository, type HoSoTomTatDb, VaiRepository } from "../repositories/ho-so.repository";
 import {
   danhGiaDieuKien, type DuLieuHocCuaHoSo, type KetQuaDieuKien, type KhoaHocCanDat, kiemChuyenTrangThai, kiemQuyenDoiVai, laVaiPhaiHoc,
-  trangThaiKhoiTao, VAI_CHUYEN_TU_THUC_TAP, VAI_PHAI_HOC
+  trangThaiKhoiTao, VAI_PHAI_HOC
 } from "../common/utils/ho-so";
 import { tinhTienDo } from "../common/utils/dao-tao";
-import { kiemVaiKhongTuCrm, trangThaiHieuLuc } from "../common/utils/quan-tri";
+import { kiemVaiKhongTuCrm, VAI_TU_CRM } from "../common/utils/quan-tri";
+import { mapVaiCrm } from "../common/utils/core";
+import { CrmDocService } from "../infrastructure/crm/crm-doc.service";
 import { NhatKyService, ThongBaoService } from "./core.service";
 import { phanTrang, taoMetaPhanTrang } from "../common/utils/phan-trang";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
-import type { DeXuatChuyenVaiDto, DoiTrangThaiVaiDto, LocHoSoDto, ThemVaiDto } from "../dto/ho-so/ho-so.dto";
+import type { DoiTrangThaiVaiDto, LocHoSoDto, ThemVaiDto } from "../dto/ho-so/ho-so.dto";
 import { NHAN_VAI_VN } from "../constants/ho-so.constants";
 
 // Ham thuan cua dao-tao: cung luat XetDatService dung de tu kich hoat
@@ -51,11 +51,6 @@ export class DieuKienHocService {
     };
   }
 
-  /** Co khoa NGHIEP_VU bat buoc cho vai (vd khoa CTV) */
-  coKhoaNghiepVu(vai: Vai): Promise<boolean> {
-    return this.repo.coKhoaNghiepVu(vai);
-  }
-
   async kiem(hoSoId: string, vai: Vai): Promise<KetQuaDieuKien> {
     const khoa = await this.layKhoaCanDat(vai);
     const kq = danhGiaDieuKien(khoa, await this.layDuLieuHoc(hoSoId, khoa));
@@ -68,17 +63,6 @@ export class DieuKienHocService {
     return { dat: false, dieu_kien: kq.dieu_kien, con_thieu: chuaXong.map(k => `${k.ten} — chưa hoàn thành theo luật học viện`) };
   }
 }
-
-/**
- * Thuc tap sinh (THUC_TAP DANG_HOC / HOAT_DONG) chua tung co vai CTV -> can xet tu len CTV.
- * Da co CTV (ke ca KET_THUC do con nguoi quyet dinh) hoac THUC_TAP tam dung / ket thuc -> khong xet.
- */
-export function canXetTtsLenCtv(vai: readonly { vai: Vai; trang_thai: TrangThaiVai }[]): boolean {
-  const tts = vai.find(v => v.vai === "THUC_TAP");
-  if (!tts || (tts.trang_thai !== "DANG_HOC" && tts.trang_thai !== "HOAT_DONG")) return false;
-  return !vai.some(v => v.vai === "CTV");
-}
-const laLoiTrungKhoa = (e: unknown) => typeof e === "object" && e !== null && (e as { code?: string }).code === "P2002";
 
 function sangTomTat(h: HoSoTomTatDb): HoSoTomTat {
   return {
@@ -99,19 +83,18 @@ function sangTomTat(h: HoSoTomTatDb): HoSoTomTat {
   };
 }
 /**
- * Quan tri vai (them / tam dung / ket thuc), lich su chuyen vai (chi INSERT), kich hoat lam viec khi hoc dat,
- * de xuat chuyen vai cho thuc tap sinh (de_xuat_duyet, maker-checker).
- * Export tu HoSoModule: `kichHoat` (dao-tao goi sau khi hoc dat), `apDungDeXuatChuyenVai` (quan-tri goi khi duyet).
+ * Quan tri vai (them / tam dung / ket thuc), lich su chuyen vai (chi INSERT), kich hoat lam viec khi hoc dat.
+ * Khong con de xuat chuyen vai: doi vai = doi phong ban / nhom quyen o CRM.
+ * Export tu HoSoModule: `kichHoat` (dao-tao goi sau khi hoc dat).
  */
 @Injectable()
 export class VaiService {
-  private readonly logger = new Logger("VaiService");
-
   constructor(
     private readonly repo: VaiRepository,
     private readonly dieuKien: DieuKienHocService,
     private readonly nhatKy: NhatKyService,
-    private readonly thongBao: ThongBaoService
+    private readonly thongBao: ThongBaoService,
+    private readonly crmDoc: CrmDocService
   ) {}
 
   // ---------------------------------------------------------------- doc
@@ -189,6 +172,11 @@ export class VaiService {
     if (!cu) throw new NotFoundException("Hồ sơ không có vai trò này");
     const moi: TrangThaiVai = dto.trang_thai;
     kiemChuyenTrangThai(vai, cu, moi);
+    // Vai lay tu CRM: chi duoc HOAT_DONG lai khi CRM HIEN dang cap vai nay (khong mo lai vai CRM da thu hoi bang tay o TK)
+    if (moi === "HOAT_DONG" && VAI_TU_CRM.includes(vai)) {
+      const vaiCrm = mapVaiCrm(await this.crmDoc.layNhanSuCrm(hoSoId));
+      if (!vaiCrm.some(v => v.vai === vai)) kiemVaiKhongTuCrm(vai);
+    }
     // Khoi phuc vai phai hoc tu TAM_DUNG: van phai con dat dieu kien hoc (tai lieu co the da doi)
     if (moi === "HOAT_DONG" && laVaiPhaiHoc(vai)) {
       const kq = await this.dieuKien.kiem(hoSoId, vai);
@@ -212,7 +200,6 @@ export class VaiService {
 
   /** Checklist dieu kien cho moi vai phai hoc dang DANG_HOC / TAM_DUNG / HOAT_DONG cua ho so */
   async dieuKienKichHoat(hoSoId: string): Promise<DieuKienKichHoat[]> {
-    await this.xetTtsLenCtvAnToan(hoSoId);
     const ds = await this.repo.dsVaiChuaKetThuc(hoSoId, [...VAI_PHAI_HOC]);
     return Promise.all(
       ds.map(async v => {
@@ -271,201 +258,6 @@ export class VaiService {
       );
     });
     return { vai, trang_thai: "HOAT_DONG", ...kq };
-  }
-
-  // ---------------------------------------------------------------- thuc tap sinh tu len CTV
-
-  /**
-   * TTS hoc dat khoa CTV (co khoa NGHIEP_VU bat buoc ap cho CTV; dat moi khoa bat buoc cua vai CTV theo cung luat
-   * DieuKienHocService.kiem / tinhTienDo cua dao-tao) -> he thong tu them vai CTV HOAT_DONG, KHONG qua de xuat.
-   * Giu vai THUC_TAP. Ghi lich_su_vai_tro (nguoi_doi null = he thong) + nhat_ky + thong bao. Idempotent:
-   * chi them khi ho so chua tung co vai CTV (CTV da bi ket thuc la quyet dinh cua nguoi — khong tu mo lai).
-   * Tra true neu vua them.
-   * Goi tu: GET /ho-so/toi (HoSoService.layCuaToi), checklist kich hoat, job quet dinh ky (TtsLenCtvJob), quan tri bam "Xét".
-   */
-  async xetTtsLenCtv(hoSoId: string): Promise<boolean> {
-    const hs = await this.repo.layHoSoKemVai(hoSoId);
-    if (!hs || !canXetTtsLenCtv(hs.vai_tro)) return false;
-    if (!(await this.dieuKien.coKhoaNghiepVu("CTV"))) return false;
-    const kq = await this.dieuKien.kiem(hoSoId, "CTV");
-    if (!kq.dat) return false;
-    const lyDo = "Thực tập sinh học đạt khoá CTV — hệ thống tự thêm vai Cộng tác viên";
-    try {
-      return await this.repo.chayTrongGiaoDich(async tx => {
-        const daCo = await this.repo.dsVaiTheoDs(hoSoId, ["CTV"], tx);
-        if (daCo.length) return false;
-        await this.repo.ghiDoiVai({ hoSoId, vai: "CTV", cu: null, moi: "HOAT_DONG", nguoiDoiId: null, lyDo, nguon: "HE_THONG" }, tx);
-        await this.repo.batKichHoatLamViecNeuChua(hoSoId, tx);
-        await this.nhatKy.ghi(
-          {
-            hoSoId: null,
-            hanhDong: "TU_DONG_THEM_VAI_CTV",
-            doiTuong: "ho_so",
-            doiTuongId: hoSoId,
-            duLieu: { vai: "CTV", trang_thai: "HOAT_DONG", tu_vai: "THUC_TAP", dieu_kien: kq.dieu_kien.map(d => `${d.khoa_hoc_ma}:${d.loai}:${d.dat ? "dat" : "chua"}`) }
-          },
-          tx
-        );
-        await this.thongBao.gui(
-          {
-            hoSoId,
-            loai: "DAO_TAO",
-            tieuDe: `Bạn đã trở thành ${NHAN_VAI_VN.CTV}`,
-            noiDung: "Bạn đã học đạt khoá CTV — vai Cộng tác viên được kích hoạt. Quyền bán từng mã mở khi học và đạt khoá sản phẩm đó.",
-            lienKet: "/lam-viec"
-          },
-          tx
-        );
-        return true;
-      });
-    } catch (e) {
-      if (laLoiTrungKhoa(e)) return false; // request song song da them truoc
-      throw e;
-    }
-  }
-
-  /** Nhu xetTtsLenCtv nhung khong lam hong luong goi (loi chi log) */
-  async xetTtsLenCtvAnToan(hoSoId: string): Promise<boolean> {
-    try {
-      return await this.xetTtsLenCtv(hoSoId);
-    } catch (e) {
-      this.logger.warn(`Xét thực tập sinh lên CTV lỗi (${hoSoId}): ${e instanceof Error ? e.message : String(e)}`);
-      return false;
-    }
-  }
-
-  /** Quet moi TTS chua co CTV — tra so ho so da xet + danh sach vua duoc them vai CTV */
-  async quetTtsLenCtv(): Promise<{ da_xet: number; len_ctv: string[] }> {
-    const ds = await this.repo.dsTtsChuaCoCtv();
-    const len: string[] = [];
-    for (const id of ds) if (await this.xetTtsLenCtvAnToan(id)) len.push(id);
-    return { da_xet: ds.length, len_ctv: len };
-  }
-
-  // ---------------------------------------------------------------- de xuat chuyen vai (thuc tap sinh)
-
-  /**
-   * Tao de_xuat_duyet CHUYEN_VAI cho thuc tap sinh (THUC_TAP -> vai_moi) — de xuat 2 buoc (CHO_DUYET):
-   * nguoi duyet (ADMIN / THIEN_KHUE) khac nguoi de xuat va khac ho so duoc chuyen (CHECK DB + ban phe duyet o quan-tri).
-   * Sale / CSKH la vai lay tu CRM -> 400 (tuyen o CRM). CTV: TTS hoc dat khoa CTV thi he thong tu them, khong can de xuat.
-   */
-  async deXuatChuyenVai(nd: ThongTinNguoiDung, hoSoId: string, dto: DeXuatChuyenVaiDto): Promise<DeXuatChuyenVai> {
-    if (!VAI_CHUYEN_TU_THUC_TAP.includes(dto.vai_moi)) throw new BadRequestException("Vai trò chuyển sang không hợp lệ");
-    kiemVaiKhongTuCrm(dto.vai_moi);
-    const hs = await this.repo.layHoSoKemVai(hoSoId);
-    if (!hs) throw new NotFoundException("Không tìm thấy hồ sơ");
-    const thucTap = hs.vai_tro.find(v => v.vai === "THUC_TAP");
-    if (!thucTap || thucTap.trang_thai === "KET_THUC") throw new BadRequestException("Hồ sơ không phải thực tập sinh đang hoạt động");
-    const daCo = hs.vai_tro.find(v => v.vai === dto.vai_moi);
-    if (daCo && daCo.trang_thai !== "KET_THUC") throw new ConflictException(`Hồ sơ đã có vai trò ${NHAN_VAI_VN[dto.vai_moi]}`);
-    const dangMo = await this.repo.timDeXuatChuyenVaiDangMo(hoSoId);
-    if (dangMo) throw new ConflictException("Hồ sơ đang có đề xuất chuyển vai chờ duyệt");
-
-    const duLieu: DuLieuDeXuatChuyenVai = {
-      ho_so_id: hoSoId,
-      ho_ten: hs.ho_ten,
-      tu_vai: "THUC_TAP",
-      vai_moi: dto.vai_moi as VaiChuyenTuThucTap,
-      trang_thai_vai_moi: trangThaiKhoiTao(dto.vai_moi)
-    };
-    const dx = await this.repo.chayTrongGiaoDich(async tx => {
-      const tao = await this.repo.taoDeXuatChuyenVai(
-        { hoSoId, duLieu: duLieu as unknown as Prisma.InputJsonValue, lyDo: dto.ly_do, nguoiDeXuatId: nd.id },
-        tx
-      );
-      await this.nhatKy.ghi(
-        { hoSoId: nd.id, hanhDong: "DE_XUAT_CHUYEN_VAI", doiTuong: "de_xuat_duyet", doiTuongId: tao.id, duLieu: { ho_so_id: hoSoId, vai_moi: dto.vai_moi } },
-        tx
-      );
-      // Bao nguoi co quyen duyet (tru nguoi de xuat va ho so duoc chuyen)
-      const nguoiDuyet = await this.repo.dsNguoiDuyetChuyenVai([nd.id, hoSoId], tx);
-      await this.thongBao.guiNhieu(
-        nguoiDuyet.map(n => n.ho_so_id),
-        {
-          loai: "PHE_DUYET",
-          tieuDe: `Đề xuất chuyển ${hs.ho_ten} sang ${NHAN_VAI_VN[dto.vai_moi]}`,
-          noiDung: dto.ly_do,
-          lienKet: "/quan-tri/phe-duyet"
-        },
-        tx
-      );
-      return tao;
-    });
-    return {
-      id: dx.id,
-      trang_thai: trangThaiHieuLuc(dx),
-      du_lieu: duLieu,
-      ly_do: dx.ly_do,
-      nguoi_de_xuat_id: dx.nguoi_de_xuat_id,
-      created_at: dx.created_at.toISOString()
-    };
-  }
-
-  /** De xuat chuyen vai lien quan ho so (moi nhat truoc) */
-  async deXuatCuaHoSo(hoSoId: string): Promise<DeXuatChuyenVai[]> {
-    const ds = await this.repo.dsDeXuatChuyenVai(hoSoId);
-    return ds.map(d => ({
-      id: d.id,
-      trang_thai: trangThaiHieuLuc(d),
-      du_lieu: d.du_lieu as unknown as DuLieuDeXuatChuyenVai,
-      ly_do: d.ly_do,
-      nguoi_de_xuat_id: d.nguoi_de_xuat_id,
-      created_at: d.created_at.toISOString()
-    }));
-  }
-
-  /**
-   * Ap dung de xuat CHUYEN_VAI DA_DUYET (quan-tri goi sau khi duyet, nen trong cung tx):
-   * ket thuc THUC_TAP, cap vai moi (vai phai hoc -> DANG_HOC). Idempotent: da ap dung thi bo qua.
-   */
-  async apDungDeXuatChuyenVai(deXuatId: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const chay = async (t: Prisma.TransactionClient) => {
-      const dx = await this.repo.layDeXuat(deXuatId, t);
-      if (!dx || dx.loai !== "CHUYEN_VAI") throw new NotFoundException("Không tìm thấy đề xuất chuyển vai");
-      if (dx.trang_thai !== "DA_DUYET") throw new ForbiddenException("Đề xuất chưa được duyệt");
-      const d = dx.du_lieu as unknown as DuLieuDeXuatChuyenVai;
-      const daApDung = await this.repo.timLichSuTheoDeXuat(dx.id, t);
-      if (daApDung) return;
-      const hienCo = await this.repo.dsVaiTheoDs(d.ho_so_id, ["THUC_TAP", d.vai_moi], t);
-      const thucTap = hienCo.find(v => v.vai === "THUC_TAP");
-      const vaiMoi = hienCo.find(v => v.vai === d.vai_moi);
-      const lyDo = `Chuyển vai theo đề xuất đã duyệt${dx.ly_do ? `: ${dx.ly_do}` : ""}`;
-      const nguoiDoiId = dx.nguoi_duyet_id ?? null;
-      if (thucTap && thucTap.trang_thai !== "KET_THUC") {
-        await this.repo.ghiDoiVai({ hoSoId: d.ho_so_id, vai: "THUC_TAP", cu: thucTap.trang_thai, moi: "KET_THUC", nguoiDoiId, lyDo, deXuatId: dx.id }, t);
-      }
-      if (!vaiMoi || vaiMoi.trang_thai === "KET_THUC") {
-        await this.repo.ghiDoiVai(
-          {
-            hoSoId: d.ho_so_id,
-            vai: d.vai_moi,
-            cu: vaiMoi?.trang_thai ?? null,
-            moi: trangThaiKhoiTao(d.vai_moi),
-            nguoiDoiId,
-            lyDo,
-            deXuatId: dx.id,
-            nguon: "QUAN_TRI"
-          },
-          t
-        );
-      }
-      await this.nhatKy.ghi(
-        { hoSoId: nguoiDoiId, hanhDong: "AP_DUNG_CHUYEN_VAI", doiTuong: "ho_so", doiTuongId: d.ho_so_id, duLieu: { de_xuat_id: dx.id, vai_moi: d.vai_moi } },
-        t
-      );
-      await this.thongBao.gui(
-        {
-          hoSoId: d.ho_so_id,
-          loai: "PHE_DUYET",
-          tieuDe: `Bạn đã được chuyển sang vai trò ${NHAN_VAI_VN[d.vai_moi]}`,
-          noiDung: laVaiPhaiHoc(d.vai_moi) ? "Hoàn thành khoá học của vai trò mới để kích hoạt." : undefined,
-          lienKet: laVaiPhaiHoc(d.vai_moi) ? "/hoc-vien" : "/tai-khoan"
-        },
-        t
-      );
-    };
-    if (tx) return chay(tx);
-    await this.repo.chayTrongGiaoDich(chay);
   }
 
   // ---------------------------------------------------------------- tien ich

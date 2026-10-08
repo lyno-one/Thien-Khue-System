@@ -90,6 +90,14 @@ enum LoaiLuyenAi {
   @@schema("thien_khue")
 }
 
+/// Muc dich phieu Sales Training: LUYEN = mo phien luyen moi; XEM = xem lai mot phien da co (chi doc)
+enum MucDichPhieuLuyenAi {
+  LUYEN
+  XEM
+
+  @@schema("thien_khue")
+}
+
 enum TrangThaiQuyenSku {
   HOAT_DONG
   CAN_HOC_LAI
@@ -1264,6 +1272,12 @@ model phieu_luyen_ai {
   het_han     DateTime    @db.Timestamptz(6)
   /// Luc Sales Training doi phieu (null = chua dung)
   dung_luc    DateTime?   @db.Timestamptz(6)
+  /// LUYEN (mac dinh) | XEM. Phieu XEM: ho_so_id = nguoi XEM (chu phien / mentor / quan ly), khoa_hoc_id + loai lay tu phien
+  muc_dich    MucDichPhieuLuyenAi @default(LUYEN)
+  /// Chi phieu XEM: id phien ben Sales Training duoc phep xem
+  phien_id_st String?
+  /// Chi phieu XEM: CHU | MENTOR | QUAN_LY — tinh luc phat phieu
+  vai_xem     String?
   created_at  DateTime    @default(now()) @db.Timestamptz(6)
 
   ho_so    ho_so    @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)

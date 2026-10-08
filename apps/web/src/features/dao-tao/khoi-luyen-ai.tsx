@@ -6,36 +6,52 @@ import { KhungCho, Loi, lopLienKet, lopThe, Nhan, Nut, ThongBaoNoiDong } from "@
 import { thongDiepLoi } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { dinhDangNgayGio } from "@/lib/dinh-dang";
-import { laySupabase } from "@/lib/supabase";
 import { daoTaoApi } from "./api";
 import { KHOA, lamMoi, lamMoiTienDo, useDuLieu } from "./dung-du-lieu";
-import { KhoiThucHanh, linkHopLe } from "./khoi-thuc-hanh";
+import { KhoiThucHanh } from "./khoi-thuc-hanh";
+import { moSalesTraining } from "./mo-sales-training";
 import type { KhoaHocChiTiet, LoaiLuyenAi, PhienLuyenAi, TienDoLoaiLuyenAi, TienDoLuyenAi } from "./kieu";
 import { Kicker, ThanhTienDo } from "./thanh-phan";
 
 /*
  * "Luyện tư vấn với AI" (Sales Training) — docs/TICH-HOP-SALES-TRAINING.md.
- * Bam "Bắt đầu luyện": xin phieu (Bearer) roi mo tab moi bang FORM POST tu gui (ma_phieu + access/refresh token cua phien
- * Supabase hien tai) — token KHONG nam tren URL. Ket qua Sales Training tu gui ve; quay lai tab nay la tai lai tien do.
+ * Bam "Bắt đầu luyện": xin phieu (Bearer) roi mo tab moi bang FORM POST tu gui (ma_phieu + access token cua phien
+ * Supabase hien tai; KHONG gui refresh token) — token KHONG nam tren URL. Ket qua Sales Training tu gui ve; quay lai tab nay la tai lai tien do.
+ * "Xem lại phiên": phieu XEM (han 2 phut) + FORM POST {ma_phieu, access_token} toi <ST>/api/vao-tu-thien-khue/xem.
  */
 
-/** Tao form an, POST sang Sales Training o cua so `dich`, roi go form */
-function guiFormPost(url: string, truong: Record<string, string>, dich: string) {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = url;
-  form.target = dich;
-  form.style.display = "none";
-  for (const [ten, giaTri] of Object.entries(truong)) {
-    const o = document.createElement("input");
-    o.type = "hidden";
-    o.name = ten;
-    o.value = giaTri;
-    form.appendChild(o);
+/** id phien Sales Training la uuid (phien that). Chuoi khac (vd phien gia tu script) = khong co ban ghi ben ST */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Nut "Xem lại phiên trên Sales Training": KHONG dung link tran (tab moi dung cookie ST cu — co the cua nguoi khac -> 404).
+ * Xin phieu XEM (chu phien / mentor / quan ly) roi POST form sang ST de ST dang nhap dung nguoi dang bam.
+ */
+function NutXemPhien({ phien }: { phien: PhienLuyenAi }) {
+  const [dangMo, setDangMo] = useState(false);
+  const [loi, setLoi] = useState<string | null>(null);
+  if (!UUID.test(phien.phien_id_st)) return <span className="text-xs text-chu-mo">Không có bản ghi trên Sales Training</span>;
+
+  function moXem() {
+    setLoi(null);
+    setDangMo(true);
+    // Goi dong bo trong onClick: moSalesTraining mo tab truoc moi await
+    moSalesTraining(async s => {
+      const phieu = await daoTaoApi.taoPhieuXemLuyenAi(phien.id);
+      return { url_vao: phieu.url_vao, truong: { ma_phieu: phieu.ma_phieu, access_token: s.access_token } };
+    })
+      .catch(e => setLoi(thongDiepLoi(e)))
+      .finally(() => setDangMo(false));
   }
-  document.body.appendChild(form);
-  form.submit();
-  form.remove();
+
+  return (
+    <div className="flex flex-col gap-2 self-start">
+      <button type="button" className={cn(lopLienKet, "cursor-pointer self-start border-0 bg-transparent p-0 text-sm")} disabled={dangMo} onClick={moXem}>
+        {dangMo ? "Đang mở Sales Training…" : "Xem lại phiên trên Sales Training →"}
+      </button>
+      {loi && <ThongBaoNoiDong kieu="loi">{loi}</ThongBaoNoiDong>}
+    </div>
+  );
 }
 
 /** Mot phien luyen: diem tong, 6 ky nang, vi pham, tom tat, link xem lai — dung o trang khoa hoc va trang Cham bai */
@@ -103,11 +119,7 @@ export function ThePhienLuyenAi({ phien, gon = false }: { phien: PhienLuyenAi; g
           )}
         </div>
       )}
-      {linkHopLe(phien.link_xem) && (
-        <a href={phien.link_xem} target="_blank" rel="noopener noreferrer" className={cn(lopLienKet, "self-start text-sm")}>
-          Xem lại phiên trên Sales Training →
-        </a>
-      )}
+      <NutXemPhien phien={phien} />
     </article>
   );
 }
@@ -145,22 +157,15 @@ function NoiDungLuyenAi({ khoa, td, taiLai }: { khoa: KhoaHocChiTiet; td: TienDo
 
   async function moLuyen(loai: LoaiLuyenAi) {
     setLoi(null);
-    // Mo tab ngay trong su kien bam (tranh chan popup), roi moi xin phieu va POST form vao dung tab do
-    const tenTab = `sales-training-${Date.now()}`;
-    const tab = window.open("about:blank", tenTab);
     setDangMo(loai);
     try {
-      // Lam moi phien truoc khi chuyen: Sales Training nhan access token con ~1 gio (ST KHONG dung refresh token cua TK —
-      // Supabase xoay vong refresh token, hai app cung lam moi mot phien se bi thu hoi ca ho phien)
-      const sb = laySupabase();
-      const moi = await sb.auth.refreshSession().catch(() => null);
-      const phien = moi?.data.session ?? (await sb.auth.getSession()).data.session;
-      if (!phien) throw new Error("Phiên đăng nhập đã hết — đăng nhập lại rồi thử lại");
-      const phieu = await daoTaoApi.taoPhieuLuyenAi({ khoa_hoc_id: khoa.id, loai });
-      guiFormPost(phieu.url_vao, { ma_phieu: phieu.ma_phieu, access_token: phien.access_token, refresh_token: phien.refresh_token }, tab ? tenTab : "_blank");
+      // moSalesTraining mo tab ngay (dong bo) roi moi xin phieu va POST form vao dung tab do
+      await moSalesTraining(async s => {
+        const phieu = await daoTaoApi.taoPhieuLuyenAi({ khoa_hoc_id: khoa.id, loai });
+        return { url_vao: phieu.url_vao, truong: { ma_phieu: phieu.ma_phieu, access_token: s.access_token } };
+      });
       setDaMo(true);
     } catch (e) {
-      tab?.close();
       setLoi(thongDiepLoi(e));
     } finally {
       setDangMo(null);

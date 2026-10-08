@@ -13,6 +13,7 @@ export type {
   LoaiLuyenAi,
   PhienLuyenAi,
   PhieuLuyenAi,
+  PhieuXemLuyenAi,
   TaoPhieuLuyenAiBody,
   TienDoLoaiLuyenAi,
   TienDoLuyenAi,

@@ -1,8 +1,8 @@
-import { BadRequestException, ConflictException, ExecutionContext, ForbiddenException, GoneException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ExecutionContext, ForbiddenException, GoneException, HttpException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { datLaiCauHinh } from "../../src/config/cau-hinh";
 import { bienTheDuongDan, HmacStGuard } from "../../src/common/guards/hmac-st.guard";
 import { kiemChuKy, kyHmac, taoHeaderKy } from "../../src/common/utils/hmac";
-import { datPhienLuyenAi, docYeuCauLuyenAi, mocTinhLai, tinhTienDoLuyenAi } from "../../src/common/utils/dao-tao-luyen-ai";
+import { chuanHoaLinkXem, datPhienLuyenAi, docYeuCauLuyenAi, laPhienIdSt, mocTinhLai, tinhTienDoLuyenAi, vaiXemPhienLuyenAi } from "../../src/common/utils/dao-tao-luyen-ai";
 import type { ThongTinNguoiDung } from "../../src/common/types/nguoi-dung.type";
 import type { KetQuaLuyenAiDto } from "../../src/dto/dao-tao/dao-tao-luyen-ai.dto";
 import type { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
@@ -16,6 +16,10 @@ const HOC_VIEN = "33333333-3333-4333-8333-333333333333";
 const CRM_USER = "44444444-4444-4444-8444-444444444444";
 const KHOA = "55555555-5555-4555-8555-555555555555";
 const YC = { nguong: 80, can: { TU_VAN: 1, DOI_TRA: 1 } };
+const MENTOR = "66666666-6666-4666-8666-666666666666";
+const CRM_MENTOR = "88888888-8888-4888-8888-888888888888";
+const NGUOI_LA = "99999999-9999-4999-8999-999999999990";
+const PHIEN_ST = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 
 beforeAll(() => {
   process.env.SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
@@ -132,11 +136,11 @@ describe("Luat dat phien luyen AI", () => {
 const nhatKy = () => ({ ghi: jest.fn(async () => undefined) }) as unknown as NhatKyService;
 const thongBao = () => ({ gui: jest.fn(async () => undefined) }) as unknown as ThongBaoService;
 
-function nguoiDung(vai: { vai: string; trang_thai: string }[]): ThongTinNguoiDung {
+function nguoiDung(vai: { vai: string; trang_thai: string }[], id = HOC_VIEN): ThongTinNguoiDung {
   return {
-    id: HOC_VIEN,
+    id,
     email: "hv@lyno.test",
-    hoSo: { id: HOC_VIEN, ho_ten: "Học viên", email: "hv@lyno.test", sdt: null, crm_user_id: CRM_USER, kich_hoat_lam_viec: false },
+    hoSo: { id, ho_ten: "Học viên", email: "hv@lyno.test", sdt: null, crm_user_id: CRM_USER, kich_hoat_lam_viec: false },
     vai: vai.filter(v => v.trang_thai === "HOAT_DONG").map(v => v.vai),
     vaiChiTiet: vai.map(v => ({ ...v, tu_luc: new Date(), den_luc: null }))
   } as unknown as ThongTinNguoiDung;
@@ -150,6 +154,9 @@ interface Phieu {
   loai: "TU_VAN" | "DOI_TRA";
   het_han: Date;
   dung_luc: Date | null;
+  muc_dich: "LUYEN" | "XEM";
+  phien_id_st?: string | null;
+  vai_xem?: string | null;
 }
 
 function taoKho() {
@@ -157,6 +164,11 @@ function taoKho() {
   const phieu: Phieu[] = [];
   const phien: Record<string, unknown>[] = [];
   const bai: Record<string, unknown>[] = [];
+  /** ho_so ngoai hoc vien mac dinh (mentor, nguoi la) */
+  const hoSo: Record<string, { crm_user_id: string; ho_ten: string }> = {
+    [MENTOR]: { crm_user_id: CRM_MENTOR, ho_ten: "Mentor" },
+    [NGUOI_LA]: { crm_user_id: "77777777-7777-4777-8777-777777777777", ho_ten: "Người lạ" }
+  };
   let dem = 0;
   const id = () => `00000000-0000-4000-8000-${String(++dem).padStart(12, "0")}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma gia trong bo nho
@@ -167,24 +179,34 @@ function taoKho() {
     },
     quyen_sku: { findMany: jest.fn(async () => []) },
     phieu_luyen_ai: {
-      create: jest.fn(async ({ data }: { data: Omit<Phieu, "id" | "dung_luc"> }) => {
-        const p = { id: id(), dung_luc: null, ...data };
+      deleteMany: jest.fn(async ({ where }: { where: { het_han: { lt: Date } } }) => {
+        const xoa = phieu.filter(x => x.het_han < where.het_han.lt && (!x.dung_luc || x.muc_dich === "XEM"));
+        for (const x of xoa) phieu.splice(phieu.indexOf(x), 1);
+        return { count: xoa.length };
+      }),
+      create: jest.fn(async ({ data }: { data: Omit<Phieu, "id" | "dung_luc" | "muc_dich"> & { muc_dich?: "LUYEN" | "XEM" } }) => {
+        const p = { id: id(), dung_luc: null, muc_dich: "LUYEN" as const, ...data };
         phieu.push(p);
         return p;
       }),
-      updateMany: jest.fn(async ({ where, data }: { where: { ma: string; het_han: { gt: Date } }; data: { dung_luc: Date } }) => {
-        const p = phieu.find(x => x.ma === where.ma && !x.dung_luc && x.het_han > where.het_han.gt);
+      updateMany: jest.fn(async ({ where, data }: { where: { ma: string; muc_dich: string; het_han: { gt: Date } }; data: { dung_luc: Date } }) => {
+        const p = phieu.find(x => x.ma === where.ma && x.muc_dich === where.muc_dich && !x.dung_luc && x.het_han > where.het_han.gt);
         if (!p) return { count: 0 };
         p.dung_luc = data.dung_luc;
         return { count: 1 };
       }),
       findUnique: jest.fn(async ({ where }: { where: { ma: string } }) => {
         const p = phieu.find(x => x.ma === where.ma);
-        return p ? { ...p, ho_so: { id: p.ho_so_id, crm_user_id: CRM_USER, vai_tro: [{ vai: "SALE" }] }, khoa_hoc: khoa } : null;
+        const hs = hoSo[p?.ho_so_id ?? ""] ?? { crm_user_id: CRM_USER, ho_ten: "Học viên" };
+        return p ? { ...p, ho_so: { id: p.ho_so_id, ...hs, vai_tro: [{ vai: "SALE" }] }, khoa_hoc: khoa } : null;
       })
     },
     phien_luyen_ai: {
-      findUnique: jest.fn(async ({ where }: { where: { phien_id_st: string } }) => phien.find(p => p.phien_id_st === where.phien_id_st) ?? null),
+      findUnique: jest.fn(async ({ where, select }: { where: { phien_id_st?: string; id?: string }; select?: { ho_so?: unknown } }) => {
+        const p = phien.find(x => (where.id ? x.id === where.id : x.phien_id_st === where.phien_id_st));
+        if (!p) return null;
+        return select?.ho_so ? { ...p, ho_so: { id: p.ho_so_id, ...(hoSo[p.ho_so_id as string] ?? { crm_user_id: CRM_USER, ho_ten: "Học viên" }) } } : p;
+      }),
       create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => {
         const p = { id: id(), nhan_luc: new Date(Date.now() + dem), ...data };
         phien.push(p);
@@ -235,6 +257,31 @@ async function moPhieu(k: ReturnType<typeof taoKho>, loai: "TU_VAN" | "DOI_TRA")
 }
 
 describe("LuyenAiService — phieu", () => {
+  it("gioi han 10 phieu / phut / nguoi (LUYEN + XEM chung) -> lan 11 bi 429, nguoi khac khong anh huong", async () => {
+    const k = taoKho();
+    for (let i = 0; i < 10; i++) await k.svc.taoPhieu(nguoiDung(SALE), { khoa_hoc_id: KHOA, loai: "TU_VAN" });
+    const loi = await k.svc.taoPhieu(nguoiDung(SALE), { khoa_hoc_id: KHOA, loai: "TU_VAN" }).catch((e: unknown) => e);
+    expect(loi).toBeInstanceOf(HttpException);
+    expect((loi as HttpException).getStatus()).toBe(429);
+    expect(k.phieu).toHaveLength(10);
+    expect(k.svc.gioiHanPhieu.thu("nguoi-khac")).toBe(true);
+  });
+
+  it("tao phieu don phieu het han: xoa phieu chua dung + phieu XEM, GIU phieu LUYEN da dung (ST con nop ket qua)", async () => {
+    const k = taoKho();
+    const cu = new Date(Date.now() - 2 * 60 * 60_000);
+    k.phieu.push(
+      { id: "a", ma: "chua-dung", ho_so_id: "x", khoa_hoc_id: KHOA, loai: "TU_VAN", het_han: cu, dung_luc: null, muc_dich: "LUYEN" } as never,
+      { id: "b", ma: "da-dung", ho_so_id: "x", khoa_hoc_id: KHOA, loai: "TU_VAN", het_han: cu, dung_luc: cu, muc_dich: "LUYEN" } as never,
+      { id: "c", ma: "xem", ho_so_id: "x", khoa_hoc_id: KHOA, loai: "TU_VAN", het_han: cu, dung_luc: cu, muc_dich: "XEM" } as never
+    );
+    await k.svc.taoPhieu(nguoiDung(SALE), { khoa_hoc_id: KHOA, loai: "TU_VAN" });
+    await new Promise(r => setImmediate(r));
+    expect(k.phieu.map(p => p.ma)).toContain("da-dung");
+    expect(k.phieu.map(p => p.ma)).not.toContain("chua-dung");
+    expect(k.phieu.map(p => p.ma)).not.toContain("xem");
+  });
+
   it("SALE dang hoc mo phieu: url_vao toi Sales Training, han 10 phut", async () => {
     const k = taoKho();
     const p = await k.svc.taoPhieu(nguoiDung(SALE), { khoa_hoc_id: KHOA, loai: "TU_VAN" });
@@ -366,5 +413,114 @@ describe("ThucHanhService.nop — khoa co yeu cau luyen AI", () => {
     const svc = new ThucHanhService(new ThucHanhRepository(prisma), new DuLieuHocRepository(prisma), {} as XetDatService, nhatKy(), thongBao());
     await expect(svc.nop(nguoiDung(SALE), KHOA, { link: "https://x.vn" })).rejects.toBeInstanceOf(BadRequestException);
     expect((prisma as unknown as { bai_thuc_hanh: { create: jest.Mock } }).bai_thuc_hanh.create).not.toHaveBeenCalled();
+  });
+});
+
+// ------------------------------------------------------------------ phieu XEM
+
+describe("Ham thuan — link_xem, vai xem", () => {
+  it("link_xem luon dung lai tu phien_id uuid; phien gia -> null", () => {
+    expect(chuanHoaLinkXem(PHIEN_ST, "http://localhost:3020")).toBe(`http://localhost:3020/luyen-tap/${PHIEN_ST}`);
+    expect(chuanHoaLinkXem(PHIEN_ST, "http://localhost:3020/")).toBe(`http://localhost:3020/luyen-tap/${PHIEN_ST}`);
+    expect(chuanHoaLinkXem("e2e-script-tu-van-dat", "http://localhost:3020")).toBeNull();
+    expect(chuanHoaLinkXem(PHIEN_ST, "")).toBeNull();
+    expect(laPhienIdSt(PHIEN_ST)).toBe(true);
+    expect(laPhienIdSt("st-1")).toBe(false);
+  });
+
+  it("vai xem: chu -> CHU; QUAN_LY / ADMIN / THIEN_KHUE -> QUAN_LY; MENTOR -> MENTOR; con lai -> null", () => {
+    expect(vaiXemPhienLuyenAi(HOC_VIEN, [], HOC_VIEN)).toBe("CHU");
+    expect(vaiXemPhienLuyenAi(MENTOR, ["MENTOR", "QUAN_LY"], HOC_VIEN)).toBe("QUAN_LY");
+    expect(vaiXemPhienLuyenAi(MENTOR, ["ADMIN"], HOC_VIEN)).toBe("QUAN_LY");
+    expect(vaiXemPhienLuyenAi(MENTOR, ["MENTOR"], HOC_VIEN)).toBe("MENTOR");
+    expect(vaiXemPhienLuyenAi(NGUOI_LA, ["SALE", "CTV"], HOC_VIEN)).toBeNull();
+  });
+});
+
+describe("LuyenAiService — phieu XEM", () => {
+  /** Mot phien that (uuid ST) cua hoc vien */
+  async function coPhien(k: ReturnType<typeof taoKho>, phienIdSt = PHIEN_ST) {
+    const ma = await moPhieu(k, "TU_VAN");
+    await k.svc.nhanKetQua(ketQua(ma, { phien_id: phienIdSt, link_xem: "http://evil.test/luyen-tap" }));
+    return k.phien.find(p => p.phien_id_st === phienIdSt)!.id as string;
+  }
+
+  it("nhan ket qua: link_xem la (khac origin / trang danh sach) bi thay bang link dung phien", async () => {
+    const k = taoKho();
+    await coPhien(k);
+    expect(k.phien[0].link_xem).toBe(`http://localhost:3020/luyen-tap/${PHIEN_ST}`);
+  });
+
+  it("chu phien xin phieu XEM: url_vao /api/vao-tu-thien-khue/xem, han 2 phut, doi ra dung nguoi + phien", async () => {
+    const k = taoKho();
+    const id = await coPhien(k);
+    const p = await k.svc.taoPhieuXem(nguoiDung(SALE), id);
+    expect(p.url_vao).toBe("http://localhost:3020/api/vao-tu-thien-khue/xem");
+    const han = new Date(p.het_han).getTime() - Date.now();
+    expect(han).toBeGreaterThan(60_000);
+    expect(han).toBeLessThanOrEqual(2 * 60_000);
+    expect(await k.svc.doiPhieuXem(p.ma_phieu)).toEqual({
+      crm_user_id: CRM_USER,
+      ho_so_id: HOC_VIEN,
+      ho_ten: "Học viên",
+      vai_xem: "CHU",
+      phien_id_st: PHIEN_ST,
+      loai: "TU_VAN",
+      khoa_hoc_ma: "sale-cskh",
+      chu_phien: { crm_user_id: CRM_USER, ho_so_id: HOC_VIEN, ho_ten: "Học viên" }
+    });
+  });
+
+  it("mentor (vai cham bai) xem phien cua hoc vien: vai_xem MENTOR, crm_user_id la cua mentor", async () => {
+    const k = taoKho();
+    const id = await coPhien(k);
+    const p = await k.svc.taoPhieuXem(nguoiDung([{ vai: "MENTOR", trang_thai: "HOAT_DONG" }], MENTOR), id);
+    const nc = await k.svc.doiPhieuXem(p.ma_phieu);
+    expect(nc).toMatchObject({ crm_user_id: CRM_MENTOR, ho_so_id: MENTOR, vai_xem: "MENTOR", chu_phien: { crm_user_id: CRM_USER } });
+  });
+
+  it("nguoi la (khong phai chu, khong MENTOR / QUAN_LY hoat dong) -> 403, khong tao phieu", async () => {
+    const k = taoKho();
+    const id = await coPhien(k);
+    const truoc = k.phieu.length;
+    await expect(k.svc.taoPhieuXem(nguoiDung([{ vai: "SALE", trang_thai: "HOAT_DONG" }], NGUOI_LA), id)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(k.svc.taoPhieuXem(nguoiDung([{ vai: "MENTOR", trang_thai: "TAM_DUNG" }], NGUOI_LA), id)).rejects.toBeInstanceOf(ForbiddenException);
+    expect(k.phieu.length).toBe(truoc);
+  });
+
+  it("phien khong co / id khong phai uuid / phien gia (khong co ban ghi ST) -> 404", async () => {
+    const k = taoKho();
+    await expect(k.svc.taoPhieuXem(nguoiDung(SALE), "khong-phai-uuid")).rejects.toBeInstanceOf(NotFoundException);
+    await expect(k.svc.taoPhieuXem(nguoiDung(SALE), "12345678-1234-4123-8123-123456789012")).rejects.toBeInstanceOf(NotFoundException);
+    const gia = await coPhien(k, "e2e-script-tu-van-dat");
+    await expect(k.svc.taoPhieuXem(nguoiDung(SALE), gia)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("dung mot lan: lan hai -> 410 PHIEU_DA_DUNG", async () => {
+    const k = taoKho();
+    const p = await k.svc.taoPhieuXem(nguoiDung(SALE), await coPhien(k));
+    await k.svc.doiPhieuXem(p.ma_phieu);
+    await expect(k.svc.doiPhieuXem(p.ma_phieu)).rejects.toMatchObject({ response: { code: "PHIEU_DA_DUNG" } });
+  });
+
+  it("het han -> 410 PHIEU_HET_HAN; ma khong co -> 404", async () => {
+    const k = taoKho();
+    const p = await k.svc.taoPhieuXem(nguoiDung(SALE), await coPhien(k));
+    k.phieu.find(x => x.ma === p.ma_phieu)!.het_han = new Date(Date.now() - 1000);
+    await expect(k.svc.doiPhieuXem(p.ma_phieu)).rejects.toMatchObject({ response: { code: "PHIEU_HET_HAN" } });
+    await expect(k.svc.doiPhieuXem("khong-co")).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("sai muc dich: phieu XEM khong doi duoc o route LUYEN (va khong nop ket qua duoc); phieu LUYEN khong doi duoc o route XEM", async () => {
+    const k = taoKho();
+    const xem = await k.svc.taoPhieuXem(nguoiDung(SALE), await coPhien(k));
+    await expect(k.svc.doiPhieu(xem.ma_phieu)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(k.svc.nhanKetQua(ketQua(xem.ma_phieu))).rejects.toBeInstanceOf(NotFoundException);
+    // Thu sai route khong lam phieu mat hieu luc
+    await expect(k.svc.doiPhieuXem(xem.ma_phieu)).resolves.toMatchObject({ vai_xem: "CHU" });
+
+    const luyen = await k.svc.taoPhieu(nguoiDung(SALE), { khoa_hoc_id: KHOA, loai: "TU_VAN" });
+    await expect(k.svc.doiPhieuXem(luyen.ma_phieu)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(k.svc.doiPhieu(luyen.ma_phieu)).resolves.toMatchObject({ loai: "TU_VAN" });
   });
 });

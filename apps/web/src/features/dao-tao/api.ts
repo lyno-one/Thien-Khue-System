@@ -19,6 +19,7 @@ import type {
   NopBaiKiemTraBody,
   NopThucHanhBody,
   PhieuLuyenAi,
+  PhieuXemLuyenAi,
   QuyenSkuCuaToi,
   TaoPhieuLuyenAiBody,
   TienDoLuyenAi,
@@ -49,6 +50,8 @@ export const daoTaoApi = {
   /** Luyen tu van voi AI (Sales Training): tien do cua toi + mo phieu vao (dung mot lan, han 10 phut) */
   luyenAi: (khoaHocId: string) => api.get<TienDoLuyenAi>(`/dao-tao/khoa-hoc/${ma(khoaHocId)}/luyen-ai`),
   taoPhieuLuyenAi: (body: TaoPhieuLuyenAiBody) => api.post<PhieuLuyenAi>("/dao-tao/luyen-ai/phieu", body),
+  /** Phieu XEM lai mot phien (id = phien_luyen_ai.id cua TK; chu phien / mentor / quan ly; dung mot lan, han 2 phut) */
+  taoPhieuXemLuyenAi: (phienId: string) => api.post<PhieuXemLuyenAi>(`/dao-tao/luyen-ai/phien/${ma(phienId)}/phieu-xem`),
 
   chungChiCuaToi: () => api.get<ChungChi[]>("/dao-tao/chung-chi/cua-toi"),
   quyenSkuCuaToi: () => api.get<QuyenSkuCuaToi[]>("/dao-tao/quyen-sku/cua-toi"),

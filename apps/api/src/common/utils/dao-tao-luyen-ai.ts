@@ -1,5 +1,6 @@
 import type { LoaiLuyenAi, TrangThaiVai, Vai } from "@prisma/client";
-import type { BangChungLuyenAi, DiemKyNangLuyenAi, PhienLuyenAi, TienDoLoaiLuyenAi, ViPhamLuyenAi, YeuCauLuyenAi } from "@thien-khue/contracts";
+import type { BangChungLuyenAi, DiemKyNangLuyenAi, PhienLuyenAi, TienDoLoaiLuyenAi, ViPhamLuyenAi, VaiXemLuyenAi, YeuCauLuyenAi } from "@thien-khue/contracts";
+import { VAI_TOI_CAO } from "../guards/vai.guard";
 
 /*
  * Luat "Luyen tu van voi AI" (Sales Training) — ham thuan, test rieng duoc. Hop dong: docs/TICH-HOP-SALES-TRAINING.md.
@@ -18,6 +19,10 @@ export const NGUONG_LUYEN_AI_TOI_THIEU = 80;
 export const VAI_LUYEN_AI: readonly Vai[] = ["SALE", "CSKH"];
 /** Han phieu vao Sales Training */
 export const HAN_PHIEU_LUYEN_AI_MS = 10 * 60 * 1000;
+/** Han phieu XEM lai mot phien (ngan: chi du de tab moi POST sang Sales Training) */
+export const HAN_PHIEU_XEM_LUYEN_AI_MS = 2 * 60 * 1000;
+/** Vai duoc xem phien cua nguoi khac — cung vai voi hang doi / cham bai thuc hanh (@Vai("MENTOR", "QUAN_LY"), ADMIN / THIEN_KHUE luon qua) */
+export const VAI_XEM_PHIEN_NGUOI_KHAC: readonly Vai[] = ["MENTOR", "QUAN_LY"];
 /** Gioi han so phien dua vao bang chung moi loai (diem cao nhat truoc) */
 export const SO_PHIEN_BANG_CHUNG_MOI_LOAI = 3;
 
@@ -157,4 +162,29 @@ export function moTaBaiLuyenAi(bc: BangChungLuyenAi): string {
     return ds.length ? `${TEN_LOAI_LUYEN_AI[l]}: ${ds.map(p => `${p.diem_tong} điểm`).join(", ")}` : null;
   }).filter(Boolean);
   return `Đạt ngưỡng ${bc.nguong} điểm, không vi phạm chính sách. ${dong.join(" · ")}`;
+}
+
+/** id phien Sales Training la uuid (phien that). Chuoi khac (vd "e2e-script-...") = khong co ban ghi ben ST */
+export function laPhienIdSt(s: string | null | undefined): s is string {
+  return !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
+/**
+ * link_xem duoc luu: KHONG tin link Sales Training gui — luon dung lai "<stUrl>/luyen-tap/<phienId>" (cung origin da cau hinh,
+ * dung phien). phienId khong phai uuid (phien gia / script) hoac chua cau hinh ST -> null.
+ */
+export function chuanHoaLinkXem(phienId: string, stUrl: string): string | null {
+  if (!stUrl || !laPhienIdSt(phienId)) return null;
+  return `${stUrl.replace(/\/+$/, "")}/luyen-tap/${phienId}`;
+}
+
+/**
+ * Vai cua nguoi xem mot phien: chu phien -> CHU; nguoi khac can vai cham bai (MENTOR / QUAN_LY, ADMIN / THIEN_KHUE luon qua)
+ * -> QUAN_LY (quan ly / admin / CEO) hoac MENTOR. null = khong duoc xem.
+ */
+export function vaiXemPhienLuyenAi(nguoiXemId: string, vaiHoatDong: readonly Vai[], chuPhienId: string): VaiXemLuyenAi | null {
+  if (nguoiXemId === chuPhienId) return "CHU";
+  if (vaiHoatDong.some(v => v === "QUAN_LY" || VAI_TOI_CAO.includes(v))) return "QUAN_LY";
+  if (vaiHoatDong.includes("MENTOR")) return "MENTOR";
+  return null;
 }

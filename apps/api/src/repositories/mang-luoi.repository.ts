@@ -310,7 +310,7 @@ export class ChienDichRepository {
 
 type Db = Prisma.TransactionClient;
 const KEM_KHOA_HOC = { khoa_hoc: { select: { id: true, ten: true } } } as const;
-/** Truy van lo trinh thuc tap: khoa_hoc THUC_TAP, tien do, luot lam, bai_thuc_hanh (vai THUC_TAP), de xuat CHUYEN_VAI */
+/** Truy van lo trinh thuc tap: khoa_hoc THUC_TAP, tien do, luot lam, bai_thuc_hanh (vai THUC_TAP) */
 @Injectable()
 export class ThucTapRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -398,19 +398,6 @@ export class ThucTapRepository {
       take: 100
     });
     return ds.map(d => d.ho_so_id);
-  }
-
-  layDeXuatChuyenVaiDangMo(hoSoId: string) {
-    return this.prisma.de_xuat_duyet.findMany({
-      where: { loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: hoSoId, trang_thai: { in: ["CHO_KIEM", "CHO_DUYET"] } },
-      select: { id: true, du_lieu: true, trang_thai: true, created_at: true }
-    });
-  }
-
-  taoDeXuatChuyenVai(hoSoId: string, duLieu: Prisma.InputJsonValue, lyDo: string, nguoiDeXuatId: string, db: Db = this.prisma): Promise<de_xuat_duyet> {
-    return db.de_xuat_duyet.create({
-      data: { loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: hoSoId, du_lieu: duLieu, ly_do: lyDo, nguoi_de_xuat_id: nguoiDeXuatId, trang_thai: "CHO_KIEM" }
-    });
   }
 }
 

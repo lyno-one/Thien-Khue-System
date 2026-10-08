@@ -1,15 +1,22 @@
 // Luyen tu van voi AI (Sales Training) — phieu vao, nhan ket qua, tien do. Hop dong: docs/TICH-HOP-SALES-TRAINING.md.
-import { BadRequestException, ConflictException, ForbiddenException, GoneException, Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import {
+  BadRequestException, ConflictException, ForbiddenException, GoneException, HttpException, HttpStatus, Injectable, Logger, NotFoundException,
+  ServiceUnavailableException
+} from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import type { NguCanhPhieuLuyenAi, PhanHoiKetQuaLuyenAi, PhieuLuyenAi, TaoPhieuLuyenAiBody, TienDoLuyenAi, YeuCauLuyenAi } from "@thien-khue/contracts";
+import type {
+  NguCanhPhieuLuyenAi, NguCanhPhieuXemLuyenAi, PhanHoiKetQuaLuyenAi, PhieuLuyenAi, PhieuXemLuyenAi, TaoPhieuLuyenAiBody, TienDoLuyenAi, VaiXemLuyenAi, YeuCauLuyenAi
+} from "@thien-khue/contracts";
 import { randomBytes } from "node:crypto";
 import { layCauHinh } from "../config/cau-hinh";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
 import { DO_DAI_BI_MAT_TOI_THIEU } from "../common/utils/hmac";
 import {
-  anhXaPhienLuyenAi, coVaiLuyenAi, datPhienLuyenAi, docYeuCauLuyenAi, HAN_PHIEU_LUYEN_AI_MS, KY_NANG_LUYEN_AI, mocTinhLai, moTaBaiLuyenAi,
-  NGUONG_LUYEN_AI_TOI_THIEU, taoBangChungLuyenAi, tinhTienDoLuyenAi
+  anhXaPhienLuyenAi, chuanHoaLinkXem, coVaiLuyenAi, datPhienLuyenAi, docYeuCauLuyenAi, HAN_PHIEU_LUYEN_AI_MS, HAN_PHIEU_XEM_LUYEN_AI_MS, KY_NANG_LUYEN_AI,
+  laPhienIdSt, mocTinhLai, moTaBaiLuyenAi, NGUONG_LUYEN_AI_TOI_THIEU, taoBangChungLuyenAi, tinhTienDoLuyenAi, vaiXemPhienLuyenAi
 } from "../common/utils/dao-tao-luyen-ai";
+import { laUuid } from "../common/utils/dao-tao";
+import { GioiHanTheoKhoa } from "../common/utils/cong-khai";
 import { LuyenAiRepository } from "../repositories/dao-tao.repository";
 import type { KetQuaLuyenAiDto } from "../dto/dao-tao/dao-tao-luyen-ai.dto";
 import { NhatKyService, ThongBaoService } from "./core.service";
@@ -27,15 +34,24 @@ function laTrungKhoa(e: unknown): boolean {
   return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
 }
 
+const GIOI_HAN_PHIEU = { toiDa: 10, cuaSoMs: 60_000 } as const;
+
 /**
  * Nguoi hoc SALE / CSKH luyen tu van voi AI ben Sales Training:
  *  - taoPhieu (Bearer): phieu mot lan, han 10 phut; web tu POST form sang Sales Training (token khong len URL).
  *  - doiPhieu (HMAC): Sales Training doi phieu lay ngu canh.
  *  - nhanKetQua (HMAC): luu diem + tom tat (idempotent theo phien_id), du phien dat -> bai thuc hanh LUYEN_AI CHO_CHAM.
+ *  - taoPhieuXem (Bearer) / doiPhieuXem (HMAC): phieu XEM mot lan, han 2 phut — mo lai mot phien da co tren Sales Training
+ *    dang nhap DUNG nguoi bam (chu phien / mentor / quan ly), khong dua vao cookie cu cua trinh duyet.
  * Mentor duyet bai o hang doi cham nhu moi bai khac (ThucHanhService.cham: khong tu cham, xet kich hoat vai).
  */
 @Injectable()
 export class LuyenAiService {
+  private readonly logger = new Logger(LuyenAiService.name);
+  /** Gioi han phat phieu (LUYEN + XEM chung) moi nguoi: 10 lan / phut — chan spam tao phieu */
+  gioiHanPhieu = new GioiHanTheoKhoa(GIOI_HAN_PHIEU.toiDa, GIOI_HAN_PHIEU.cuaSoMs);
+  private donLanCuoi = 0;
+
   constructor(
     private readonly repo: LuyenAiRepository,
     private readonly nhatKy: NhatKyService,
@@ -47,8 +63,23 @@ export class LuyenAiService {
     return !!ch.salesTrainingUrl && ch.tichHopStSecret.length >= DO_DAI_BI_MAT_TOI_THIEU;
   }
 
+  /** 429 khi nguoi dung xin phieu qua nhieu; kem don phieu het han (toi da 10 phut / lan, khong chan request) */
+  private kiemGioiHanPhieu(hoSoId: string): void {
+    if (!this.gioiHanPhieu.thu(hoSoId)) {
+      const giay = Math.max(1, this.gioiHanPhieu.conLaiGiay(hoSoId));
+      throw new HttpException({ code: "QUA_NHIEU_YEU_CAU", message: `Bạn mở quá nhiều lần. Vui lòng thử lại sau ${giay} giây.` }, HttpStatus.TOO_MANY_REQUESTS);
+    }
+    const nay = Date.now();
+    if (nay - this.donLanCuoi < 10 * 60_000) return;
+    this.donLanCuoi = nay;
+    this.repo
+      .donPhieuHetHan(new Date(nay - 60 * 60_000))
+      .catch(e => this.logger.warn(`Không dọn được phiếu hết hạn: ${e instanceof Error ? e.message : String(e)}`));
+  }
+
   async taoPhieu(nd: ThongTinNguoiDung, body: TaoPhieuLuyenAiBody): Promise<PhieuLuyenAi> {
     if (!this.tichHopDaBat()) throw new ServiceUnavailableException("Chưa cấu hình tích hợp Sales Training");
+    this.kiemGioiHanPhieu(nd.id);
     if (!coVaiLuyenAi(nd.vaiChiTiet)) throw new ForbiddenException("Chỉ Sale / CSKH đang học hoặc đang hoạt động mới luyện tư vấn với AI");
     const khoa = await this.repo.timKhoa(body.khoa_hoc_id.trim());
     if (!khoa || !khoa.bat) throw new NotFoundException("Không tìm thấy khoá học");
@@ -65,9 +96,10 @@ export class LuyenAiService {
   /** Sales Training doi phieu (HMAC). Dung MOT lan: het han / da dung -> 410 */
   async doiPhieu(ma: string): Promise<NguCanhPhieuLuyenAi> {
     const bayGio = new Date();
-    const daDung = await this.repo.dungPhieu(ma, bayGio);
+    const daDung = await this.repo.dungPhieu(ma, bayGio, "LUYEN");
     const phieu = await this.repo.timPhieu(ma);
-    if (!phieu) throw new NotFoundException("Không tìm thấy phiếu luyện tập");
+    // Phieu XEM khong mo duoc phien luyen moi (va nguoc lai) — coi nhu khong co, khong lo phieu ton tai
+    if (!phieu || phieu.muc_dich !== "LUYEN") throw new NotFoundException("Không tìm thấy phiếu luyện tập");
     if (!daDung) {
       if (phieu.dung_luc) throw new GoneException({ code: "PHIEU_DA_DUNG", message: "Phiếu luyện tập đã được dùng — mở lại từ học viện" });
       throw new GoneException({ code: "PHIEU_HET_HAN", message: "Phiếu luyện tập đã hết hạn — mở lại từ học viện" });
@@ -87,7 +119,7 @@ export class LuyenAiService {
   /** Sales Training gui ket qua (HMAC). Idempotent theo phien_id: gui lai tra cung ket qua, khong nhan ban */
   async nhanKetQua(body: KetQuaLuyenAiDto): Promise<PhanHoiKetQuaLuyenAi> {
     const phieu = await this.repo.timPhieu(body.ma_phieu);
-    if (!phieu) throw new NotFoundException("Không tìm thấy phiếu luyện tập");
+    if (!phieu || phieu.muc_dich !== "LUYEN") throw new NotFoundException("Không tìm thấy phiếu luyện tập");
     // Phien phai cua dung nguoi da mo phieu — khong nop phien cua nguoi khac
     if (body.crm_user_id !== (phieu.ho_so.crm_user_id ?? phieu.ho_so.id)) throw new ForbiddenException("Phiên luyện không thuộc người đã mở phiếu");
     if (body.loai !== phieu.loai) throw new BadRequestException("Loại tình huống không khớp với phiếu");
@@ -141,7 +173,8 @@ export class LuyenAiService {
             diem_manh: body.diem_manh ?? [],
             can_cai_thien: body.can_cai_thien ?? [],
             dat,
-            link_xem: body.link_xem?.trim() || null,
+            // Khong tin link ST gui (tung gap link trang danh sach / phien gia): dung lai tu phien_id
+            link_xem: chuanHoaLinkXem(body.phien_id, layCauHinh().salesTrainingUrl),
             ket_thuc_luc: body.ket_thuc_luc ? new Date(body.ket_thuc_luc) : null
           },
           tx
@@ -220,6 +253,59 @@ export class LuyenAiService {
     });
 
     return { dat: kq.dat, tien_do: kq.theoLoai, ...(kq.baiId ? { bai_thuc_hanh_id: kq.baiId } : {}) };
+  }
+
+  /**
+   * Phat phieu XEM mot phien (id = phien_luyen_ai.id cua TK). Duoc: chu phien, hoac nguoi co vai cham bai thuc hanh
+   * (MENTOR / QUAN_LY dang HOAT_DONG; ADMIN / THIEN_KHUE luon qua) — cung luat voi hang doi / cham bai.
+   */
+  async taoPhieuXem(nd: ThongTinNguoiDung, phienId: string): Promise<PhieuXemLuyenAi> {
+    if (!this.tichHopDaBat()) throw new ServiceUnavailableException("Chưa cấu hình tích hợp Sales Training");
+    this.kiemGioiHanPhieu(nd.id);
+    const phien = laUuid(phienId) ? await this.repo.timPhienTheoId(phienId) : null;
+    if (!phien) throw new NotFoundException("Không tìm thấy phiên luyện");
+    const vaiXem = vaiXemPhienLuyenAi(nd.id, nd.vai, phien.ho_so_id);
+    if (!vaiXem) throw new ForbiddenException("Bạn không có quyền xem phiên luyện này");
+    if (!laPhienIdSt(phien.phien_id_st)) throw new NotFoundException("Phiên này không có bản ghi trên Sales Training");
+
+    const ma = randomBytes(24).toString("base64url");
+    const hetHan = new Date(Date.now() + HAN_PHIEU_XEM_LUYEN_AI_MS);
+    await this.repo.taoPhieu({
+      ma,
+      ho_so_id: nd.id,
+      khoa_hoc_id: phien.khoa_hoc_id,
+      loai: phien.loai,
+      het_han: hetHan,
+      muc_dich: "XEM",
+      phien_id_st: phien.phien_id_st,
+      vai_xem: vaiXem
+    });
+    await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "TAO_PHIEU_XEM_LUYEN_AI", doiTuong: "phien_luyen_ai", doiTuongId: phien.id, duLieu: { vai_xem: vaiXem } });
+    return { ma_phieu: ma, url_vao: `${layCauHinh().salesTrainingUrl}/api/vao-tu-thien-khue/xem`, het_han: hetHan.toISOString() };
+  }
+
+  /** Sales Training doi phieu XEM (HMAC). Dung MOT lan: khong co / sai muc dich -> 404; het han / da dung -> 410 */
+  async doiPhieuXem(ma: string): Promise<NguCanhPhieuXemLuyenAi> {
+    const daDung = await this.repo.dungPhieu(ma, new Date(), "XEM");
+    const phieu = await this.repo.timPhieu(ma);
+    if (!phieu || phieu.muc_dich !== "XEM" || !phieu.phien_id_st) throw new NotFoundException("Không tìm thấy phiếu xem phiên");
+    if (!daDung) {
+      if (phieu.dung_luc) throw new GoneException({ code: "PHIEU_DA_DUNG", message: "Phiếu xem phiên đã được dùng — mở lại từ học viện" });
+      throw new GoneException({ code: "PHIEU_HET_HAN", message: "Phiếu xem phiên đã hết hạn — mở lại từ học viện" });
+    }
+    const phien = await this.repo.timPhienKemChu(phieu.phien_id_st);
+    // Phien bi xoa sau khi phat phieu
+    if (!phien) throw new NotFoundException("Không tìm thấy phiên luyện");
+    return {
+      crm_user_id: phieu.ho_so.crm_user_id ?? phieu.ho_so.id,
+      ho_so_id: phieu.ho_so_id,
+      ho_ten: phieu.ho_so.ho_ten,
+      vai_xem: phieu.vai_xem as VaiXemLuyenAi,
+      phien_id_st: phien.phien_id_st,
+      loai: phieu.loai,
+      khoa_hoc_ma: phieu.khoa_hoc.ma,
+      chu_phien: { crm_user_id: phien.ho_so.crm_user_id ?? phien.ho_so.id, ho_so_id: phien.ho_so.id, ho_ten: phien.ho_so.ho_ten }
+    };
   }
 
   /** Tien do luyen AI cua toi o mot khoa (uuid hoac ma) */

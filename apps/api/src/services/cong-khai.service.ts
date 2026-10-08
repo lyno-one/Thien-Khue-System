@@ -2,7 +2,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, NotFoundException, Optional } from "@nestjs/common";
 import type { ChiTietSanPhamCongKhai, GuiLienHeBody, KetQuaLienHe, SanPhamCongKhai, SapXepSanPham } from "@thien-khue/contracts";
 import { CrmDocService } from "../infrastructure/crm/crm-doc.service";
-import { chuanHoaBangSize, GioiHanTheoKhoa, loaiLeadTheoTrang, nenGoiYDangKy, sangCongKhai, taoNhuCau, tomTatTonKho } from "../common/utils/cong-khai";
+import { chuanHoaBangSize, GioiHanTheoKhoa, loaiLeadTheoTrang, sangCongKhai, taoNhuCau, tomTatTonKho } from "../common/utils/cong-khai";
 import { GIOI_HAN_LIEN_HE, GOP_TRUNG_LEAD_MS, MA_MAU_HOP_LE, TTL_CACHE_SAN_PHAM_MS } from "../constants/cong-khai.constants";
 import { chuanHoaSdt } from "../infrastructure/crm/chuan-hoa-sdt";
 import { NhatKyService } from "./core.service";
@@ -67,7 +67,7 @@ export class SanPhamCongKhaiService {
  * Form tren trang cong khai -> thien_khue.lead (agent ban-hang phan bo lead MOI cho Sale / CSKH).
  * Chong spam: honeypot `website` (bot dien -> tra thanh cong gia, khong ghi), gioi han theo IP trong bo nho,
  * gop trung cung SDT + loai + trang trong 24 gio (khong tao them dong).
- * Dang ky TAI KHOAN khong lam o day — FE chuyen sang /dang-ky (agent ho-so) khi goi_y_dang_ky = true.
+ * Khong tao TAI KHOAN: tai khoan + vai do admin tao trong CRM sau khi nhan vien lien he lai.
  */
 
 @Injectable()
@@ -94,12 +94,10 @@ export class LienHeService {
       );
     }
 
-    const goiY = nenGoiYDangKy(b.trang, b.lo_trinh);
-
     // Honeypot: tra loi y nhu thanh cong de bot khong biet bi chan
     if (b.website && b.website.trim() !== "") {
       this.logger.warn(`Chặn form spam (honeypot) từ IP ${khoaIp}`);
-      return { da_nhan: true, goi_y_dang_ky: goiY };
+      return { da_nhan: true };
     }
 
     // Kiem lai o service (khong chi dua vao DTO) — luat nghiep vu chinh cua form
@@ -119,7 +117,7 @@ export class LienHeService {
     }
 
     const trung = await this.repo.timLeadTrung({ sdtChuan, loai, nguon: b.trang, tu: new Date(Date.now() - GOP_TRUNG_LEAD_MS) });
-    if (trung) return { da_nhan: true, goi_y_dang_ky: goiY };
+    if (trung) return { da_nhan: true };
 
     const lead = await this.repo.taoLead({
       ten: hoTen,
@@ -148,6 +146,6 @@ export class LienHeService {
       void this.phanBo.phanBoLead(lead.id, null).catch(e => this.logger.warn(`Chưa phân bổ được lead ${lead.id}: ${e instanceof Error ? e.message : String(e)}`));
     }
 
-    return { da_nhan: true, goi_y_dang_ky: goiY };
+    return { da_nhan: true };
   }
 }

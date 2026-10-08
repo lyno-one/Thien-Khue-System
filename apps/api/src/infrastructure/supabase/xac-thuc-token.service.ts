@@ -83,7 +83,8 @@ export class XacThucTokenService {
     return {
       sub: payload.sub,
       email: chuoi(payload.email),
-      sdt: chuoi(payload.phone) ?? chuoi(meta.sdt),
+      // CHI lay phone da xac thuc boi Supabase — user_metadata nguoi dung tu sua duoc (PUT /auth/v1/user)
+      sdt: chuoi(payload.phone),
       hoTen: chuoi(meta.full_name) ?? chuoi(meta.ho_ten) ?? chuoi(meta.name),
       sessionId: chuoi(payload.session_id)
     };

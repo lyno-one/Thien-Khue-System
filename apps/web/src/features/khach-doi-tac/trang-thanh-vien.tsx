@@ -50,13 +50,39 @@ async function taiHangCuaToi(): Promise<HangCuaToi | ChuaXacMinh> {
   }
 }
 
+/** Uu dai + hanh phuc goi SONG SONG voi hang (khong doi hang xong moi goi); chua xac minh SDT thi bo ket qua (403) */
+interface TaiTruoc {
+  uuDai: Promise<UuDaiCuaToi>;
+  hanhPhuc: Promise<HanhPhucCuaToi>;
+}
+
+function taoTaiTruoc(): TaiTruoc {
+  const uuDai = apiKdt.uuDaiCuaToi();
+  const hanhPhuc = apiKdt.hanhPhucCuaToi();
+  // Tranh unhandled rejection khi khong dung toi (vd SDT chua xac minh) — noi dung loi van den useTai neu dung
+  uuDai.catch(() => undefined);
+  hanhPhuc.catch(() => undefined);
+  return { uuDai, hanhPhuc };
+}
+
+/** Lan goi dau dung promise da tai truoc (loi thi goi moi mot lan — vd hang phai thu lai), cac lan sau goi moi */
+function dungMotLan<T>(truoc: Promise<T>, ham: () => Promise<T>): () => Promise<T> {
+  let cho: Promise<T> | null = truoc;
+  return () => {
+    const p = cho ? cho.catch(() => ham()) : ham();
+    cho = null;
+    return p;
+  };
+}
+
 export function TrangThanhVien() {
+  const [taiTruoc] = useState(taoTaiTruoc);
   const hang = useTai(taiHangCuaToi);
 
   if (hang.dangTai && !hang.data) return <DangTai />;
   if (hang.loi || !hang.data) return <Loi chiTiet={hang.loi} thuLai={() => void hang.taiLai()} />;
   if ("chua_xac_minh" in hang.data) return <TrangChuaXacMinh d={hang.data} />;
-  return <TrangDaXacMinh h={hang.data} />;
+  return <TrangDaXacMinh h={hang.data} taiTruoc={taiTruoc} />;
 }
 
 function LienKetNhanVien() {
@@ -111,9 +137,11 @@ function TrangChuaXacMinh({ d }: { d: ChuaXacMinh }) {
   );
 }
 
-function TrangDaXacMinh({ h }: { h: HangCuaToi }) {
-  const uuDai = useTai(apiKdt.uuDaiCuaToi);
-  const hanhPhuc = useTai(apiKdt.hanhPhucCuaToi);
+function TrangDaXacMinh({ h, taiTruoc }: { h: HangCuaToi; taiTruoc: TaiTruoc }) {
+  const [hamUuDai] = useState(() => dungMotLan(taiTruoc.uuDai, apiKdt.uuDaiCuaToi));
+  const [hamHanhPhuc] = useState(() => dungMotLan(taiTruoc.hanhPhuc, apiKdt.hanhPhucCuaToi));
+  const uuDai = useTai(hamUuDai);
+  const hanhPhuc = useTai(hamHanhPhuc);
 
   return (
     <div className="-mt-2 flex flex-col">

@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
 import type { TrangThaiVai, Vai } from "@prisma/client";
 import type { MucDieuKien } from "@thien-khue/contracts";
 import type { ThongTinNguoiDung } from "../types/nguoi-dung.type";
@@ -9,14 +9,10 @@ import type { ThongTinNguoiDung } from "../types/nguoi-dung.type";
 
 /** Vai phai hoc dat moi duoc HOAT_DONG (giong contracts VAI_PHAI_HOC) */
 export const VAI_PHAI_HOC: readonly Vai[] = ["SALE", "CSKH", "CTV", "THUC_TAP", "KOL", "KOC"];
-/** Vai tu dang ky duoc khi chua co tai khoan */
-export const VAI_DANG_KY: readonly Vai[] = ["CTV", "THUC_TAP", "KOL", "KOC", "KHACH"];
 /** Vai chi ADMIN / THIEN_KHUE duoc cap / doi */
 export const VAI_CAP_CAO: readonly Vai[] = ["QUAN_LY", "ADMIN", "THIEN_KHUE"];
 /** Vai duoc quan tri vai cua nguoi khac */
 export const VAI_QUAN_TRI_VAI: readonly Vai[] = ["QUAN_LY", "ADMIN", "THIEN_KHUE"];
-/** Vai dich khi chuyen tu thuc tap sinh */
-export const VAI_CHUYEN_TU_THUC_TAP: readonly Vai[] = ["CTV", "SALE", "CSKH", "KOL", "KOC"];
 export function laVaiPhaiHoc(vai: Vai): boolean {
   return VAI_PHAI_HOC.includes(vai);
 }
@@ -60,41 +56,6 @@ export function kiemChuyenTrangThai(vai: Vai, cu: TrangThaiVai, moi: TrangThaiVa
   if (moi === "DANG_HOC") throw new BadRequestException("Không chuyển vai về trạng thái đang học bằng tay");
   if (moi === "HOAT_DONG" && cu === "DANG_HOC" && laVaiPhaiHoc(vai)) {
     throw new BadRequestException("Vai đang học chỉ được kích hoạt khi học và thi đạt (≥ 90%) và bài thực hành được duyệt");
-  }
-}
-
-/**
- * Gioi han tan suat don gian trong bo nho (cua so truot) — chan spam dang ky tu mot IP / email.
- * Mot tien trinh API nen du cho local / mot instance; nhieu instance thi can kho chung (Redis) — ghi chu cho tich hop.
- */
-export class GioiHanTanSuat {
-  private readonly moc = new Map<string, number[]>();
-
-  constructor(
-    private readonly toiDa: number,
-    private readonly cuaSoMs: number,
-    private readonly bayGio: () => number = Date.now
-  ) {}
-
-  /** Ghi mot lan va nem 429 neu vuot gioi han trong cua so */
-  kiem(khoa: string): void {
-    const nay = this.bayGio();
-    const ds = (this.moc.get(khoa) ?? []).filter(t => nay - t < this.cuaSoMs);
-    if (ds.length >= this.toiDa) {
-      this.moc.set(khoa, ds);
-      const choGiay = Math.ceil((this.cuaSoMs - (nay - ds[0]!)) / 1000);
-      throw new HttpException(
-        { message: `Bạn thao tác quá nhiều lần, thử lại sau ${Math.max(1, Math.ceil(choGiay / 60))} phút` },
-        HttpStatus.TOO_MANY_REQUESTS
-      );
-    }
-    ds.push(nay);
-    this.moc.set(khoa, ds);
-    if (this.moc.size > 10_000) this.donDep(nay);
-  }
-
-  private donDep(nay: number): void {
-    for (const [k, ds] of this.moc) if (!ds.some(t => nay - t < this.cuaSoMs)) this.moc.delete(k);
   }
 }
 

@@ -3,12 +3,11 @@ import { Injectable } from "@nestjs/common";
 import type { Prisma, TrangThaiVai, Vai } from "@prisma/client";
 import { PrismaService } from "../infrastructure/prisma/prisma.service";
 import type { KhoaHocCanDat } from "../common/utils/ho-so";
-import { trangThaiBatDau } from "../common/utils/quan-tri";
 import { CHON_KHOA, type DuLieuHocVien, type KhoaDaNap } from "../common/utils/dao-tao";
 import { napDuLieuHocVien } from "./dao-tao.repository";
 
 type Db = Prisma.TransactionClient;
-/** Truy van ho so cua chinh minh + dang ky (schema thien_khue) */
+/** Truy van ho so cua chinh minh (schema thien_khue) */
 @Injectable()
 export class HoSoRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -52,11 +51,6 @@ export class HoSoRepository {
     return this.prisma.ho_so.findUnique({ where: { id: hoSoId }, select: { sdt_chuan: true, sdt_xac_minh_luc: true } });
   }
 
-  /** Ho so co email nay (khong phan biet hoa thuong) */
-  timTheoEmail(email: string): Promise<{ id: string } | null> {
-    return this.prisma.ho_so.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
-  }
-
   /** Ho so (khac boQuaHoSoId) da XAC MINH so chuan nay */
   timHoSoDaXacMinhSdt(sdtChuan: string, boQuaHoSoId: string | null): Promise<{ id: string } | null> {
     return this.prisma.ho_so.findFirst({
@@ -65,25 +59,13 @@ export class HoSoRepository {
     });
   }
 
-  timTheoId(hoSoId: string): Promise<{ id: string } | null> {
-    return this.prisma.ho_so.findUnique({ where: { id: hoSoId }, select: { id: true } });
-  }
-
-  taoHoSo(data: Prisma.ho_soCreateInput, db: Db = this.prisma) {
-    return db.ho_so.create({ data });
-  }
-
   capNhat(hoSoId: string, data: Prisma.ho_soUpdateInput, db: Db = this.prisma) {
     return db.ho_so.update({ where: { id: hoSoId }, data });
-  }
-
-  layGhiChu(hoSoId: string, db: Db = this.prisma): Promise<{ ghi_chu: string | null } | null> {
-    return db.ho_so.findUnique({ where: { id: hoSoId }, select: { ghi_chu: true } });
   }
 }
 
 /*
- * Truy van vai / lich su vai / de xuat chuyen vai (schema thien_khue).
+ * Truy van vai / lich su vai (schema thien_khue).
  * lich_su_vai_tro CHI INSERT (trigger DB chan UPDATE / DELETE) — ghiDoiVai la cho duy nhat cua module ghi lich su, va chi dung `create`.
  * Ham nhan `db` (mac dinh this.prisma) de service chay nhieu buoc trong cung transaction (chayTrongGiaoDich).
  */
@@ -143,8 +125,6 @@ const CHON_TOM_TAT = {
   vai_tro: { select: CHON_VAI, orderBy: { tu_luc: "asc" } }
 } satisfies Prisma.ho_soSelect;
 export type HoSoTomTatDb = Prisma.ho_soGetPayload<{ select: typeof CHON_TOM_TAT }>;
-/** Trang thai de xuat con dang mo (chua ket thuc) */
-const DE_XUAT_DANG_MO = ["CHO_KIEM", "CHO_DUYET"] as const;
 @Injectable()
 export class VaiRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -206,14 +186,6 @@ export class VaiRepository {
     });
   }
 
-  /** Ho so kem moi vai (de xuat chuyen vai) */
-  layHoSoKemVai(hoSoId: string) {
-    return this.prisma.ho_so.findUnique({
-      where: { id: hoSoId },
-      select: { id: true, ho_ten: true, vai_tro: { select: { vai: true, trang_thai: true } } }
-    });
-  }
-
   /** Vai (trong ds) cua ho so chua KET_THUC, theo tu_luc */
   dsVaiChuaKetThuc(hoSoId: string, vais: Vai[]): Promise<{ vai: Vai; trang_thai: TrangThaiVai }[]> {
     return this.prisma.vai_tro_ho_so.findMany({
@@ -223,77 +195,12 @@ export class VaiRepository {
     });
   }
 
-  /** Vai (trong ds) hien co cua ho so, moi trang thai */
-  dsVaiTheoDs(hoSoId: string, vais: Vai[], db: Db = this.prisma): Promise<{ vai: Vai; trang_thai: TrangThaiVai }[]> {
-    return db.vai_tro_ho_so.findMany({ where: { ho_so_id: hoSoId, vai: { in: vais } }, select: { vai: true, trang_thai: true } });
-  }
-
   /** Bat ho_so.kich_hoat_lam_viec (kem moc) neu chua bat */
   async batKichHoatLamViecNeuChua(hoSoId: string, db: Db = this.prisma): Promise<void> {
     const hs = await db.ho_so.findUnique({ where: { id: hoSoId }, select: { kich_hoat_lam_viec: true } });
     if (!hs?.kich_hoat_lam_viec) await db.ho_so.update({ where: { id: hoSoId }, data: { kich_hoat_lam_viec: true, kich_hoat_luc: new Date() } });
   }
 
-  /** Ho so HOAT_DONG co quyen duyet chuyen vai (ADMIN, THIEN_KHUE — de xuat 2 buoc), tru nguoi de xuat va ho so duoc chuyen */
-  dsNguoiDuyetChuyenVai(boQuaHoSoIds: string[], db: Db = this.prisma): Promise<{ ho_so_id: string }[]> {
-    return db.vai_tro_ho_so.findMany({
-      where: { vai: { in: ["ADMIN", "THIEN_KHUE"] }, trang_thai: "HOAT_DONG", ho_so_id: { notIn: boQuaHoSoIds } },
-      select: { ho_so_id: true }
-    });
-  }
-
-  /** Ho so co vai THUC_TAP con hieu luc (DANG_HOC / HOAT_DONG) va chua tung co vai CTV — ung vien tu len CTV */
-  async dsTtsChuaCoCtv(gioiHan = 200): Promise<string[]> {
-    const ds = await this.prisma.vai_tro_ho_so.findMany({
-      where: { vai: "THUC_TAP", trang_thai: { in: ["DANG_HOC", "HOAT_DONG"] }, ho_so: { vai_tro: { none: { vai: "CTV" } } } },
-      select: { ho_so_id: true },
-      orderBy: { tu_luc: "asc" },
-      take: gioiHan
-    });
-    return ds.map(d => d.ho_so_id);
-  }
-
-  // ---------------------------------------------------------------- de xuat chuyen vai
-
-  timDeXuatChuyenVaiDangMo(hoSoId: string): Promise<{ id: string } | null> {
-    return this.prisma.de_xuat_duyet.findFirst({
-      where: { loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: hoSoId, trang_thai: { in: [...DE_XUAT_DANG_MO] } },
-      select: { id: true }
-    });
-  }
-
-  taoDeXuatChuyenVai(d: { hoSoId: string; duLieu: Prisma.InputJsonValue; lyDo: string; nguoiDeXuatId: string }, db: Db = this.prisma) {
-    return db.de_xuat_duyet.create({
-      data: {
-        loai: "CHUYEN_VAI",
-        doi_tuong: "ho_so",
-        doi_tuong_id: d.hoSoId,
-        du_lieu: d.duLieu,
-        ly_do: d.lyDo,
-        nguoi_de_xuat_id: d.nguoiDeXuatId,
-        // CHUYEN_VAI la de xuat 2 buoc: vao thang cho duyet (khong qua buoc kiem)
-        trang_thai: trangThaiBatDau("CHUYEN_VAI")
-      }
-    });
-  }
-
-  /** De xuat chuyen vai lien quan ho so (moi nhat truoc, toi da 50) */
-  dsDeXuatChuyenVai(hoSoId: string) {
-    return this.prisma.de_xuat_duyet.findMany({
-      where: { loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: hoSoId },
-      orderBy: { created_at: "desc" },
-      take: 50
-    });
-  }
-
-  layDeXuat(deXuatId: string, db: Db = this.prisma) {
-    return db.de_xuat_duyet.findUnique({ where: { id: deXuatId } });
-  }
-
-  /** Da co dong lich su gan de xuat nay chua (de xuat da ap dung) */
-  timLichSuTheoDeXuat(deXuatId: string, db: Db = this.prisma): Promise<{ id: string } | null> {
-    return db.lich_su_vai_tro.findFirst({ where: { de_xuat_duyet_id: deXuatId }, select: { id: true } });
-  }
 }
 
 /** Truy van xac minh SDT ho so (schema thien_khue) */
@@ -363,12 +270,6 @@ export class XacMinhSdtRepository {
 @Injectable()
 export class DieuKienHocRepository {
   constructor(private readonly prisma: PrismaService) {}
-
-  /** Co khoa NGHIEP_VU bat buoc dang bat ap cho vai (vd khoa CTV) — khong co thi khong tu nang vai */
-  async coKhoaNghiepVu(vai: Vai): Promise<boolean> {
-    const n = await this.prisma.khoa_hoc.count({ where: { bat: true, bat_buoc: true, loai: "NGHIEP_VU", vai_ap_dung: { has: vai } } });
-    return n > 0;
-  }
 
   /** Khoa bat buoc (NEN_TANG + NGHIEP_VU) dang bat, ap cho vai */
   layKhoaCanDat(vai: Vai): Promise<KhoaHocCanDat[]> {

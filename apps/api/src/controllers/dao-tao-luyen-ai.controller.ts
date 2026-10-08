@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
-import type { NguCanhPhieuLuyenAi, PhanHoiKetQuaLuyenAi, PhieuLuyenAi, TienDoLuyenAi } from "@thien-khue/contracts";
+import type { NguCanhPhieuLuyenAi, NguCanhPhieuXemLuyenAi, PhanHoiKetQuaLuyenAi, PhieuLuyenAi, PhieuXemLuyenAi, TienDoLuyenAi } from "@thien-khue/contracts";
 import { CongKhai, NguoiDung } from "../common/decorators/xac-thuc.decorator";
 import { HmacStGuard } from "../common/guards/hmac-st.guard";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
@@ -20,6 +20,12 @@ export class DaoTaoLuyenAiController {
     return this.luyenAi.taoPhieu(nd, body);
   }
 
+  /** Chu phien / MENTOR / QUAN_LY mo lai mot phien tren Sales Training (phieu XEM, kiem quyen trong service) */
+  @Post("luyen-ai/phien/:id/phieu-xem")
+  taoPhieuXem(@NguoiDung() nd: ThongTinNguoiDung, @Param("id") id: string): Promise<PhieuXemLuyenAi> {
+    return this.luyenAi.taoPhieuXem(nd, id);
+  }
+
   @Get("khoa-hoc/:idHoacMa/luyen-ai")
   tienDo(@NguoiDung() nd: ThongTinNguoiDung, @Param("idHoacMa") idHoacMa: string): Promise<TienDoLuyenAi> {
     return this.luyenAi.tienDo(nd, idHoacMa);
@@ -31,6 +37,14 @@ export class DaoTaoLuyenAiController {
   @Get("luyen-ai/phieu/:ma")
   doiPhieu(@Param("ma") ma: string): Promise<NguCanhPhieuLuyenAi> {
     return this.luyenAi.doiPhieu(ma);
+  }
+
+  /** Sales Training doi phieu XEM (dung mot lan, han 2 phut) */
+  @CongKhai()
+  @UseGuards(HmacStGuard)
+  @Get("luyen-ai/phieu-xem/:ma")
+  doiPhieuXem(@Param("ma") ma: string): Promise<NguCanhPhieuXemLuyenAi> {
+    return this.luyenAi.doiPhieuXem(ma);
   }
 
   /** Sales Training gui ket qua phien luyen (idempotent theo phien_id). Body kieu interface -> pipe toan cuc bo qua, pipe rieng kiem */

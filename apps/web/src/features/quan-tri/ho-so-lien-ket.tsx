@@ -142,14 +142,9 @@ function ChiTietNguoiDung({ id, dong }: { id: string | null; dong: () => void })
       moTa={h ? [h.email, h.sdt].filter(Boolean).join(" · ") : undefined}
       chanTrang={
         h && (
-          <>
-            <NutLienKet href={lienKet("CAP_QUYEN_SKU")} kieu="vien" co="nho">
-              Đề xuất quyền SKU
-            </NutLienKet>
-            <NutLienKet href={lienKet("CHUYEN_VAI")} co="nho">
-              Đề xuất chuyển vai
-            </NutLienKet>
-          </>
+          <NutLienKet href={lienKet("CAP_QUYEN_SKU")} co="nho">
+            Đề xuất quyền SKU
+          </NutLienKet>
         )
       }
     >

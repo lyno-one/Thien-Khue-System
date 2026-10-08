@@ -5,6 +5,7 @@ import type { PrismaService } from "../../src/infrastructure/prisma/prisma.servi
 import type { ThongTinNguoiDung } from "../../src/common/types/nguoi-dung.type";
 import type { ApDungDeXuatService } from "../../src/services/quan-tri-ap-dung.service";
 import { DeXuatService } from "../../src/services/quan-tri.service";
+import { LOI_VAI_TU_CRM } from "../../src/common/utils/quan-tri";
 import { DeXuatRepository, NguoiTomTatRepository } from "../../src/repositories/quan-tri.repository";
 
 // Maker-checker qua de_xuat_duyet — repository that boc Prisma mock (bang nho trong RAM), khong can DB
@@ -134,7 +135,8 @@ function taoMoiTruong() {
 const BODY_CHINH_SACH = { loai: "DOI_CHINH_SACH" as const, du_lieu: { chinh_sach: "TY_LE_HOA_HONG", vai: "SALE", ty_le: 3 }, ly_do: "Tăng động lực Sale" };
 /** Loai TIEN (3 buoc) — chuanBi da mock */
 const BODY_TIEN = { loai: "CHI_TRA_HOA_HONG" as const, du_lieu: { ky: "2026-10" }, ly_do: "Chi trả kỳ 10" };
-const BODY_MENTOR = { loai: "CHUYEN_VAI" as const, doi_tuong_id: "cccccccc-0000-4000-8000-000000000001", du_lieu: { vai: "MENTOR", trang_thai_moi: "HOAT_DONG" } };
+/** Loai 2 buoc lap tu ban phe duyet (ADMIN / THIEN_KHUE duyet) — chuanBi da mock */
+const BODY_SKU = { loai: "CAP_QUYEN_SKU" as const, doi_tuong_id: "cccccccc-0000-4000-8000-000000000001", du_lieu: { mau_id: "mau-1", trang_thai_moi: "THU_HOI" } };
 const LOAI_BA_BUOC = ["CHI_TRA_HOA_HONG", "DIEU_CHINH_HOA_HONG", "XAC_MINH_DON", "XUAT_DU_LIEU_KHACH"];
 
 describe("DeXuatService — 2 buoc (de xuat -> duyet) cho loai khong lien quan tien", () => {
@@ -158,22 +160,22 @@ describe("DeXuatService — 2 buoc (de xuat -> duyet) cho loai khong lien quan t
     expect(apDung.apDung).not.toHaveBeenCalled();
   });
 
-  it("2 buoc: nguoi lien quan (ho so duoc chuyen vai) khong duoc duyet", async () => {
+  it("2 buoc: nguoi lien quan (ho so duoc cap / thu quyen) khong duoc duyet", async () => {
     const { sv, apDung } = taoMoiTruong();
-    const dx = await sv.tao(ndQuanLy, BODY_MENTOR);
+    const dx = await sv.tao(ndQuanLy, BODY_SKU);
     apDung.nguoiLienQuan.mockResolvedValueOnce([ADMIN_2]);
     await expect(sv.duyet(ndAdmin2, dx.id, { dong_y: true })).rejects.toThrow("người liên quan");
   });
 
   it("2 buoc: khong co buoc kiem — goi kiem -> 409", async () => {
     const { sv } = taoMoiTruong();
-    const dx = await sv.tao(ndQuanLy, BODY_MENTOR);
+    const dx = await sv.tao(ndQuanLy, BODY_SKU);
     await expect(sv.kiem(ndAdmin, dx.id, { dong_y: true })).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it("chuyen vai MENTOR (khong co trong CRM): Quan ly de xuat -> Admin duyet", async () => {
+  it("quyen SKU (2 buoc): Quan ly de xuat -> Admin duyet", async () => {
     const { sv } = taoMoiTruong();
-    const dx = await sv.tao(ndQuanLy, BODY_MENTOR);
+    const dx = await sv.tao(ndQuanLy, BODY_SKU);
     const sau = await sv.duyet(ndAdmin, dx.id, { dong_y: true });
     expect(sau.trang_thai).toBe("DA_DUYET");
   });
@@ -186,7 +188,7 @@ describe("DeXuatService — 2 buoc (de xuat -> duyet) cho loai khong lien quan t
 
   it("de xuat 2 buoc cu con CHO_KIEM (truoc khi gon / module khac tao): hien la cho duyet, duyet thang duoc", async () => {
     const { sv, deXuatDb } = taoMoiTruong();
-    const cu = await deXuatDb.create({ data: { loai: "CHUYEN_VAI", doi_tuong: "ho_so", doi_tuong_id: SALE, du_lieu: { vai: "KOC" }, nguoi_de_xuat_id: QUAN_LY, trang_thai: "CHO_KIEM" } });
+    const cu = await deXuatDb.create({ data: { loai: "CAP_QUYEN_SKU", doi_tuong: "ho_so", doi_tuong_id: SALE, du_lieu: { mau_id: "mau-1" }, nguoi_de_xuat_id: QUAN_LY, trang_thai: "CHO_KIEM" } });
     const hien = (await sv.layDanhSach(ndAdmin, {})).ds[0];
     expect(hien.trang_thai).toBe("CHO_DUYET");
     expect(hien.co_the_kiem).toBe(false);
@@ -206,9 +208,9 @@ describe("DeXuatService — 2 buoc (de xuat -> duyet) cho loai khong lien quan t
 });
 
 describe("DeXuatService — vai lay tu CRM khong chuyen bang de xuat", () => {
-  it.each(["SALE", "CSKH", "QUAN_LY", "ADMIN", "THIEN_KHUE"])("CHUYEN_VAI sang %s -> 400 'đổi ở CRM', khong tao de xuat", async vai => {
+  it.each(["SALE", "CSKH", "THUC_TAP", "CTV", "KOL", "KOC", "DOI_TAC", "MENTOR", "QUAN_LY", "ADMIN", "THIEN_KHUE", "KHACH"])("CHUYEN_VAI sang %s -> 400 'lấy từ CRM', khong tao de xuat", async vai => {
     const { sv, apDung, deXuatDb } = taoMoiTruong();
-    await expect(sv.tao(ndAdmin, { loai: "CHUYEN_VAI", doi_tuong_id: SALE, du_lieu: { vai, trang_thai_moi: "HOAT_DONG" } })).rejects.toThrow("Vai này lấy từ CRM");
+    await expect(sv.tao(ndAdmin, { loai: "CHUYEN_VAI", doi_tuong_id: SALE, du_lieu: { vai, trang_thai_moi: "HOAT_DONG" } })).rejects.toThrow(LOI_VAI_TU_CRM);
     await expect(sv.tao(ndAdmin, { loai: "CHUYEN_VAI", doi_tuong_id: SALE, du_lieu: { vai_moi: vai } })).rejects.toBeInstanceOf(BadRequestException);
     expect(apDung.chuanBi).not.toHaveBeenCalled();
     expect(deXuatDb.create).not.toHaveBeenCalled();
@@ -293,10 +295,10 @@ describe("DeXuatService — TIEN giu 3 buoc (de xuat -> kiem -> duyet, 3 nguoi k
 });
 
 describe("DeXuatService — chung", () => {
-  it("khong lap de xuat co loi cho chinh minh (vd tu xin vai)", async () => {
+  it("khong lap de xuat co loi cho chinh minh (vd tu xin quyen SKU)", async () => {
     const { sv, apDung } = taoMoiTruong();
-    apDung.chuanBi.mockResolvedValueOnce({ doi_tuong: "ho_so", doi_tuong_id: QUAN_LY, du_lieu: { ho_so_id: QUAN_LY, vai: "MENTOR", trang_thai_moi: "HOAT_DONG" } });
-    await expect(sv.tao(ndQuanLy, { loai: "CHUYEN_VAI", doi_tuong_id: QUAN_LY, du_lieu: { vai: "MENTOR" } })).rejects.toBeInstanceOf(ForbiddenException);
+    apDung.chuanBi.mockResolvedValueOnce({ doi_tuong: "ho_so", doi_tuong_id: QUAN_LY, du_lieu: { ho_so_id: QUAN_LY, mau_id: "mau-1", trang_thai_moi: "HOAT_DONG" } });
+    await expect(sv.tao(ndQuanLy, { loai: "CAP_QUYEN_SKU", doi_tuong_id: QUAN_LY, du_lieu: { mau_id: "mau-1" } })).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it("vai khong du (SALE) khong lap duoc de xuat", async () => {
@@ -323,7 +325,7 @@ describe("DeXuatService — chung", () => {
 
   it("co hien nut theo nguoi xem: 2 buoc khong co nut kiem; tien co nut kiem roi moi den duyet", async () => {
     const { sv } = taoMoiTruong();
-    const hai = await sv.tao(ndQuanLy, BODY_MENTOR);
+    const hai = await sv.tao(ndQuanLy, BODY_SKU);
     expect(hai.co_the_kiem).toBe(false);
     expect(hai.co_the_duyet).toBe(false); // nguoi de xuat
     expect(hai.co_the_huy).toBe(true);

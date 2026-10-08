@@ -2,7 +2,7 @@
 
 import { NHAN_VAI } from "@thien-khue/contracts";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LogoKhung, lopNhomNav, lopNutPhu } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -25,6 +25,9 @@ const thuTuVai = (v: string) => {
   const i = THU_TU_VAI.indexOf(v);
   return i < 0 ? THU_TU_VAI.length : i;
 };
+
+/** Sidebar dinh duoi thanh tren (h-14 + vien 1px = 57px), cuon rieng; noi dung trang van cuon theo cua so */
+const lopSidebarDinh = "md:sticky md:top-[57px] md:h-[calc(100dvh-57px)] md:self-start md:overflow-y-auto md:overscroll-contain";
 
 const lopNutThuGon =
   "inline-flex h-8 w-8 items-center justify-center rounded-lg text-chu-mo transition-colors duration-nhanh hover:bg-be-mat-phu hover:text-chu";
@@ -88,6 +91,11 @@ export function KhungSidebar({
       return !v;
     });
   };
+  // Muc dang o luon nam trong vung nhin cua sidebar (cuon rieng)
+  const refSidebar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    refSidebar.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
+  }, [duongDan, anSidebar]);
   useEffect(() => {
     const phim = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "b") {
@@ -140,14 +148,14 @@ export function KhungSidebar({
       <div className={cn("flex flex-1 flex-col md:grid", anSidebar ? "md:grid-cols-[48px_minmax(0,1fr)]" : "md:grid-cols-[224px_minmax(0,1fr)]")}>
         {/* Thu gon: chi con dai hep 48px voi nut mo lai (nhu CRM — nut nam trong sidebar, khong nam tren header) */}
         {anSidebar && (
-          <div className="hidden flex-col items-center border-r border-vien bg-be-mat py-3 md:flex">
+          <div className={cn("hidden flex-col items-center border-r border-vien bg-be-mat py-3 md:flex", lopSidebarDinh)}>
             <button type="button" onClick={doiThuNho} aria-label="Mở menu" title="Mở menu (Ctrl + B)" aria-expanded={false} className={lopNutThuGon}>
               <IconThuGon />
             </button>
           </div>
         )}
         {/* SIDEBAR desktop — nen trang 224px, muc 36px, dang chon nen `chinh-nhat` chu `chinh-dam` */}
-        <aside className={cn("hidden flex-col gap-1 border-r border-vien bg-be-mat px-3 py-3", !anSidebar && "md:flex")}>
+        <aside ref={refSidebar} className={cn("cuon-mong hidden flex-col gap-1 border-r border-vien bg-be-mat px-3 py-3", lopSidebarDinh, !anSidebar && "md:flex")}>
           <div className="flex justify-end pb-1">
             <button type="button" onClick={doiThuNho} aria-label="Thu gọn menu" title="Thu gọn menu (Ctrl + B)" aria-expanded className={lopNutThuGon}>
               <IconThuGon />

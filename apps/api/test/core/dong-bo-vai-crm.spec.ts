@@ -100,23 +100,23 @@ describe("keHoachDongBoVaiCrm — vai CRM mo rong (THIEN_KHUE, MENTOR, CTV, KOC)
     expect(kq[0].nguon).toBe("CRM");
   });
 
-  it("ho so marketing cu (KHACH, chua co vai CRM) -> them KOC DANG_HOC, KHACH giu nguyen", () => {
-    const kq = keHoachDongBoVaiCrm([{ vai: "KHACH", trang_thai: "HOAT_DONG", nguon: "HE_THONG" }], ns({ position: "Marketing" }), true);
+  it("ho so nhom quyen KOC cu (KHACH, chua co vai CRM) -> them KOC DANG_HOC, KHACH giu nguyen", () => {
+    const kq = keHoachDongBoVaiCrm([{ vai: "KHACH", trang_thai: "HOAT_DONG", nguon: "HE_THONG" }], ns({ nhom_quyen: "KOC" }), true);
     expect(tom(kq)).toEqual(["KOC:-->DANG_HOC"]);
   });
 
-  it("doi chuc danh CTV -> Content: CTV do CRM cap KET_THUC, them KOC DANG_HOC", () => {
-    const kq = keHoachDongBoVaiCrm([{ vai: "CTV", trang_thai: "HOAT_DONG", nguon: "CRM" }], ns({ position: "Content" }), true);
+  it("doi nhom quyen CTV -> KOC: CTV do CRM cap KET_THUC, them KOC DANG_HOC", () => {
+    const kq = keHoachDongBoVaiCrm([{ vai: "CTV", trang_thai: "HOAT_DONG", nguon: "CRM" }], ns({ nhom_quyen: "KOC" }), true);
     expect(tom(kq)).toEqual(["CTV:HOAT_DONG->KET_THUC", "KOC:-->DANG_HOC"]);
   });
 
-  it("chuyen tu chuc danh CTV vao phong SALE: SALE DANG_HOC, CTV KET_THUC", () => {
-    const kq = keHoachDongBoVaiCrm([{ vai: "CTV", trang_thai: "DANG_HOC", nguon: "CRM" }], ns({ nhom_quyen: "SALE", position: "CTV" }), true);
+  it("chuyen tu nhom CTV vao phong SALE: SALE DANG_HOC, CTV KET_THUC", () => {
+    const kq = keHoachDongBoVaiCrm([{ vai: "CTV", trang_thai: "DANG_HOC", nguon: "CRM" }], ns({ nhom_quyen: "SALE" }), true);
     expect(tom(kq)).toEqual(["SALE:-->DANG_HOC", "CTV:DANG_HOC->KET_THUC"]);
   });
 
   it("KOC do CRM cap da HOAT_DONG (hoc dat), CRM van map KOC -> khong ha ve DANG_HOC", () => {
-    const kq = keHoachDongBoVaiCrm([{ vai: "KOC", trang_thai: "HOAT_DONG", nguon: "CRM" }], ns({ position: "MKT" }), true);
+    const kq = keHoachDongBoVaiCrm([{ vai: "KOC", trang_thai: "HOAT_DONG", nguon: "CRM" }], ns({ nhom_quyen: "KOC" }), true);
     expect(kq).toEqual([]);
   });
 
@@ -140,7 +140,7 @@ describe("keHoachDongBoVaiCrm — vai CRM mo rong (THIEN_KHUE, MENTOR, CTV, KOC)
         { vai: "CTV", trang_thai: "HOAT_DONG", nguon: "DANG_KY" },
         { vai: "KOC", trang_thai: "DANG_HOC", nguon: "QUAN_TRI" }
       ],
-      ns({ role: "employee", nhom_quyen: "KHO", position: "Thủ kho" }),
+      ns({ role: "employee", nhom_quyen: "KHO" }),
       true
     );
     expect(kq).toEqual([]);
@@ -155,7 +155,7 @@ describe("keHoachDongBoVaiCrm — vai CRM mo rong (THIEN_KHUE, MENTOR, CTV, KOC)
         { vai: "KOC", trang_thai: "DANG_HOC", nguon: "CRM" },
         { vai: "CTV", trang_thai: "HOAT_DONG", nguon: "QUAN_TRI" }
       ],
-      ns({ role: "admin", active: false, position: "Marketing" }),
+      ns({ role: "admin", active: false, nhom_quyen: "KOC" }),
       true
     );
     expect(tom(kq)).toEqual(["ADMIN:HOAT_DONG->TAM_DUNG", "THIEN_KHUE:HOAT_DONG->TAM_DUNG", "KOC:DANG_HOC->TAM_DUNG"]);
@@ -168,14 +168,14 @@ describe("keHoachDongBoVaiCrm — vai CRM mo rong (THIEN_KHUE, MENTOR, CTV, KOC)
         { vai: "THIEN_KHUE", trang_thai: "TAM_DUNG", nguon: "CRM_DONG_BO" },
         { vai: "KOC", trang_thai: "TAM_DUNG", nguon: "CRM_DONG_BO" }
       ],
-      ns({ role: "admin", position: "Marketing" }),
+      ns({ role: "admin", nhom_quyen: "KOC" }),
       true
     );
     expect(tom(kq)).toEqual(["ADMIN:-->HOAT_DONG", "THIEN_KHUE:TAM_DUNG->HOAT_DONG", "KOC:TAM_DUNG->DANG_HOC"]);
   });
 
   it("vai mo rong bi con nguoi ket thuc (QUAN_TRI) khong bi mo lai du CRM van map", () => {
-    const kq = keHoachDongBoVaiCrm([{ vai: "CTV", trang_thai: "KET_THUC", nguon: "QUAN_TRI" }], ns({ position: "CTV" }), true);
+    const kq = keHoachDongBoVaiCrm([{ vai: "CTV", trang_thai: "KET_THUC", nguon: "QUAN_TRI" }], ns({ nhom_quyen: "CTV" }), true);
     expect(kq).toEqual([]);
   });
 });
@@ -251,7 +251,7 @@ describe("NguoiDungService.layTuToken — dong bo lai vai CRM moi lan xac thuc (
       { vai: "KOL", trang_thai: "HOAT_DONG", nguon: "QUAN_TRI" }
     ]);
     const crmDoc = {
-      layNhanSuCrm: jest.fn(async () => ({ id: ID, role: "manager", active: true, nhom_quyen: "KHONG", position: "Trưởng nhóm" }))
+      layNhanSuCrm: jest.fn(async () => ({ id: ID, role: "manager", active: true, nhom_quyen: "KHONG" }))
     } as unknown as CrmDocService;
     const nd = await new NguoiDungService(new CoreRepository(prisma), crmDoc, nhatKy).layTuToken(TOKEN);
     expect(nd.vai).toEqual(["QUAN_LY", "KOL", "MENTOR"]);
@@ -259,10 +259,10 @@ describe("NguoiDungService.layTuToken — dong bo lai vai CRM moi lan xac thuc (
     expect(lichSu).toEqual([expect.objectContaining({ vai: "MENTOR", trang_thai_cu: null, trang_thai_moi: "HOAT_DONG" })]);
   });
 
-  it("ho so nhan su marketing cu (KHACH) -> them KOC DANG_HOC, chua duoc dung vai KOC", async () => {
+  it("ho so nhan su nhom KOC cu (KHACH) -> them KOC DANG_HOC, chua duoc dung vai KOC", async () => {
     const { prisma, nhatKy } = taoMock([{ vai: "KHACH", trang_thai: "HOAT_DONG", nguon: "HE_THONG" }]);
     const crmDoc = {
-      layNhanSuCrm: jest.fn(async () => ({ id: ID, role: "employee", active: true, nhom_quyen: "KHONG", position: "Nhân viên Marketing" }))
+      layNhanSuCrm: jest.fn(async () => ({ id: ID, role: "employee", active: true, nhom_quyen: "KOC" }))
     } as unknown as CrmDocService;
     const nd = await new NguoiDungService(new CoreRepository(prisma), crmDoc, nhatKy).layTuToken(TOKEN);
     expect(nd.vaiChiTiet.map(v => `${v.vai}:${v.trang_thai}`)).toEqual(["KHACH:HOAT_DONG", "KOC:DANG_HOC"]);

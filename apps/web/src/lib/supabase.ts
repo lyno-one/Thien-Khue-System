@@ -1,20 +1,34 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { GoTrueClient } from "@supabase/auth-js";
 
 /*
  * Supabase Auth cua CRM (dung chung) — chi dung de DANG NHAP / giu phien phia web.
  * Du lieu nghiep vu luon di qua Nest (src/lib/api.ts), khong doc bang truc tiep tu web.
+ * Chi nap @supabase/auth-js (GoTrueClient) thay vi ca supabase-js: web khong dung Realtime / Postgrest / Storage,
+ * bot ~45 kB gzip JS tren moi trang. Cau hinh giong createClient (storageKey, header apikey) -> phien cu van dung duoc.
  */
 
-let client: SupabaseClient | null = null;
+interface SupabaseAuth {
+  auth: GoTrueClient;
+}
 
-export function laySupabase(): SupabaseClient {
+let client: SupabaseAuth | null = null;
+
+export function laySupabase(): SupabaseAuth {
   if (client) return client;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) throw new Error("Thiếu NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (xem apps/web/.env.example)");
-  client = createClient(url, anon, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "thien-khue-auth" }
-  });
+  client = {
+    auth: new GoTrueClient({
+      url: `${url.replace(/\/+$/, "")}/auth/v1`,
+      headers: { Authorization: `Bearer ${anon}`, apikey: anon },
+      storageKey: "thien-khue-auth",
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      flowType: "implicit"
+    })
+  };
   return client;
 }
 

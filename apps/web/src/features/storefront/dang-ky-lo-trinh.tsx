@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { LoTrinhDangKy } from "@thien-khue/contracts";
 import { lopKicker, lopNutChinh, lopTab, lopThanhTab } from "@/components/ui";
-import { LO_TRINH, THU_TU_LO_TRINH, VAI_DANG_KY_THEO_LO_TRINH } from "./noi-dung";
+import { LO_TRINH, THU_TU_LO_TRINH } from "./noi-dung";
 import { KhoiVaForm } from "./trang-vai-tro";
 
 /** Khu "Đăng ký" cuoi trang Dao tao (Main.dc.html #dang-ky-lo-trinh): chon lo trinh -> khoi noi dung + form */
@@ -55,7 +55,6 @@ export function DangKyLoTrinh({ loTrinhDau }: { loTrinhDau: LoTrinhDangKy }) {
         block={t}
         trang="DAO_TAO"
         loTrinh={loTrinh}
-        vaiDangKy={VAI_DANG_KY_THEO_LO_TRINH[loTrinh]}
         form={{ title: `Trở thành ${t.label}`, selectLabel: "Hình thức", options: t.options, noteLabel: "Kinh nghiệm hoặc kênh của bạn", cta: `Đăng ký ${t.label}` }}
       />
     </>

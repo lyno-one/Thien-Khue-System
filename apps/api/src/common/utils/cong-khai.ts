@@ -1,5 +1,5 @@
 import { LoaiLead } from "@prisma/client";
-import type { DongBangSize, GuiLienHeBody, LoTrinhDangKy, SanPhamCongKhai, TrangLienHe } from "@thien-khue/contracts";
+import type { DongBangSize, GuiLienHeBody, SanPhamCongKhai, TrangLienHe } from "@thien-khue/contracts";
 import { NHAN_LO_TRINH, NHAN_LUA_CHON, NHOM_THEO_TIEN_TO, THU_TU_SIZE } from "../../constants/cong-khai.constants";
 import type { MauCrm, TonKhoCrm } from "../../infrastructure/crm/crm-doc.service";
 
@@ -52,11 +52,6 @@ export function loaiLeadTheoTrang(trang: TrangLienHe): LoaiLead {
   if (trang === "DAO_TAO") return LoaiLead.DANG_KY_HOC;
   if (trang === "DOI_TAC") return LoaiLead.HOP_TAC;
   return LoaiLead.MUA_HANG;
-}
-/** Co nen goi y tao tai khoan: CTV / KOL-KOC / thuc tap tu dang ky; khach VIP / than thien de theo doi hang the */
-export function nenGoiYDangKy(trang: TrangLienHe, loTrinh?: LoTrinhDangKy): boolean {
-  if (trang === "DAO_TAO") return !!loTrinh && loTrinh !== "sale";
-  return trang === "VIP" || trang === "THAN_THIEN";
 }
 /** Gom noi dung form thanh mot doan nhu_cau cho Sale doc */
 export function taoNhuCau(b: Pick<GuiLienHeBody, "trang" | "lo_trinh" | "lua_chon" | "loi_nhan" | "ma_mau_quan_tam">): string | null {

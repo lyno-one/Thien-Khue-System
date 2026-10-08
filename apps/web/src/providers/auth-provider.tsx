@@ -1,7 +1,7 @@
 "use client";
 
 import type { NguoiDungHienTai, Vai } from "@thien-khue/contracts";
-import type { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/auth-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { goiApi, thongDiepLoi } from "@/lib/api";
 import { dangNhapEmail, dangXuatSupabase, laySupabase } from "@/lib/supabase";
@@ -35,25 +35,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [dangTai, setDangTai] = useState(true);
   const [loi, setLoi] = useState<string | null>(null);
   const tokenDaTai = useRef<string | null>(null);
+  /** Lan tai ho so dang chay (theo user id): getSession() luc dau + INITIAL_SESSION / SIGNED_IN den gan nhu cung luc —
+   *  dung chung mot request thay vi goi /ho-so/toi 2–3 lan moi lan mo trang */
+  const dangTaiHoSo = useRef<{ id: string; p: Promise<NguoiDungHienTai | null> } | null>(null);
 
-  const taiHoSo = useCallback(async (s: Session | null): Promise<NguoiDungHienTai | null> => {
+  const taiHoSo = useCallback(async (s: Session | null, epTaiMoi = false): Promise<NguoiDungHienTai | null> => {
     if (!s) {
       tokenDaTai.current = null;
+      dangTaiHoSo.current = null;
       setNguoiDung(null);
       return null;
     }
-    try {
-      // Dung token cua chinh Session nay — khong goi lai getSession() (xem TuyChonGoi.token)
-      const nd = (await goiApi<NguoiDungHienTai>("GET", "/ho-so/toi", { token: s.access_token })).data;
-      tokenDaTai.current = s.user.id;
-      setNguoiDung(nd);
-      setLoi(null);
-      return nd;
-    } catch (e) {
-      setNguoiDung(null);
-      setLoi(thongDiepLoi(e));
-      return null;
-    }
+    const dangChay = dangTaiHoSo.current;
+    if (!epTaiMoi && dangChay && dangChay.id === s.user.id) return dangChay.p;
+    const lan: { id: string; p: Promise<NguoiDungHienTai | null> } = { id: s.user.id, p: Promise.resolve(null) };
+    const conHieuLuc = () => dangTaiHoSo.current === lan;
+    dangTaiHoSo.current = lan;
+    lan.p = (async () => {
+      try {
+        // Dung token cua chinh Session nay — khong goi lai getSession() (xem TuyChonGoi.token)
+        const nd = (await goiApi<NguoiDungHienTai>("GET", "/ho-so/toi", { token: s.access_token })).data;
+        // Da dang xuat / doi nguoi trong luc cho -> bo ket qua cu
+        if (!conHieuLuc()) return nd;
+        tokenDaTai.current = s.user.id;
+        setNguoiDung(nd);
+        setLoi(null);
+        return nd;
+      } catch (e) {
+        if (!conHieuLuc()) return null;
+        setNguoiDung(null);
+        setLoi(thongDiepLoi(e));
+        return null;
+      } finally {
+        if (conHieuLuc()) dangTaiHoSo.current = null;
+      }
+    })();
+    return lan.p;
   }, []);
 
   useEffect(() => {
@@ -92,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, matKhau: string) => {
       const s = await dangNhapEmail(email, matKhau);
       setPhien(s);
-      return taiHoSo(s);
+      return taiHoSo(s, true);
     },
     [taiHoSo]
   );
@@ -102,12 +119,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPhien(null);
     setNguoiDung(null);
     tokenDaTai.current = null;
+    dangTaiHoSo.current = null;
   }, []);
 
   const taiLai = useCallback(async () => {
     const { data } = await laySupabase().auth.getSession();
     setPhien(data.session);
-    await taiHoSo(data.session);
+    // Tai lai co chu dich (sau khi sua ho so...) — luon goi moi, khong dung lan dang chay
+    await taiHoSo(data.session, true);
   }, [taiHoSo]);
 
   const coVai = useCallback(

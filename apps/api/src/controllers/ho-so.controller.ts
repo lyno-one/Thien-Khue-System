@@ -1,8 +1,6 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Ip, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
 import { Vai as VaiEnum } from "@prisma/client";
 import type {
-  DangKyKetQua,
-  DeXuatChuyenVai,
   DieuKienKichHoat,
   HoSoChiTiet,
   HoSoCuaToi,
@@ -14,9 +12,6 @@ import { CongKhai, NguoiDung, Vai } from "../common/decorators/xac-thuc.decorato
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
 import {
   CapNhatHoSoDto,
-  DangKyDto,
-  DangKyThemVaiDto,
-  DeXuatChuyenVaiDto,
   DoiTrangThaiVaiDto,
   HuyXacMinhSdtDto,
   KichHoatDto,
@@ -38,6 +33,8 @@ function docVai(v: string): VaiEnum {
 /**
  * Ho so & vai — /api/ho-so/*
  * Route "toi/*" (cua chinh minh) dat TRUOC route ":id" de khong bi bat nham.
+ * Khong co tu dang ky tai khoan / tu dang ky vai / de xuat chuyen vai: tai khoan + vai do admin tao trong CRM
+ * (Thien Khue chi doc vai tu CRM). Trang thai hoc DANG_HOC -> HOAT_DONG (kich-hoat) van o day.
  */
 @Controller("ho-so")
 export class HoSoController {
@@ -51,15 +48,6 @@ export class HoSoController {
   @Get("health")
   health() {
     return { module: "ho-so", trang_thai: "ok" };
-  }
-
-  // ---------------------------------------------------------------- dang ky (cong khai)
-
-  /** Dang ky CTV / thuc tap sinh / KOL / KOC / khach — tao tai khoan + ho so; vai phai hoc o DANG_HOC */
-  @CongKhai()
-  @Post("dang-ky")
-  dangKy(@Body() dto: DangKyDto, @Ip() ip: string, @NguoiDung() nd: ThongTinNguoiDung | undefined): Promise<DangKyKetQua> {
-    return this.hoSo.dangKy(dto, ip ?? null, nd);
   }
 
   // ---------------------------------------------------------------- cua toi
@@ -92,24 +80,6 @@ export class HoSoController {
   @HttpCode(200)
   kichHoatCuaToi(@NguoiDung() nd: ThongTinNguoiDung, @Body() dto: KichHoatDto): Promise<DieuKienKichHoat> {
     return this.vaiSv.kichHoat(nd.id, dto.vai, null);
-  }
-
-  /** Nguoi da co tai khoan dang ky hoc them vai (luon DANG_HOC) */
-  @Post("toi/dang-ky-vai")
-  async dangKyThemVai(@NguoiDung() nd: ThongTinNguoiDung, @Body() dto: DangKyThemVaiDto): Promise<HoSoCuaToi> {
-    await this.hoSo.dangKyThemVai(nd, dto);
-    return this.hoSo.layCuaToi(nd);
-  }
-
-  /** Thuc tap sinh tu de xuat chuyen vai (nguoi khac kiem + duyet) */
-  @Post("toi/de-xuat-chuyen-vai")
-  deXuatCuaToi(@NguoiDung() nd: ThongTinNguoiDung, @Body() dto: DeXuatChuyenVaiDto): Promise<DeXuatChuyenVai> {
-    return this.vaiSv.deXuatChuyenVai(nd, nd.id, dto);
-  }
-
-  @Get("toi/de-xuat-chuyen-vai")
-  dsDeXuatCuaToi(@NguoiDung() nd: ThongTinNguoiDung): Promise<DeXuatChuyenVai[]> {
-    return this.vaiSv.deXuatCuaHoSo(nd.id);
   }
 
   // ---------------------------------------------------------------- xac minh SDT (CSKH / QUAN_LY; ADMIN, THIEN_KHUE qua @Vai)
@@ -193,18 +163,5 @@ export class HoSoController {
   kichHoat(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: KichHoatDto): Promise<DieuKienKichHoat> {
     if (id === nd.id) throw new BadRequestException("Tự kích hoạt vai của mình tại trang Tài khoản");
     return this.vaiSv.kichHoat(id, dto.vai, nd.id);
-  }
-
-  /** De xuat chuyen vai cho thuc tap sinh -> de_xuat_duyet (ban phe duyet o quan-tri) */
-  @Vai("QUAN_LY", "MENTOR")
-  @Post(":id/de-xuat-chuyen-vai")
-  deXuat(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: DeXuatChuyenVaiDto): Promise<DeXuatChuyenVai> {
-    return this.vaiSv.deXuatChuyenVai(nd, id, dto);
-  }
-
-  @Vai("QUAN_LY", "MENTOR")
-  @Get(":id/de-xuat-chuyen-vai")
-  dsDeXuat(@Param("id", ParseUUIDPipe) id: string): Promise<DeXuatChuyenVai[]> {
-    return this.vaiSv.deXuatCuaHoSo(id);
   }
 }

@@ -260,18 +260,25 @@ export class HocVienService {
   }
 
   async loTrinh(nd: ThongTinNguoiDung): Promise<LoTrinhCuaToi> {
-    const dsKhoa = await this.khoaCuaLoTrinh(nd);
-    const dl = await this.duLieuHoc.napDuLieuHocVien(nd.id, dsKhoa.map(k => k.id));
+    // Dieu kien vai xet tren MOI khoa bat buoc cua vai (khong phu thuoc bo loc lo trinh)
+    const vaiPhaiHoc = nd.vaiChiTiet.map(v => ({ vai: v.vai, trang_thai: v.trang_thai }));
+    // Cac truy van doc lap chay song song (truoc day noi tiep 5 vong DB)
+    const [dsKhoa, khoaVaiTho, soChungChi, soQuyen] = await Promise.all([
+      this.khoaCuaLoTrinh(nd),
+      this.duLieuHoc.dsKhoaBatBuocCuaVai(vaiPhaiHoc.map(v => v.vai)),
+      this.repo.demChungChiConHieuLuc(nd.id),
+      this.repo.demQuyenSkuHoatDong(nd.id)
+    ]);
+    const khoaVai = sapXepKhoa(khoaVaiTho);
+    // Mot lan nap du lieu hoc cho ca khoa lo trinh lan khoa bat buoc cua vai (tinhTienDo chi doc phan cua tung khoa)
+    const idsNap = [...new Set([...dsKhoa.map(k => k.id), ...khoaVai.map(k => k.id)])];
+    const dl = await this.duLieuHoc.napDuLieuHocVien(nd.id, idsNap);
     const tienDo = new Map(dsKhoa.map(k => [k.id, tinhTienDo(k, dl)]));
     const nhom: NhomLoTrinh[] = (["NEN_TANG", "NGHIEP_VU", "SAN_PHAM"] as LoaiKhoaHoc[]).map(loai => ({
       loai,
       tieu_de: TIEU_DE_NHOM[loai],
       khoa_hoc: dsKhoa.filter(k => k.loai === loai).map(k => this.tomTat(k, tienDo.get(k.id)!))
     }));
-    const [soChungChi, soQuyen] = await Promise.all([
-      this.repo.demChungChiConHieuLuc(nd.id),
-      this.repo.demQuyenSkuHoatDong(nd.id)
-    ]);
     const soBai = dsKhoa.reduce((a, k) => a + k.bai_hoc.length, 0);
     const soBaiXong = dsKhoa.reduce((a, k) => a + tienDo.get(k.id)!.so_bai_xong, 0);
 
@@ -286,13 +293,7 @@ export class HocVienService {
       break;
     }
 
-    // Dieu kien vai can xet tren MOI khoa bat buoc cua vai (khong phu thuoc bo loc lo trinh)
-    const vaiPhaiHoc = nd.vaiChiTiet.map(v => ({ vai: v.vai, trang_thai: v.trang_thai }));
-    const vaiCanXet = vaiPhaiHoc.map(v => v.vai);
-    const khoaVai = sapXepKhoa(await this.duLieuHoc.dsKhoaBatBuocCuaVai(vaiCanXet));
-    const thieu = khoaVai.filter(k => !tienDo.has(k.id));
-    const dlThem = thieu.length ? await this.duLieuHoc.napDuLieuHocVien(nd.id, thieu.map(k => k.id)) : null;
-    for (const k of thieu) tienDo.set(k.id, tinhTienDo(k, dlThem!));
+    for (const k of khoaVai) if (!tienDo.has(k.id)) tienDo.set(k.id, tinhTienDo(k, dl));
 
     return {
       nhom,

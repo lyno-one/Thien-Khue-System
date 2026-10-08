@@ -1,4 +1,4 @@
-import type { LoTrinhDangKy, TrangLienHe, Vai } from "@thien-khue/contracts";
+import type { LoTrinhDangKy, TrangLienHe } from "@thien-khue/contracts";
 
 /*
  * Noi dung tinh cua trang cong khai — chep tu renderVals() trong Main.dc.html.
@@ -159,13 +159,6 @@ export const LO_TRINH: Record<LoTrinhDangKy, LoTrinh> = {
 };
 
 export const THU_TU_LO_TRINH: LoTrinhDangKy[] = ["sale", "ctv", "kol", "other"];
-
-/** Lo trinh -> vai goi y khi chuyen sang /dang-ky (agent ho-so) */
-export const VAI_DANG_KY_THEO_LO_TRINH: Partial<Record<LoTrinhDangKy, Vai>> = {
-  ctv: "CTV",
-  kol: "KOL",
-  other: "THUC_TAP"
-};
 
 export function laLoTrinh(v: unknown): v is LoTrinhDangKy {
   return typeof v === "string" && (THU_TU_LO_TRINH as string[]).includes(v);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChuLogo, DauLogo, MuiTen, lopNutChinh } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useXacThuc } from "@/providers/auth-provider";
@@ -40,6 +40,128 @@ function IconGio() {
       <path d="M5 8h14l-1 13H6z" />
       <path d="M9 8V6a3 3 0 0 1 6 0v2" />
     </svg>
+  );
+}
+
+function IconXuong({ mo }: { mo: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden
+      className={cn("transition-transform duration-nhanh", mo && "rotate-180")}
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+/* Nut "Mua sam" mo danh sach doc: click (va hover voi chuot), dong khi Escape / bam ngoai / doi route */
+function MenuMuaSam({ duongDan }: { duongDan: string }) {
+  const [mo, setMo] = useState(false);
+  const idPanel = useId();
+  const goc = useRef<HTMLDivElement>(null);
+  const nut = useRef<HTMLButtonElement>(null);
+  const hen = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Mo bang hover thi cu click dau tien giu mo (khong dong ngay duoi tay chuot)
+  const moQuaHover = useRef(false);
+
+  useEffect(() => setMo(false), [duongDan]);
+  useEffect(() => {
+    if (!mo) {
+      moQuaHover.current = false;
+      return;
+    }
+    const bamNgoai = (e: PointerEvent) => {
+      if (goc.current && !goc.current.contains(e.target as Node)) setMo(false);
+    };
+    const phim = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMo(false);
+        nut.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", bamNgoai);
+    document.addEventListener("keydown", phim);
+    return () => {
+      document.removeEventListener("pointerdown", bamNgoai);
+      document.removeEventListener("keydown", phim);
+    };
+  }, [mo]);
+  useEffect(() => () => {
+    if (hen.current) clearTimeout(hen.current);
+  }, []);
+
+  const huyHen = () => {
+    if (hen.current) clearTimeout(hen.current);
+    hen.current = null;
+  };
+
+  return (
+    <div
+      ref={goc}
+      className="relative"
+      onPointerEnter={e => {
+        if (e.pointerType !== "mouse") return;
+        huyHen();
+        if (!mo) moQuaHover.current = true;
+        setMo(true);
+      }}
+      onPointerLeave={e => {
+        if (e.pointerType !== "mouse") return;
+        huyHen();
+        hen.current = setTimeout(() => setMo(false), 150);
+      }}
+      onBlur={e => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setMo(false);
+      }}
+    >
+      <button
+        ref={nut}
+        type="button"
+        aria-expanded={mo}
+        aria-controls={idPanel}
+        aria-haspopup="true"
+        onClick={() => {
+          if (moQuaHover.current) {
+            moQuaHover.current = false;
+            setMo(true);
+          } else setMo(v => !v);
+        }}
+        className={cn(
+          "inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-medium uppercase tracking-[0.04em] transition-colors duration-nhanh hover:bg-be-mat-phu hover:text-chinh",
+          mo ? "text-chinh" : "text-chu-phu"
+        )}
+      >
+        Mua sắm
+        <IconXuong mo={mo} />
+      </button>
+      <nav
+        id={idPanel}
+        aria-label="Mua sắm"
+        hidden={!mo}
+        className="absolute left-0 top-full z-40 mt-1 min-w-[220px] rounded-lg border border-vien bg-be-mat py-1 shadow-md"
+      >
+        <ul className="flex flex-col">
+          {MUA_SAM.map(m => (
+            <li key={m}>
+              <a href={LYNO} className="flex min-h-11 items-center px-4 text-sm text-chu-phu no-underline transition-colors duration-nhanh hover:bg-be-mat-phu hover:text-chinh">
+                {m}
+              </a>
+            </li>
+          ))}
+          <li className="mt-1 border-t border-vien pt-1">
+            <a href={LYNO} className="flex min-h-11 items-center px-4 text-sm font-semibold text-chinh no-underline transition-colors duration-nhanh hover:bg-be-mat-phu hover:text-chinh-dam">
+              Khăn lụa Thiên Khuê
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
   );
 }
 
@@ -103,18 +225,9 @@ export function StorefrontHeader() {
         </div>
         <div className="hidden border-t border-vien md:block">
           <div className="mx-auto flex max-w-tk items-center justify-center gap-2 px-6 lg:px-10">
-            {/* Nhom mua sam an duoi xl: o 768–1279px hai nhom nav khong vua mot dong */}
-            <nav aria-label="Mua sắm" className="hidden items-center gap-5 whitespace-nowrap text-xs font-medium uppercase tracking-[0.04em] text-chu-phu xl:flex">
-              {MUA_SAM.map(m => (
-                <a key={m} href={LYNO} className="inline-flex min-h-12 items-center no-underline transition-colors duration-nhanh hover:text-chinh">
-                  {m}
-                </a>
-              ))}
-              <a href={LYNO} className="inline-flex min-h-12 items-center font-semibold text-chinh no-underline hover:text-chinh-dam">
-                Khăn lụa Thiên Khuê
-              </a>
-            </nav>
-            <span aria-hidden className="mx-4 hidden h-5 w-px bg-vien-dam xl:block" />
+            {/* Nhom mua sam gom vao mot nut tha xuong (disclosure) nen vua mot dong tu md tro len */}
+            <MenuMuaSam duongDan={duongDan} />
+            <span aria-hidden className="mx-4 h-5 w-px bg-vien-dam" />
             <nav aria-label="Thành viên, đối tác và đào tạo" className="flex items-center gap-1 whitespace-nowrap py-2">
               {NAV_STOREFRONT.map(n => {
                 const dangO = n.href === "/" ? duongDan === "/" : duongDan.startsWith(n.href);

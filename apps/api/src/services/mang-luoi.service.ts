@@ -3,19 +3,18 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { createHash } from "node:crypto";
 import type {
   BaiTapTts, CapNhatChienDichBody, CapNhatSoLieuBody, ChamBaiTapTtsBody, ChienDichChoToi, ChienDichMl, ChienDichQuanLy, DanhGiaTts,
-  DeXuatChuyenVaiTtsBody, DuyetNoiDungBody, KhoaHocLoTrinhTts, MaGioiThieuCongKhai, MaGioiThieuCuaToi, NoiDungKocMl, NopBaiTapTtsBody, NopNoiDungBody,
+  DuyetNoiDungBody, KhoaHocLoTrinhTts, MaGioiThieuCongKhai, MaGioiThieuCuaToi, NoiDungKocMl, NopBaiTapTtsBody, NopNoiDungBody,
   SuaNoiDungBody, TaiLieuSanPhamMl, TaoChienDichBody, ThamGiaChienDichMl
 } from "@thien-khue/contracts";
 import {
   type bai_thuc_hanh, type chien_dich, type noi_dung_koc, Prisma, type TrangThaiChienDich, type TrangThaiNoiDung, type TrangThaiThucHanh,
-  type TrangThaiVai, type Vai
+  type Vai
 } from "@prisma/client";
 import { CrmDocService, type MauCrm } from "../infrastructure/crm/crm-doc.service";
 import { NhatKyService, ThongBaoService } from "./core.service";
 import { QuyenSkuService } from "./dao-tao-quyen-sku.service";
 import { chonVai, iso, laLinkHopLe, laTrungKhoa, skuThieuQuyen, taoChuoiMa, VAI_GIOI_THIEU } from "../common/utils/mang-luoi";
 import { KHOANG_CLICK_MS, SO_LAN_THU_MA, VAI_TOI_CAO } from "../constants/mang-luoi.constants";
-import { kiemVaiKhongTuCrm, trangThaiHieuLuc } from "../common/utils/quan-tri";
 import { ChienDichRepository, HoSoMangLuoiRepository, MaGioiThieuRepository, ThucTapRepository } from "../repositories/mang-luoi.repository";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
 
@@ -560,9 +559,9 @@ export class ChienDichService {
 /** Diem trung binh lam tron, null khi rong */
 const trungBinh = (a: number[]) => (a.length ? Math.round(a.reduce((s, x) => s + x, 0) / a.length) : null);
 /**
- * Thuc tap sinh: lo trinh (khoa hoc ap dung THUC_TAP), bai tap co mentor cham, danh gia tong hop ->
- * mentor / quan ly lap de_xuat_duyet CHUYEN_VAI (2 buoc: quan-tri duyet roi ap dung). Sale / CSKH lay tu CRM — khong de xuat;
- * TTS hoc dat khoa CTV thi ho-so tu them vai CTV (VaiService.xetTtsLenCtv).
+ * Thuc tap sinh: lo trinh (khoa hoc ap dung THUC_TAP), bai tap co mentor cham, danh gia tong hop.
+ * Khong de xuat chuyen vai o Thien Khue (doi vai = doi phong ban / nhom quyen o CRM).
+ * TTS va CTV la hai vai tach biet: hoc xong khoa CTV KHONG tu them vai CTV — vai chi lay tu CRM.
  * Bai tap luu o bai_thuc_hanh (vai = THUC_TAP) de dung chung bang chung hoc voi LMS.
  */
 @Injectable()
@@ -675,16 +674,12 @@ export class ThucTapService {
     return (await this.dinhDang([moi]))[0]!;
   }
 
-  /** Ket qua danh gia mot TTS — can cu de xuat chuyen vai */
+  /** Ket qua danh gia mot TTS (bai tap, kiem tra, bai hoc) */
   async danhGia(hoSoId: string): Promise<DanhGiaTts> {
     const hs = await this.hoSoRepo.timKemVai(hoSoId);
     if (!hs) throw new NotFoundException("Không tìm thấy hồ sơ");
     const lt = await this.loTrinh(hoSoId);
-    const [bt, luot, deXuat] = await Promise.all([
-      this.repo.layDiemBaiTap(hoSoId),
-      this.repo.layLuotLamDaNop(hoSoId),
-      this.repo.layDeXuatChuyenVaiDangMo(hoSoId)
-    ]);
+    const [bt, luot] = await Promise.all([this.repo.layDiemBaiTap(hoSoId), this.repo.layLuotLamDaNop(hoSoId)]);
     // Moi bai kiem tra lay diem cao nhat
     const caoNhat = new Map<string, { diem: number; dat: boolean }>();
     for (const l of luot) {
@@ -705,14 +700,7 @@ export class ThucTapService {
         diem_tb: trungBinh(diemBt)
       },
       kiem_tra: { tong: kt.length, dat: kt.filter(k => k.dat).length, diem_tb: trungBinh(kt.map(k => k.diem)) },
-      bai_hoc: { xong: lt.reduce((s, k) => s + k.so_bai_xong, 0), tong: lt.reduce((s, k) => s + k.so_bai_hoc, 0) },
-      de_xuat_dang_mo: deXuat.map(d => ({
-        id: d.id,
-        sang_vai: ((d.du_lieu ?? {}) as { vai?: Vai }).vai ?? "KHACH",
-        // De xuat chuyen vai la 2 buoc: ban ghi CHO_KIEM (tao truoc khi gon) hien la cho duyet
-        trang_thai: trangThaiHieuLuc({ loai: "CHUYEN_VAI", trang_thai: d.trang_thai }),
-        created_at: d.created_at.toISOString()
-      }))
+      bai_hoc: { xong: lt.reduce((s, k) => s + k.so_bai_xong, 0), tong: lt.reduce((s, k) => s + k.so_bai_hoc, 0) }
     };
   }
 
@@ -720,46 +708,5 @@ export class ThucTapService {
   async danhSachTts(): Promise<DanhGiaTts[]> {
     const ds = await this.repo.layHoSoIdTts();
     return Promise.all(ds.map(id => this.danhGia(id)));
-  }
-
-  /**
-   * Mentor / quan ly de xuat chuyen vai cho TTS (CHUYEN_VAI, doi_tuong ho_so) — can cu: it nhat mot bai tap DAT.
-   * Nguoi de xuat khong la chinh TTS; duyet o ban phe duyet (2 buoc: nguoi duyet khac nguoi de xuat).
-   * Sale / CSKH la vai lay tu CRM -> 400.
-   */
-  async deXuatChuyenVai(nd: ThongTinNguoiDung, body: DeXuatChuyenVaiTtsBody) {
-    if (body.ho_so_id === nd.id) throw new ForbiddenException("Không tự đề xuất chuyển vai cho chính mình");
-    kiemVaiKhongTuCrm(body.sang_vai);
-    const dg = await this.danhGia(body.ho_so_id);
-    if (!dg.vai.some(v => v.vai === "THUC_TAP" && v.trang_thai !== "KET_THUC")) throw new BadRequestException("Hồ sơ không phải thực tập sinh");
-    if (dg.bai_tap.dat < 1) throw new BadRequestException("Cần ít nhất một bài tập được mentor chấm đạt làm căn cứ đề xuất");
-    if (dg.vai.some(v => v.vai === body.sang_vai && v.trang_thai === "HOAT_DONG")) throw new ConflictException("Hồ sơ đã có vai này");
-    if (dg.de_xuat_dang_mo.some(d => d.sang_vai === body.sang_vai)) throw new ConflictException("Đã có đề xuất chuyển sang vai này đang chờ duyệt");
-    const trangThaiMoi: TrangThaiVai = body.trang_thai_moi ?? "DANG_HOC";
-    const dx = await this.repo.chayTrongGiaoDich(async tx => {
-      const dx = await this.repo.taoDeXuatChuyenVai(
-        body.ho_so_id,
-        // Dang du_lieu khop DuLieuDeXuatChuyenVai cua quan-tri ({ vai, trang_thai_moi }) + can cu
-        {
-          vai: body.sang_vai,
-          trang_thai_moi: trangThaiMoi,
-          tu_vai: "THUC_TAP",
-          can_cu: { bai_tap: dg.bai_tap, kiem_tra: dg.kiem_tra, bai_hoc: dg.bai_hoc }
-        },
-        body.ly_do.trim(),
-        nd.id,
-        tx
-      );
-      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "DE_XUAT_CHUYEN_VAI_TTS", doiTuong: "de_xuat_duyet", doiTuongId: dx.id, duLieu: { ho_so_id: body.ho_so_id, sang_vai: body.sang_vai } }, tx);
-      return dx;
-    });
-    const phuTrach = (await this.hoSoRepo.layNguoiPhuTrach()).filter(id => id !== nd.id && id !== body.ho_so_id);
-    await this.thongBao
-      .guiNhieu(phuTrach, { loai: "PHE_DUYET", tieuDe: `Đề xuất chuyển ${dg.ho_so.ho_ten} sang vai ${body.sang_vai}`, noiDung: body.ly_do, lienKet: "/quan-tri/phe-duyet" })
-      .catch(() => 0);
-    await this.thongBao
-      .gui({ hoSoId: body.ho_so_id, loai: "PHE_DUYET", tieuDe: `Bạn được đề xuất chuyển sang vai ${body.sang_vai}`, noiDung: "Đề xuất đang chờ duyệt.", lienKet: "/lam-viec/mang-luoi/thuc-tap" })
-      .catch(() => undefined);
-    return { id: dx.id, trang_thai: trangThaiHieuLuc(dx) };
   }
 }

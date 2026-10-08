@@ -1,4 +1,4 @@
-import type { LoTrinhDangKy, TrangLienHe, Vai } from "@thien-khue/contracts";
+import type { LoTrinhDangKy, TrangLienHe } from "@thien-khue/contracts";
 import { lopChip, lopChipTong, lopThe } from "@/components/ui";
 import { FormLienHe } from "./form-lien-he";
 import type { CauHinhForm, MucKhoi, TrangVaiTro } from "./noi-dung";
@@ -28,12 +28,11 @@ interface KhoiVaFormProps {
   form: CauHinhForm;
   trang: TrangLienHe;
   loTrinh?: LoTrinhDangKy;
-  vaiDangKy?: Vai;
   /** Doi key de form ve trang thai dau khi doi lo trinh */
   khoaForm?: string;
 }
 
-export function KhoiVaForm({ block, form, trang, loTrinh, vaiDangKy, khoaForm }: KhoiVaFormProps) {
+export function KhoiVaForm({ block, form, trang, loTrinh, khoaForm }: KhoiVaFormProps) {
   return (
     <section className="tk-reveal mx-auto grid max-w-tk grid-cols-1 items-start gap-10 px-4 pb-20 pt-10 md:px-10 md:pb-24 md:pt-14 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-20">
       <div className="flex flex-col">
@@ -51,7 +50,7 @@ export function KhoiVaForm({ block, form, trang, loTrinh, vaiDangKy, khoaForm }:
       </div>
 
       <div className={`${lopThe} p-5 md:p-8`}>
-        <FormLienHe key={khoaForm} trang={trang} form={form} loTrinh={loTrinh} vaiDangKy={vaiDangKy} />
+        <FormLienHe key={khoaForm} trang={trang} form={form} loTrinh={loTrinh} />
       </div>
     </section>
   );
@@ -61,7 +60,7 @@ export function TrangVaiTroDayDu({ du }: { du: TrangVaiTro }) {
   return (
     <>
       <HeroVaiTro hero={du.hero} />
-      <KhoiVaForm block={du.block} form={du.form} trang={du.trang} vaiDangKy={du.trang === "DOI_TAC" ? undefined : "KHACH"} />
+      <KhoiVaForm block={du.block} form={du.form} trang={du.trang} />
     </>
   );
 }

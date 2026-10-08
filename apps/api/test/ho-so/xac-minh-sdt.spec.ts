@@ -2,10 +2,8 @@ import { ConflictException, ForbiddenException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import type { NhatKyService, ThongBaoService } from "../../src/services/core.service";
 import type { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
-import type { SupabaseAdminService } from "../../src/infrastructure/supabase/supabase-admin.service";
 import type { ThongTinNguoiDung } from "../../src/common/types/nguoi-dung.type";
-import type { DangKyDto } from "../../src/dto/ho-so/ho-so.dto";
-import { HoSoRepository, VaiRepository, XacMinhSdtRepository } from "../../src/repositories/ho-so.repository";
+import { HoSoRepository, XacMinhSdtRepository } from "../../src/repositories/ho-so.repository";
 import { HoSoService, XacMinhSdtService } from "../../src/services/ho-so.service";
 import { anEmail } from "../../src/common/utils/ho-so";
 
@@ -32,9 +30,7 @@ function taoHoSoSv(hoSoHienTai: { sdt_chuan: string | null; sdt_xac_minh_luc: Da
     $transaction: jest.fn(async (fn: (t: typeof tx) => unknown) => fn(tx))
   } as unknown as PrismaService;
   const nhatKy = { ghi: jest.fn(async () => undefined) } as unknown as NhatKyService;
-  const supabaseAdmin = { taoNguoiDung: jest.fn(async () => ({ id: KHACH })), xoaNguoiDung: jest.fn() } as unknown as SupabaseAdminService;
-  const thongBao = { gui: jest.fn(async () => undefined) } as unknown as ThongBaoService;
-  return { sv: new HoSoService(new HoSoRepository(prisma), new VaiRepository(prisma), supabaseAdmin, nhatKy, thongBao), prisma, tx, nhatKy };
+  return { sv: new HoSoService(new HoSoRepository(prisma), nhatKy), prisma, tx, nhatKy };
 }
 
 describe("HoSoService — doi SDT xoa xac minh", () => {
@@ -65,15 +61,6 @@ describe("HoSoService — doi SDT xoa xac minh", () => {
     const { sv, prisma } = taoHoSoSv({ sdt_chuan: null, sdt_xac_minh_luc: null });
     await sv.capNhatCuaToi(nd(KHACH, ["KHACH"]), { sdt: "0901234567" });
     expect((prisma.ho_so.findFirst as jest.Mock).mock.calls[0][0].where).toMatchObject({ sdt_chuan: "0901234567", sdt_xac_minh_luc: { not: null } });
-  });
-
-  it("dang ky: SDT tu khai khong duoc danh dau xac minh", async () => {
-    const { sv, tx } = taoHoSoSv({ sdt_chuan: null, sdt_xac_minh_luc: null });
-    const dto = { ho_ten: "Khách B", email: "b@vi.du", sdt: "0901234567", mat_khau: "matkhau123", vai: "KHACH" } as DangKyDto;
-    await sv.dangKy(dto, "10.9.9.1", undefined);
-    const data = (tx.ho_so.create.mock.calls[0] as unknown as [{ data: Record<string, unknown> }])[0].data;
-    expect(data.sdt_chuan).toBe("0901234567");
-    expect(data.sdt_xac_minh_luc ?? null).toBeNull();
   });
 });
 
