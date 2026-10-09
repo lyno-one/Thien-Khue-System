@@ -30,15 +30,40 @@ nano .env api.env
 docker compose build
 # Áp migration schema thien_khue (KHÔNG đụng schema public của CRM)
 docker compose run --rm api node_modules/.bin/prisma migrate deploy
-docker compose up -d
+docker compose up -d                    # VPS đã có Caddy chạy trên máy (xem 2.1)
+# docker compose --profile caddy up -d  # VPS trống: chạy kèm container Caddy giữ :80/:443
 ```
+
+### 2.1. VPS dùng chung với CRM (Caddy chạy trực tiếp trên máy)
+
+VPS OCI `150.230.154.52` đã có Caddy (systemd) phục vụ `crm` / `api` / `doitra` / `app.lyno.com.vn`. Không bật profile `caddy`; web/api chỉ mở `127.0.0.1:3300` / `127.0.0.1:3310`. Thêm khối sau vào **cuối** `/etc/caddy/Caddyfile`:
+
+```
+thienkhue.lyno.com.vn {
+	encode zstd gzip
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3310
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3300
+	}
+}
+```
+
+```bash
+sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak-$(date +%F)
+sudo nano /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+```
+
+`reload` không làm gián đoạn các site CRM đang chạy. `api.env`: `TRUST_PROXY=1`, `CRM_API_URL=https://api.lyno.com.vn`. Nếu cổng 3300/3310 trên máy đã bị chiếm, đặt `WEB_PORT` / `API_PORT` trong `deploy/.env` rồi sửa cổng trong khối Caddy cho khớp.
 
 Kiểm tra:
 
 ```bash
 docker compose ps                                  # api phải "healthy"
 curl https://thienkhue.lyno.com.vn/api/health
-docker compose logs -f api web caddy
+docker compose logs -f api web
 ```
 
 ## 3. Cập nhật phiên bản mới
@@ -57,4 +82,4 @@ docker image prune -f
 - `deploy/api.env` chứa service role key và mật khẩu DB. Không commit file này (đã có trong `.gitignore`), nên đặt quyền `chmod 600`.
 - `DATABASE_URL` **bắt buộc** có `?schema=thien_khue`. Không bao giờ chạy `prisma migrate reset` hay `db push` trên DB thật vì DB dùng chung với CRM.
 - Job đồng bộ đơn CRM (`MANG_LUOI_DONG_BO_PHUT`) chạy trong container api. Chỉ chạy **một** bản api để job không bị chạy trùng.
-- Nếu bỏ Caddy vì đã có Nginx hoặc CDN riêng: xoá service `caddy`, mở cổng `3300`/`3310` ra cho proxy đó, rồi định tuyến `/api/*` vào 3310 và phần còn lại vào 3300.
+- Dùng Nginx thay Caddy: không bật profile `caddy`, định tuyến `/api/*` vào `127.0.0.1:3310` và phần còn lại vào `127.0.0.1:3300`.
