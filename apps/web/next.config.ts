@@ -1,4 +1,8 @@
+import path from "node:path";
 import type { NextConfig } from "next";
+
+/** NEXT_OUTPUT=standalone (Dockerfile deploy) -> ban chay doc lap .next/standalone; trace tu goc monorepo de lay ca packages/contracts */
+const STANDALONE = process.env.NEXT_OUTPUT === "standalone";
 
 /** Header bao mat co ban (KHONG dat CSP day du — de tranh vo script/anh). HSTS chi ban production. */
 const HEADER_BAO_MAT = [
@@ -14,6 +18,7 @@ const nextConfig: NextConfig = {
   // contracts build ra dist (CommonJS) — van khai bao de Next bien dich cung pipeline
   transpilePackages: ["@thien-khue/contracts"],
   poweredByHeader: false,
+  ...(STANDALONE ? { output: "standalone" as const, outputFileTracingRoot: path.join(__dirname, "../..") } : {}),
   async headers() {
     return [{ source: "/:path*", headers: HEADER_BAO_MAT }];
   },

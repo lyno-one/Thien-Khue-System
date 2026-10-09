@@ -10,3 +10,6 @@ next-env.d.ts
 !.env.example
 .DS_Store
 *.log
+
+# Khoa that khi deploy
+deploy/api.env

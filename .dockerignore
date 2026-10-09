@@ -1,0 +1,14 @@
+**/node_modules
+**/.next
+**/.next-build
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/.env*
+!**/.env.example
+.git
+docs
+thien-khue-s-src
+deploy/*.env
+deploy/.env
+**/*.log
