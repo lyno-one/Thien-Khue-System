@@ -25,11 +25,11 @@ const NUT_GOC = lopNutGoc.replace("whitespace-nowrap", "text-center");
 const KIEU: Record<KieuNut, string> = {
   chinh: "bg-chinh text-tren-chinh hover:bg-chinh-dam hover:text-tren-chinh",
   vien: "border border-vien-dam bg-be-mat text-chu hover:bg-be-mat-phu",
-  toi: "bg-chinh-dam text-tren-chinh hover:bg-xanh-800 hover:text-tren-chinh",
-  bo: "bg-be-mat text-chinh-dam hover:bg-chinh-nhat",
-  nhat: "border border-chinh/20 bg-chinh-nhat text-chinh-dam hover:bg-xanh-100",
+  toi: "bg-xanh-800 text-tren-chinh hover:bg-xanh-900 hover:text-tren-chinh",
+  bo: "bg-be-mat text-chu hover:bg-be-mat-phu",
+  nhat: "border border-vien bg-chinh-nhat text-chu hover:bg-vien",
   trong: "bg-transparent text-chu-phu hover:bg-be-mat-phu hover:text-chu",
-  "vien-toi": "border border-muc-200/40 bg-transparent text-tren-chinh hover:bg-xanh-700 hover:text-tren-chinh",
+  "vien-toi": "border border-tren-chinh/40 bg-transparent text-tren-chinh hover:bg-tren-chinh/10 hover:text-tren-chinh",
   "vien-loi": "border border-loi/30 bg-be-mat text-loi hover:bg-loi-nhat hover:text-loi",
   "nguy-hiem": "bg-loi text-tren-chinh hover:bg-loi/90 hover:text-tren-chinh"
 };

@@ -22,7 +22,7 @@ export function StorefrontFooter() {
       <div className="mx-auto grid max-w-tk grid-cols-1 gap-8 px-4 pb-10 pt-10 text-sm sm:grid-cols-2 md:px-10 lg:grid-cols-[minmax(0,3fr)_repeat(3,minmax(0,2fr))]">
         <div className="flex flex-col gap-2">
           <span className="text-lg font-semibold tracking-[0.24em] text-chu">
-            THIÊN KHUÊ <span className="text-chinh">S</span>
+            THIÊN KHUÊ <span className="text-lien-ket">S</span>
           </span>
           <span className="leading-6">
             Zalo/Hotline 0968 463 986 (9h–22h)

@@ -14,7 +14,7 @@
  */
 
 export const lopNutGoc =
-  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold no-underline " +
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold tracking-[-0.005em] no-underline " +
   "transition-colors duration-nhanh disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50";
 
 /** Cao chuan cua nut: 44px tren dien thoai, 36px tu sm */
@@ -30,7 +30,7 @@ export const lopNutMa = `${lopNutGoc} ${lopCaoNut} bg-transparent px-3 text-chu-
 
 export const lopNutVien =
   "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded border border-vien-dam bg-be-mat " +
-  "h-7 px-2 text-xs font-medium text-chinh no-underline transition-colors duration-nhanh hover:border-chinh/40 hover:bg-chinh-nhat " +
+  "h-7 px-2 text-xs font-medium text-chu no-underline transition-colors duration-nhanh hover:border-chu hover:bg-be-mat-phu " +
   "disabled:cursor-not-allowed disabled:opacity-50";
 
 export const lopNutIcon =
@@ -40,13 +40,13 @@ export const lopNutIcon =
 export const lopNutVuong = `${lopNutGoc} h-11 w-11 sm:h-9 sm:w-9 border border-vien-dam bg-be-mat text-chu-phu hover:bg-be-mat-phu hover:text-chu`;
 
 /** Link chu trong doan van / dong bang */
-export const lopLienKet = "font-medium text-chinh underline-offset-2 hover:text-chinh-dam hover:underline";
+export const lopLienKet = "font-medium text-lien-ket underline underline-offset-2 hover:decoration-2";
 
 /** O nhap: input / select cao 44 (dien thoai) / 36 (tu sm); textarea tu cao. Chu 16px tren dien thoai de iOS khong phong to */
 export const lopO =
   "w-full rounded-lg border border-vien-dam bg-be-mat px-3 py-2 text-base text-chu placeholder:text-chu-mo sm:text-sm " +
   "[&:not(textarea)]:h-11 sm:[&:not(textarea)]:h-9 " +
-  "transition-colors duration-nhanh focus:border-chinh focus:outline-none focus:ring-2 focus:ring-chinh/20 " +
+  "transition-colors duration-nhanh focus:border-chu focus:outline-none focus:ring-2 focus:ring-vong/30 " +
   "aria-[invalid=true]:border-loi disabled:cursor-not-allowed disabled:bg-be-mat-phu disabled:text-chu-mo";
 
 export const lopNhanTruong = "text-sm font-semibold text-chu";
@@ -68,7 +68,7 @@ export const lopThanhTab = "inline-flex max-w-full flex-wrap gap-1 rounded-lg bg
 
 export const lopTab = (dangChon: boolean) =>
   "inline-flex h-9 sm:h-8 items-center gap-2 whitespace-nowrap rounded px-3 text-sm no-underline transition-colors duration-nhanh " +
-  (dangChon ? "bg-be-mat font-semibold text-chinh-dam ring-1 ring-vien" : "text-chu-phu hover:bg-be-mat/60 hover:text-chu");
+  (dangChon ? "bg-chinh font-semibold text-tren-chinh" : "text-chu-phu hover:bg-be-mat/60 hover:text-chu");
 
 /** Nhan trang thai (chip): caption, bo nho — mau lay tu lopChipTong */
 export const lopChip = "inline-flex items-center gap-1 whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium";
@@ -76,7 +76,7 @@ export const lopChip = "inline-flex items-center gap-1 whitespace-nowrap rounded
 export type TongChip = "chinh" | "trung-tinh" | "thanh-cong" | "canh-bao" | "loi" | "dam";
 
 export const lopChipTong: Record<TongChip, string> = {
-  chinh: "bg-chinh-nhat text-chinh-dam",
+  chinh: "bg-xanh-100 text-xanh-800",
   "trung-tinh": "bg-be-mat-phu text-chu-phu",
   "thanh-cong": "bg-thanh-cong-nhat text-thanh-cong",
   "canh-bao": "bg-canh-bao-nhat text-canh-bao",

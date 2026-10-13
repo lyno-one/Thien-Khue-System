@@ -16,9 +16,9 @@ export function DauLogo({ co = 28, mau = "text-chinh", className }: { co?: numbe
 }
 
 /** Chu "THIÊN KHUÊ S" gian chu (storefront) — chu `chu`, chu S `chinh` */
-export function ChuLogo({ className, chuS = "text-chinh" }: { className?: string; chuS?: string }) {
+export function ChuLogo({ className, chuS = "text-lien-ket" }: { className?: string; chuS?: string }) {
   return (
-    <span className={cn("font-semibold leading-none tracking-[0.24em] text-chu", className)}>
+    <span className={cn("font-display font-extrabold leading-none tracking-[0.24em] text-chu", className)}>
       THIÊN KHUÊ <span className={chuS}>S</span>
     </span>
   );
@@ -29,8 +29,8 @@ export function LogoKhung({ nhanPhu }: { nhanPhu?: string }) {
   return (
     <span className="flex items-center gap-2">
       <DauLogo co={24} />
-      <span className="whitespace-nowrap text-h3 text-chu">
-        Thiên Khuê <span className="text-chinh">S</span>
+      <span className="whitespace-nowrap font-display text-h3 text-chu">
+        Thiên Khuê <span className="text-lien-ket">S</span>
       </span>
       {nhanPhu && (
         <span className="hidden border-l border-vien pl-2 text-xs font-medium uppercase tracking-[0.04em] text-chu-mo sm:inline">{nhanPhu}</span>
