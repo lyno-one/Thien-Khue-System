@@ -13,6 +13,23 @@ import { TheSanPham, TheSanPhamCho } from "./the-san-pham";
  * xanh `chinh` chi o cho bam duoc / dang chon; khong gradient, khong vang / cam / tim.
  */
 
+/** Anh LYNO CDN (chi hien thi, khong cau hinh next/image) lap day khung `relative` cha */
+function AnhPhu({ src, alt }: { src: string; alt: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />;
+}
+
+const ANH = {
+  bst: "https://img1.lyno.vn/RV9BWO-3yRHrb2xCO46ToLw22pgoK2iLcOWJfphbcHc/rs:fill:900:0:0/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyNi8xMC83YmVkNTg5MzExOTJiZTNkM2VhY2FhYjZkYTYwNDA0Ni5qcGc.webp",
+  workshop: "https://img1.lyno.vn/1rrIrMTGBF5HtrExp49VJadn3WvgZBzYx0M4MBDVQJ0/rs:fit:750:1000:0/ex:1:ce/background:eeeeee/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyMy8xMS9kN2E1NzY2MWRlMzhkOTI5MzQ1OTAzYjBjODQ3OTYwMy5qcGc.webp",
+  lopHoc: "/lophoc-ctv.png",
+  somi: "https://img1.lyno.vn/HLopkDfr8RekNkJ395uU8eYvKdIH6MJ7BnyVi_9InyI/rs:fit:750:1000:0/ex:1:ce/background:eeeeee/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyNC8wMy8yNDI4N2ZlZmU4NjNlOTc0NzU0ZWY3NDUxNzE4ODljYi5wbmc.webp",
+  hoaTiet: "https://img1.lyno.vn/kEBtGMy7OZ58KqKjjuHDx4_BCPVzaZbixbW1sFiDxVY/rs:fit:750:1000:0/ex:1:ce/background:eeeeee/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyNS8wMy83OTE2OGQxMzYzYjU0MDUwZGJhMGNhOTJlNmMzYjU0Zi5wbmc.webp",
+  khan1: "https://img1.lyno.vn/TpOSrNZ5uo9iNHFdZmL5waBu8p0wcWgTzoN9DRTwQlk/rs:fit:750:1000:0/ex:1:ce/background:eeeeee/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyMy8xMS83ZmIyNzA4ZTNmZGRlODUyODNjZDM5YzlkODQwZGRjOS5qcGc.webp",
+  khan2: "https://img1.lyno.vn/fE_DseR3u5js5XXfutV9FWOZcL2LvbmGf3YSmLTmiY8/rs:fit:750:1000:0/ex:1:ce/background:eeeeee/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyMy8xMS8zNTMyYzUwOWJlYmM4YjZhMjllZTRiYTdlMjA2YjU0OS5qcGc.webp",
+  khan3: "https://img1.lyno.vn/-FNJM-lvmY6jJwtDaoTFqdmtq5qf2SpmU6f8g6uMlOE/rs:fit:750:1000:0/ex:1:ce/background:eeeeee/aHR0cDovL3MzLmFwLW5vcnRoZWFzdC0xLndhc2FiaXN5cy5jb20vaG5jLWNybS1zMy5nZXRjb252ZXJzaW9uLmNvL3dlYmVjb20vMjAyMy8xMS83NDA1N2M5MGMwNDJhZDg2YTI3NzJjOGEwZDgwYzNhZi5qcGc.webp"
+} as const;
+
 const LOP_H2 = "m-0 text-h1 text-chu";
 /** Chip noi bat tren nen xanh dam */
 const LOP_CHIP_TOI = `${lopChip} bg-xanh-100 text-xanh-800`;
@@ -60,7 +77,7 @@ function Hero() {
           </span>
           <h1 className="tk-up tk-d1 m-0 max-w-[560px] text-hien-thi">
             Khí chất <br className="hidden md:block" />
-            <span className="text-chinh">không cần lên tiếng.</span>
+            <span className="text-lien-ket">không cần lên tiếng.</span>
           </h1>
           <p className="tk-up tk-d2 m-0 hidden max-w-[440px] text-body-lg text-chu-phu md:block">
             Thời trang công sở LYNO và khăn lụa Thiên Khuê — cổ điển mà hiện đại, tinh tế mà phóng khoáng.
@@ -95,9 +112,8 @@ function DanhMucMobile() {
       {DANH_MUC_MOBILE.map(d => (
         <LinkNgoai
           key={d.nhan}
-          className={`inline-flex min-h-10 shrink-0 items-center rounded-lg border px-4 text-sm font-medium no-underline ${
-            d.noiBat ? "border-chinh/20 bg-chinh-nhat text-chinh-dam" : "border-vien-dam bg-be-mat text-chu"
-          }`}
+          className={`inline-flex min-h-10 shrink-0 items-center rounded-lg border px-4 text-sm font-medium no-underline ${d.noiBat ? "border-chinh/20 bg-chinh-nhat text-chinh-dam" : "border-vien-dam bg-be-mat text-chu"
+            }`}
         >
           {d.nhan}
         </LinkNgoai>
@@ -136,9 +152,9 @@ function DaiThongTin() {
 // ------------------------------------------------------------------ HOAT DONG NOI BAT (desktop)
 
 const HOAT_DONG = [
-  { anh: "[Ảnh ra mắt BST]", muc: "Bộ sưu tập · [Ngày]", ten: "Ra mắt bộ sưu tập [Tên BST]", mo: "Xem trước tại cửa hàng Phú Nhuận, thành viên VIP được ưu tiên đặt giữ mẫu." },
-  { anh: "[Ảnh workshop]", muc: "Workshop · [Ngày]", ten: "Phối khăn lụa cho trang phục công sở", mo: "Hướng dẫn thắt khăn và phối cùng sơ mi, blazer — mở cho khách hàng và học viên." },
-  { anh: "[Ảnh lớp học]", muc: "Đào tạo · [Ngày khai giảng]", ten: "Khai giảng khóa CTV online", mo: "Lộ trình về sản phẩm, tư vấn size và chốt đơn cho người mới bắt đầu." }
+  { anh: ANH.bst, alt: "Ra mắt bộ sưu tập mới", muc: "Bộ sưu tập · [Ngày]", ten: "Ra mắt bộ sưu tập [Tên BST]", mo: "Xem trước tại cửa hàng Phú Nhuận, thành viên VIP được ưu tiên đặt giữ mẫu." },
+  { anh: ANH.workshop, alt: "Workshop phối khăn lụa", muc: "Workshop · [Ngày]", ten: "Phối khăn lụa cho trang phục công sở", mo: "Hướng dẫn thắt khăn và phối cùng sơ mi, blazer — mở cho khách hàng và học viên." },
+  { anh: ANH.lopHoc, alt: "Lớp học CTV online", muc: "Đào tạo · [Ngày khai giảng]", ten: "Khai giảng khóa CTV online", mo: "Lộ trình về sản phẩm, tư vấn size và chốt đơn cho người mới bắt đầu." }
 ];
 
 function HoatDongNoiBat() {
@@ -150,7 +166,9 @@ function HoatDongNoiBat() {
       <div className="grid grid-cols-3 gap-6">
         {HOAT_DONG.map(h => (
           <article key={h.ten} className="flex flex-col gap-3">
-            <div className="flex aspect-[4/3] items-center justify-center rounded-xl border border-vien bg-be-mat-phu text-caption text-chu-mo">{h.anh}</div>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-vien bg-be-mat-phu">
+              <AnhPhu src={h.anh} alt={h.alt} />
+            </div>
             <span className="text-caption text-chu-mo">{h.muc}</span>
             <h3 className="m-0 text-h3 text-chu">{h.ten}</h3>
             <p className="m-0 text-body text-chu-phu">{h.mo}</p>
@@ -196,15 +214,15 @@ function HaiDong() {
   return (
     <section className="tk-reveal mx-auto grid w-full max-w-tk grid-cols-1 gap-8 px-4 pt-10 md:grid-cols-2 md:gap-6 md:px-10 md:pt-20">
       <LinkNgoai className="group flex flex-col gap-3 text-chu no-underline">
-        <div className="flex h-[420px] items-center justify-center rounded-xl border border-vien bg-be-mat-phu px-4 text-center text-caption text-chu-mo md:h-[520px]">
-          [Ảnh dòng sơ mi cơ bản — nhiều vóc dáng]
+        <div className="relative h-[420px] overflow-hidden rounded-xl border border-vien bg-be-mat-phu md:h-[520px]">
+          <AnhPhu src={ANH.somi} alt="Dòng sơ mi cơ bản — nhiều vóc dáng" />
         </div>
         <span className={lopKicker}>Dòng cơ bản · Size S — 3XL</span>
         <span className="text-h2 transition-colors duration-nhanh group-hover:text-chinh md:text-h1">Dễ mặc, dễ phối, không lỗi mốt</span>
       </LinkNgoai>
       <LinkNgoai className="group flex flex-col gap-3 text-chu no-underline md:pt-16">
-        <div className="flex h-[420px] items-center justify-center rounded-xl border border-chinh/10 bg-chinh-nhat px-4 text-center text-caption text-chu-phu md:h-[520px]">
-          [Ảnh dòng họa tiết, áo kiểu, đầm]
+        <div className="relative h-[420px] overflow-hidden rounded-xl border border-vien bg-be-mat-phu md:h-[520px]">
+          <AnhPhu src={ANH.hoaTiet} alt="Dòng họa tiết, áo kiểu, đầm" />
         </div>
         <span className={lopKicker}>Họa tiết · Áo kiểu · Đầm</span>
         <span className="text-h2 transition-colors duration-nhanh group-hover:text-chinh md:text-h1">Điểm nhấn cho những cuộc gặp quan trọng</span>
@@ -260,11 +278,15 @@ function KhuThienKhue() {
           </NutLienKet>
         </div>
         <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
-          <div className="flex h-[260px] items-center justify-center rounded-xl border border-chinh/10 bg-be-mat px-3 text-center text-caption text-chu-mo md:h-[420px]">[Khăn — họa tiết 1]</div>
-          <div className="mt-7 flex h-[260px] items-center justify-center rounded-xl border border-chinh/10 bg-be-mat px-3 text-center text-caption text-chu-mo md:mt-12 md:h-[420px]">
-            [Khăn — họa tiết 2]
+          <div className="relative h-[260px] overflow-hidden rounded-xl border border-vien bg-be-mat md:h-[420px]">
+            <AnhPhu src={ANH.khan1} alt="Khăn lụa Thiên Khuê — họa tiết 1" />
           </div>
-          <div className="hidden h-[420px] items-center justify-center rounded-xl border border-chinh/10 bg-be-mat px-3 text-center text-caption text-chu-mo lg:flex">[Khăn — cách thắt]</div>
+          <div className="relative mt-7 h-[260px] overflow-hidden rounded-xl border border-vien bg-be-mat md:mt-12 md:h-[420px]">
+            <AnhPhu src={ANH.khan2} alt="Khăn lụa Thiên Khuê — họa tiết 2" />
+          </div>
+          <div className="relative hidden h-[420px] overflow-hidden rounded-xl border border-vien bg-be-mat lg:block">
+            <AnhPhu src={ANH.khan3} alt="Khăn lụa Thiên Khuê — họa tiết 3" />
+          </div>
         </div>
       </div>
     </section>
