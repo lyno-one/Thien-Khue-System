@@ -352,10 +352,25 @@ export class CrmDocService {
    * Doc ::text — khong phu thuoc CRM da ap migration 079 hay chua (nhom moi chi la gia tri text them vao CHECK).
    */
   async layNhanSuCrm(userId: string): Promise<NhanSuCrm | null> {
+    const coNhom = await this.coCotNhomQuyen();
     const rows = await this.prisma.$queryRaw<NhanSuCrm[]>`
-      select u.id, u.email, u.full_name, u.role, u.active, coalesce(p.nhom_quyen::text, 'KHONG') as nhom_quyen, p.ten as phong_ban
+      select u.id, u.email, u.full_name, u.role, u.active, ${coNhom ? Prisma.sql`coalesce(p.nhom_quyen::text, 'KHONG')` : Prisma.sql`'KHONG'`} as nhom_quyen, p.ten as phong_ban
       from public.users u left join public.phong_ban p on p.id = u.phong_ban_id where u.id = ${userId}::uuid`;
     return rows[0] ?? null;
+  }
+
+  private coNhomQuyen: Promise<boolean> | null = null;
+
+  /**
+   * CRM chua ap migration 075 (phong_ban.nhom_quyen) thi coi moi phong la KHONG — admin / manager van dang nhap duoc theo users.role,
+   * cac vai theo nhom (SALE, CSKH...) chi co sau khi CRM len migration. Chi nho ket qua khi CO cot (de CRM migrate xong khong can khoi dong lai).
+   */
+  private async coCotNhomQuyen(): Promise<boolean> {
+    if (this.coNhomQuyen && (await this.coNhomQuyen)) return true;
+    this.coNhomQuyen = this.prisma
+      .$queryRaw<{ n: number }[]>`select count(*)::int as n from information_schema.columns where table_schema = 'public' and table_name = 'phong_ban' and column_name = 'nhom_quyen'`
+      .then(r => (r[0]?.n ?? 0) > 0);
+    return this.coNhomQuyen;
   }
 
   /** Trong cac auth uid dua vao, nhung uid KHONG con lam tren CRM (bi khoa active=false hoac da xoa khoi public.users) */
@@ -370,6 +385,7 @@ export class CrmDocService {
 
   /** Nhan su CRM dang lam theo nhom quyen (vd SALE / CSKH) — phan bo khach */
   async layNhanSuTheoNhom(nhomQuyen: NhanSuCrm["nhom_quyen"]): Promise<NhanSuCrm[]> {
+    if (!(await this.coCotNhomQuyen())) return [];
     return this.prisma.$queryRaw<NhanSuCrm[]>`
       select u.id, u.email, u.full_name, u.role, u.active, coalesce(p.nhom_quyen::text, 'KHONG') as nhom_quyen, p.ten as phong_ban
       from public.users u left join public.phong_ban p on p.id = u.phong_ban_id
