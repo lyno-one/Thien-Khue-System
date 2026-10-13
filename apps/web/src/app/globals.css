@@ -3,53 +3,55 @@
 @tailwind utilities;
 
 /*
- * DESIGN TOKEN — Thien Khue S theo he thiet ke trang xanh cua CRM Lyno (D:\intern\CRM_Lyno-\DESIGN.md,
- * apps/web/src/styles/globals.css). Gia tri chep NGUYEN tu CRM; doi o CRM thi chep lai sang day.
+ * DESIGN TOKEN — Thien Khue S theo he thiet ke TOI GIAN (.agents/skills/design-system/SKILL.md):
+ * nen be am #F4F4F1, chu/nut chinh den #0C0C09, nhan nhan chàm #312C85, khoang cach 4/8/12/16/24/32,
+ * khong do bong khi o yen, vien mong thay cho bong. Ten bien giu nguyen (xanh = thang cham, muc = thang xam am).
  * Mau khai bang kenh RGB ("22 91 226") de Tailwind ghep duoc do mo: rgb(var(--chinh) / 0.1).
  * Tang 1 = thang nguyen thuy (xanh, muc). Tang 2 = token ngu nghia, component chi nen dung tang 2.
  * Ten cu tk-* trong tailwind.config.ts chi la ALIAS chuyen tiep tro sang cac token nay.
  */
 @layer base {
   :root {
-    /* ---- Thang xanh (chinh) — oklch hue 262 ---- */
-    --xanh-50: 239 245 255; /* #EFF5FF */
-    --xanh-100: 221 234 255; /* #DDEAFF */
-    --xanh-200: 192 216 255; /* #C0D8FF */
-    --xanh-300: 151 190 255; /* #97BEFF */
-    --xanh-400: 94 149 253; /* #5E95FD */
-    --xanh-500: 43 108 236; /* #2B6CEC  4.7:1 tren trang */
-    --xanh-600: 22 91 226; /* #165BE2  5.8:1 — mau chinh */
-    --xanh-700: 10 74 197; /* #0A4AC5 */
-    --xanh-800: 9 59 155; /* #093B9B */
-    --xanh-900: 9 42 108; /* #092A6C */
+    /* ---- Thang xanh = CHAM (secondary #312C85 la xanh-800) — link, focus, khoi nhan ---- */
+    --xanh-50: 240 240 250; /* #F0F0FA */
+    --xanh-100: 225 224 245; /* #E1E0F5 */
+    --xanh-200: 196 194 235; /* #C4C2EB */
+    --xanh-300: 160 157 219; /* #A09DDB */
+    --xanh-400: 122 118 198; /* #7A76C6 */
+    --xanh-500: 85 80 173; /* #5550AD */
+    --xanh-600: 67 62 154; /* #433E9A  8.1:1 tren trang */
+    --xanh-700: 58 53 144; /* #3A3590 */
+    --xanh-800: 49 44 133; /* #312C85  secondary */
+    --xanh-900: 34 30 94; /* #221E5E */
 
-    /* ---- Thang muc (trung tinh lanh, nga xanh) — oklch hue 258 ---- */
-    --muc-50: 245 248 252; /* #F5F8FC */
-    --muc-100: 237 241 247; /* #EDF1F7 */
-    --muc-200: 225 231 240; /* #E1E7F0 */
-    --muc-300: 201 210 222; /* #C9D2DE  chi cho vien / chu vo hieu */
-    --muc-400: 98 112 131; /* #627083  5.0:1 tren trang — muc chu nhat nhat duoc phep */
-    --muc-500: 85 100 122; /* #55647A */
-    --muc-600: 64 81 105; /* #405169 */
-    --muc-700: 46 62 85; /* #2E3E55 */
-    --muc-800: 28 41 61; /* #1C293D */
-    --muc-900: 14 25 40; /* #0E1928 */
-    --muc-950: 6 13 26; /* #060D1A */
+    /* ---- Thang muc = XAM AM (nen #F4F4F1, chu #0C0C09) ---- */
+    --muc-50: 249 249 247; /* #F9F9F7 */
+    --muc-100: 236 236 231; /* #ECECE7 */
+    --muc-200: 225 225 219; /* #E1E1DB */
+    --muc-300: 196 196 188; /* #C4C4BC  chi cho vien / chu vo hieu */
+    --muc-400: 106 106 98; /* #6A6A62  5.5:1 tren trang — muc chu nhat nhat duoc phep */
+    --muc-500: 90 90 83; /* #5A5A53 */
+    --muc-600: 68 68 62; /* #44443E */
+    --muc-700: 52 52 47; /* #34342F */
+    --muc-800: 32 32 28; /* #20201C */
+    --muc-900: 12 12 9; /* #0C0C09  text / primary */
+    --muc-950: 8 8 6; /* #080806 */
 
     /* ---- Ngu nghia: LIGHT ---- */
-    --nen: var(--muc-50); /* nen trang (khu lam viec) */
+    --nen: 244 244 241; /* #F4F4F1 surface (khu lam viec) */
     --be-mat: 255 255 255; /* the, bang, popup, nen storefront */
     --be-mat-phu: var(--muc-100); /* dau bang, dong re chuot, o bi khoa */
     --vien: var(--muc-200); /* vien the, ke dong */
     --vien-dam: var(--muc-300); /* vien o nhap, nut phu */
-    --chu: var(--muc-900); /* chu chinh      17.7:1 */
-    --chu-phu: var(--muc-600); /* chu phu, nhan   8.1:1 */
-    --chu-mo: var(--muc-400); /* placeholder, chu thich  5.0:1 */
-    --chinh: var(--xanh-600); /* nut chinh, link, muc dang chon */
-    --chinh-dam: var(--xanh-700); /* hover / nhan cua mau chinh */
-    --chinh-nhat: var(--xanh-50); /* nen muc dang chon, dong duoc chon */
-    --tren-chinh: 255 255 255; /* chu tren nen chinh  5.8:1 */
-    --vong: var(--xanh-500); /* vong focus  4.7:1 */
+    --chu: var(--muc-900); /* chu chinh      19:1 */
+    --chu-phu: var(--muc-600); /* chu phu, nhan   9.5:1 */
+    --chu-mo: var(--muc-400); /* placeholder, chu thich  5.5:1 */
+    --chinh: var(--muc-900); /* nut chinh, muc dang chon: den #0C0C09 */
+    --chinh-dam: var(--muc-700); /* hover cua mau chinh */
+    --chinh-nhat: var(--muc-100); /* nen muc dang chon, dong duoc chon */
+    --tren-chinh: 255 255 255; /* chu tren nen chinh  19:1 */
+    --lien-ket: var(--xanh-800); /* link trong doan van: cham #312C85  11.5:1 */
+    --vong: var(--xanh-600); /* vong focus cham  8.1:1 */
     --loi: 197 30 33; /* #C51E21  loi, xoa, so xau di  5.9:1 */
     --loi-nhat: 255 238 238; /* #FFEEEE */
     --canh-bao: 154 85 5; /* #9A5505  sap het, cho xac minh  5.7:1 */
@@ -58,10 +60,10 @@
     --thanh-cong-nhat: 227 250 237; /* #E3FAED */
 
     /* ---- Do bong: am xanh navy, co do lech + nhoe ---- */
-    --bong-mau: 14 25 40;
-    --bong-1: 0 1px 2px rgb(var(--bong-mau) / 0.06), 0 1px 3px rgb(var(--bong-mau) / 0.04); /* the noi nhe */
-    --bong-2: 0 4px 12px -2px rgb(var(--bong-mau) / 0.1), 0 2px 4px rgb(var(--bong-mau) / 0.05); /* menu tha, popover */
-    --bong-3: 0 16px 40px -8px rgb(var(--bong-mau) / 0.18), 0 4px 10px rgb(var(--bong-mau) / 0.06); /* hop thoai */
+    --bong-mau: 12 12 9;
+    --bong-1: none; /* toi gian: vien mong thay cho bong */
+    --bong-2: 0 4px 12px -2px rgb(var(--bong-mau) / 0.08); /* menu tha, popover */
+    --bong-3: 0 16px 40px -8px rgb(var(--bong-mau) / 0.16); /* hop thoai */
 
     /* ---- Khoang cach: luoi 4px ---- */
     --khoang-1: 4px;
@@ -71,14 +73,13 @@
     --khoang-5: 20px;
     --khoang-6: 24px;
     --khoang-8: 32px;
-    --khoang-10: 40px;
     --khoang-12: 48px;
     --khoang-16: 64px;
 
-    /* ---- Bo goc: 4 muc (rounded / rounded-lg / rounded-xl / rounded-full) ---- */
+    /* ---- Bo goc: 4 / 6 / 8 / tron (rounded / rounded-lg / rounded-xl / rounded-full) — vuong vuc hon ban cu ---- */
     --bo-nho: 4px;
-    --bo-vua: 8px;
-    --bo-lon: 12px;
+    --bo-vua: 6px;
+    --bo-lon: 8px;
     --bo-tron: 9999px;
 
     /* ---- Co dieu khien ---- */
@@ -94,19 +95,20 @@
 
   /* ---- Ngu nghia: DARK — chi bat khi <html data-theme="dark"> (chua dung) ---- */
   [data-theme="dark"] {
-    --nen: 9 15 26;
-    --be-mat: 16 23 36;
-    --be-mat-phu: 25 32 47;
-    --vien: 37 46 62;
-    --vien-dam: 56 67 85;
-    --chu: 231 235 242;
-    --chu-phu: 174 184 200;
-    --chu-mo: 141 153 171;
-    --chinh: 96 149 250;
-    --chinh-dam: 128 173 255;
-    --chinh-nhat: 19 37 72;
-    --tren-chinh: 9 15 26;
-    --vong: 128 173 255;
+    --nen: 12 12 9;
+    --be-mat: 20 20 17;
+    --be-mat-phu: 32 32 28;
+    --vien: 52 52 47;
+    --vien-dam: 90 90 83;
+    --chu: 244 244 241;
+    --chu-phu: 196 196 188;
+    --chu-mo: 150 150 142;
+    --chinh: 244 244 241;
+    --chinh-dam: 255 255 255;
+    --chinh-nhat: 37 37 33;
+    --tren-chinh: 12 12 9;
+    --lien-ket: 160 157 219;
+    --vong: 160 157 219;
     --loi: 246 109 103;
     --loi-nhat: 67 22 20;
     --canh-bao: 242 175 72;
@@ -115,7 +117,7 @@
     --thanh-cong-nhat: 11 46 30;
 
     --bong-mau: 0 0 0;
-    --bong-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --bong-1: none;
     --bong-2: 0 6px 16px -2px rgb(0 0 0 / 0.5), 0 2px 4px rgb(0 0 0 / 0.3);
     --bong-3: 0 20px 48px -8px rgb(0 0 0 / 0.6), 0 4px 12px rgb(0 0 0 / 0.35);
 
@@ -137,6 +139,19 @@
 
   a {
     color: inherit;
+  }
+
+  /* Chu hien thi (Inter) cho cac vai tieu de; noi dung dung Open Sans */
+  h1,
+  h2,
+  h3,
+  h4,
+  .text-h1,
+  .text-h2,
+  .text-h3,
+  .text-so,
+  .text-hien-thi {
+    font-family: var(--font-display), system-ui, sans-serif;
   }
 
   input,
@@ -233,12 +248,10 @@
 /* The bam duoc: re chuot doi vien + bong nhe, khong nhay len */
 .tk-lift {
   transition:
-    border-color 120ms ease-out,
-    box-shadow 200ms ease-out;
+    border-color 120ms ease-out;
 }
 .tk-lift:hover {
-  border-color: rgb(var(--vien-dam));
-  box-shadow: var(--bong-2);
+  border-color: rgb(var(--chu));
 }
 /* Nut: chi doi mau khi re chuot (120ms) */
 .tk-btn {
@@ -258,7 +271,7 @@
 }
 .tk-float,
 .tk-bob {
-  animation: tkFloat 8s ease-in-out infinite;
+  animation: none; /* toi gian: khong bong benh */
 }
 .tk-marquee {
   animation: tkMarquee 40s linear infinite;

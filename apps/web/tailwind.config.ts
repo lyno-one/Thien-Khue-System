@@ -30,6 +30,7 @@ const config: Config = {
         "be-mat": v("be-mat"),
         "be-mat-phu": v("be-mat-phu"),
         vien: v("vien"),
+        "lien-ket": v("lien-ket"),
         "vien-dam": v("vien-dam"),
         chu: v("chu"),
         "chu-phu": v("chu-phu"),
@@ -42,20 +43,24 @@ const config: Config = {
         "thanh-cong": { DEFAULT: v("thanh-cong"), nhat: v("thanh-cong-nhat") },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "Inter", "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["var(--font-body)", "Open Sans", "Segoe UI", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-display)", "Inter", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "Inconsolata", "ui-monospace", "monospace"],
       },
+      // Toi gian: goc vuong hon (4 / 6 / 8); rounded-full van la hinh tron
+      borderRadius: { DEFAULT: "4px", md: "4px", lg: "6px", xl: "8px", "2xl": "8px" },
       // Vai tro chu: co / dong / do dam di cung nhau
       fontSize: {
-        h1: ["1.5rem", { lineHeight: "2rem", fontWeight: "600", letterSpacing: "-0.015em" }],
-        h2: ["1.125rem", { lineHeight: "1.75rem", fontWeight: "600", letterSpacing: "-0.01em" }],
-        h3: ["1rem", { lineHeight: "1.5rem", fontWeight: "600" }],
-        h4: ["0.875rem", { lineHeight: "1.25rem", fontWeight: "600" }],
+        h1: ["1.75rem", { lineHeight: "2.25rem", fontWeight: "700", letterSpacing: "-0.025em" }],
+        h2: ["1.25rem", { lineHeight: "1.75rem", fontWeight: "700", letterSpacing: "-0.015em" }],
+        h3: ["1rem", { lineHeight: "1.5rem", fontWeight: "700", letterSpacing: "-0.005em" }],
+        h4: ["0.875rem", { lineHeight: "1.25rem", fontWeight: "700" }],
         body: ["0.875rem", { lineHeight: "1.25rem", fontWeight: "400" }],
         "body-lg": ["1rem", { lineHeight: "1.5rem", fontWeight: "400" }],
         caption: ["0.75rem", { lineHeight: "1rem", fontWeight: "500" }],
-        so: ["1.75rem", { lineHeight: "2.25rem", fontWeight: "600", letterSpacing: "-0.02em" }],
+        so: ["2rem", { lineHeight: "2.5rem", fontWeight: "800", letterSpacing: "-0.03em" }],
         // Rieng storefront: tieu de hero / muc lon (CRM khong co trang cong khai)
-        "hien-thi": ["2.25rem", { lineHeight: "2.75rem", fontWeight: "600", letterSpacing: "-0.02em" }]
+        "hien-thi": ["clamp(2.25rem, 5vw, 3.5rem)", { lineHeight: "1.08", fontWeight: "800", letterSpacing: "-0.035em" }]
       },
       boxShadow: {
         sm: "var(--bong-1)",
