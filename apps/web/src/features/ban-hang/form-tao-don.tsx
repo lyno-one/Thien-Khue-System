@@ -267,7 +267,7 @@ export function FormTaoDon() {
           </Nut>
           <p className="m-0 mt-3 text-xs leading-relaxed text-chu-phu">
             Đơn được tạo trên CRM Lyno bằng tài khoản của bạn. Tạo đơn chưa trừ kho — kho trừ khi giao thành công.{" "}
-            <Link href="/lam-viec/ban-hang/khach" className="font-medium text-chinh hover:text-chinh-dam hover:underline">
+            <Link href="/lam-viec/ban-hang/khach" className="font-medium text-lien-ket hover:underline hover:underline">
               Danh sách khách
             </Link>
           </p>

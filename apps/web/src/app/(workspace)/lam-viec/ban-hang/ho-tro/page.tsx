@@ -81,7 +81,7 @@ function TheYeuCau({ y, hienNguoiHoTro, xong }: { y: YeuCauHoTro; hienNguoiHoTro
       </div>
       <p className="m-0 whitespace-pre-line text-body">{y.noi_dung}</p>
       {y.lien_ket && (
-        <a href={y.lien_ket} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block break-all text-sm font-medium text-chinh hover:text-chinh-dam hover:underline">
+        <a href={y.lien_ket} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block break-all text-sm font-medium text-lien-ket hover:underline hover:underline">
           {y.lien_ket}
         </a>
       )}

@@ -176,12 +176,12 @@ export default function TrangMaGioiThieu() {
                   {t.cau_tu_van && <p className="m-0 whitespace-pre-line leading-relaxed text-chu-phu">{t.cau_tu_van}</p>}
                   <div className="flex flex-wrap gap-3 pt-1">
                     {t.khoa_hoc && (
-                      <a href={`/hoc-vien/khoa-hoc/${t.khoa_hoc.id}`} className="font-semibold text-chinh hover:text-chinh-dam hover:underline">
+                      <a href={`/hoc-vien/khoa-hoc/${t.khoa_hoc.id}`} className="font-semibold text-lien-ket hover:underline hover:underline">
                         Khoá học sản phẩm
                       </a>
                     )}
                     {t.anh_size_chart && (
-                      <a href={t.anh_size_chart} target="_blank" rel="noopener noreferrer" className="font-semibold text-chinh hover:text-chinh-dam hover:underline">
+                      <a href={t.anh_size_chart} target="_blank" rel="noopener noreferrer" className="font-semibold text-lien-ket hover:underline hover:underline">
                         Bảng size
                       </a>
                     )}

@@ -150,7 +150,7 @@ function HopThoaiSuaHang({ ch, dong, xong }: { ch: CauHinhHang; dong: () => void
         <ONhap nhan="Tên hiển thị" value={ten} onChange={e => setTen(e.target.value)} batBuoc />
         <p className="m-0 text-sm text-chu-phu">
           Ngưỡng hiện tại {dinhDangTien(ch.nguong_tich_luy)} · giảm {ch.giam_gia_phan_tram}%.{" "}
-          <Link href="/quan-tri/phe-duyet" className="font-medium text-chinh hover:text-chinh-dam hover:underline">
+          <Link href="/quan-tri/phe-duyet" className="font-medium text-lien-ket hover:underline hover:underline">
             Đổi qua Bàn phê duyệt →
           </Link>
         </p>

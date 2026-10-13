@@ -147,7 +147,7 @@ function DanhSachBaiTap({ ds, dangTai, loi, taiLai, onCham }: { ds: BaiTapTts[] 
             {b.nguoi_cham ? ` · chấm bởi ${b.nguoi_cham.ho_ten}` : ""}
           </span>
           {b.link && (
-            <a href={b.link} target="_blank" rel="noopener noreferrer" className="break-all text-sm font-medium text-chinh hover:text-chinh-dam hover:underline">
+            <a href={b.link} target="_blank" rel="noopener noreferrer" className="break-all text-sm font-medium text-lien-ket hover:underline hover:underline">
               {b.link}
             </a>
           )}

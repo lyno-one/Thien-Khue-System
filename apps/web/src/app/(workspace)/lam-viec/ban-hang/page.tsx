@@ -72,7 +72,7 @@ export default function TrangHopViec() {
                 kicker="Ưu tiên"
                 tieuDe="Lead cần liên hệ"
                 hanhDong={
-                  <Link href="/lam-viec/ban-hang/lead" className="text-sm font-semibold text-chinh hover:text-chinh-dam hover:underline">
+                  <Link href="/lam-viec/ban-hang/lead" className="text-sm font-semibold text-lien-ket hover:underline hover:underline">
                     Tất cả
                   </Link>
                 }
@@ -104,7 +104,7 @@ export default function TrangHopViec() {
                 kicker="Hôm nay"
                 tieuDe="Khách mới được giao"
                 hanhDong={
-                  <Link href="/lam-viec/ban-hang/khach" className="text-sm font-semibold text-chinh hover:text-chinh-dam hover:underline">
+                  <Link href="/lam-viec/ban-hang/khach" className="text-sm font-semibold text-lien-ket hover:underline hover:underline">
                     Danh sách khách
                   </Link>
                 }

@@ -95,7 +95,7 @@ export function TrangNhatKy() {
                 <DongNhatKy key={n.id} n={n}>
                   {n.du_lieu != null && (
                     <div>
-                      <button type="button" className="min-h-[32px] text-sm font-medium text-chinh hover:text-chinh-dam" aria-expanded={moRong === n.id} onClick={() => setMoRong(moRong === n.id ? null : n.id)}>
+                      <button type="button" className="min-h-[32px] text-sm font-medium text-lien-ket hover:underline" aria-expanded={moRong === n.id} onClick={() => setMoRong(moRong === n.id ? null : n.id)}>
                         {moRong === n.id ? "Ẩn dữ liệu" : "Xem dữ liệu"}
                       </button>
                       {moRong === n.id && <pre className="cuon-mong mt-2 max-h-[240px] overflow-auto whitespace-pre-wrap break-all rounded-lg bg-be-mat-phu p-3 text-xs text-chu">{JSON.stringify(n.du_lieu, null, 2)}</pre>}

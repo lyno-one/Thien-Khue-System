@@ -65,7 +65,7 @@ export default function TrangTongQuanMangLuoi() {
             kicker="Nguồn đơn"
             tieuDe="Đơn gần đây"
             hanhDong={
-              <Link href="/lam-viec/mang-luoi/thu-nhap" className="text-sm font-semibold text-chinh hover:text-chinh-dam hover:underline">
+              <Link href="/lam-viec/mang-luoi/thu-nhap" className="text-sm font-semibold text-lien-ket hover:underline hover:underline">
                 Bảng thu nhập
               </Link>
             }

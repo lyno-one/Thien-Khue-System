@@ -483,7 +483,7 @@ function KhuNoiDung() {
                   {nd.ten_chien_dich ? ` · ${nd.ten_chien_dich}` : ""} · {dinhDangNgayGio(nd.created_at)} · {nd.luot_xem.toLocaleString("vi-VN")} xem / {nd.luot_tuong_tac.toLocaleString("vi-VN")} tương tác
                 </span>
                 {nd.link_video && (
-                  <a href={nd.link_video} target="_blank" rel="noopener noreferrer" className="break-all text-sm font-medium text-chinh hover:text-chinh-dam hover:underline">
+                  <a href={nd.link_video} target="_blank" rel="noopener noreferrer" className="break-all text-sm font-medium text-lien-ket hover:underline hover:underline">
                     {nd.link_video}
                   </a>
                 )}

@@ -208,7 +208,7 @@ function DanhSachPhanHoi() {
                 {p.hinh_anh.length > 0 && (
                   <span className="flex flex-wrap gap-2">
                     {p.hinh_anh.map(h => (
-                      <a key={h} href={h} target="_blank" rel="noreferrer" className="text-sm font-medium text-chinh hover:text-chinh-dam hover:underline">
+                      <a key={h} href={h} target="_blank" rel="noreferrer" className="text-sm font-medium text-lien-ket hover:underline hover:underline">
                         Xem hình
                       </a>
                     ))}

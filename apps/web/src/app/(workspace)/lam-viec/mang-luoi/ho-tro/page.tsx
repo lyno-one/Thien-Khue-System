@@ -82,7 +82,7 @@ export default function TrangHoTroKoc() {
                   </div>
                   <p className="m-0 whitespace-pre-wrap text-sm">{y.noi_dung}</p>
                   {y.lien_ket && (
-                    <a href={y.lien_ket} target="_blank" rel="noreferrer" className="break-all text-sm font-medium text-chinh hover:text-chinh-dam hover:underline">
+                    <a href={y.lien_ket} target="_blank" rel="noreferrer" className="break-all text-sm font-medium text-lien-ket hover:underline hover:underline">
                       {y.lien_ket}
                     </a>
                   )}

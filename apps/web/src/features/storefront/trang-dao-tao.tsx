@@ -29,7 +29,7 @@ function Hero() {
           <h1 className="tk-up tk-d1 m-0 text-hien-thi text-chu">
             Học nghề thời trang.
             <br />
-            <span className="text-chinh">Sáng tạo</span> theo
+            <span className="text-lien-ket">Sáng tạo</span> theo
             <br />
             cách của bạn.
           </h1>
