@@ -1,0 +1,13 @@
+# Them khoi nay vao /etc/caddy/Caddyfile tren VPS dang chay Caddy systemd.
+# Chay docker compose up -d --build, khong bat profile caddy tren VPS nay.
+lyno.com.vn {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3410
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3400
+	}
+}

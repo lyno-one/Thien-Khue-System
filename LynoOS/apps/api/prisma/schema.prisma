@@ -1,0 +1,1319 @@
+// =====================================================================================
+// Thien Khue S — HOP DONG DU LIEU CHUNG cua moi module (agent module KHONG tu sua file nay;
+// can them cot / bang thi ghi vao muc "Can doi schema" khi tra ket qua).
+//
+// LUAT CUNG: Prisma CHI quan schema "thien_khue". Schema "public" la cua CRM Lyno —
+// khong tao / sua / xoa gi o do, khong `prisma migrate reset`, khong `prisma db pull`.
+// Doc bang CRM (public.mau, khach_hang, don_hang...) chi qua CrmDocService ($queryRaw).
+// Cot tham chieu CRM (mau_id, crm_user_id, crm_don_id, sdt_chuan) KHONG co FK sang public.
+//
+// Quy uoc: ten bang / cot tieng Viet khong dau, snake_case. Tien = Decimal(14,0) (dong) —
+// interceptor o core tu doi Decimal -> number khi tra ve.
+// Cot "nguoi_*_id" la ho_so.id (khong FK de bot quan he nguoc; danh tinh luon tu token).
+// =====================================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["thien_khue"]
+}
+
+// ------------------------------------------------------------------ ENUM
+
+/// Vai trong he thong (KIEN-TRUC muc 4). THIEN_KHUE = CEO / nguoi duyet cao nhat
+enum Vai {
+  KHACH
+  SALE
+  CSKH
+  CTV
+  THUC_TAP
+  KOL
+  KOC
+  MENTOR
+  DOI_TAC
+  QUAN_LY
+  ADMIN
+  THIEN_KHUE
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiVai {
+  DANG_HOC
+  HOAT_DONG
+  TAM_DUNG
+  KET_THUC
+
+  @@schema("thien_khue")
+}
+
+enum LoaiKhoaHoc {
+  NEN_TANG
+  NGHIEP_VU
+  SAN_PHAM
+
+  @@schema("thien_khue")
+}
+
+enum LoaiNoiDungBaiHoc {
+  MARKDOWN
+  VIDEO
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiThucHanh {
+  CHO_CHAM
+  DAT
+  CHUA_DAT
+
+  @@schema("thien_khue")
+}
+
+/// Nguon bai thuc hanh: hoc vien nop tay (link / tep) hay tu Sales Training (du phien luyen AI dat)
+enum NguonThucHanh {
+  NOP_TAY
+  LUYEN_AI
+
+  @@schema("thien_khue")
+}
+
+/// Loai tinh huong luyen tu van voi AI (Sales Training): tu van ban hang / doi tra
+enum LoaiLuyenAi {
+  TU_VAN
+  DOI_TRA
+
+  @@schema("thien_khue")
+}
+
+/// Muc dich phieu Sales Training: LUYEN = mo phien luyen moi; XEM = xem lai mot phien da co (chi doc)
+enum MucDichPhieuLuyenAi {
+  LUYEN
+  XEM
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiQuyenSku {
+  HOAT_DONG
+  CAN_HOC_LAI
+  THU_HOI
+
+  @@schema("thien_khue")
+}
+
+enum NguonGiaoKhach {
+  TU_DONG
+  THU_CONG
+  LEAD
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiGiaoKhach {
+  DANG_PHU_TRACH
+  DA_CHUYEN
+  KET_THUC
+
+  @@schema("thien_khue")
+}
+
+enum LoaiLead {
+  MUA_HANG
+  DANG_KY_HOC
+  HOP_TAC
+  KHAC
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiLead {
+  MOI
+  DA_PHAN_BO
+  DANG_XU_LY
+  THANH_CONG
+  THAT_BAI
+  TRUNG
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiChienDich {
+  NHAP
+  DANG_CHAY
+  TAM_DUNG
+  KET_THUC
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiThamGia {
+  CHO_DUYET
+  DA_DUYET
+  TU_CHOI
+  HOAN_THANH
+
+  @@schema("thien_khue")
+}
+
+enum LoaiNoiDungKoc {
+  KICH_BAN
+  VIDEO
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiNoiDung {
+  NHAP
+  CHO_DUYET
+  CAN_SUA
+  DA_DUYET
+  TU_CHOI
+  DA_DANG
+
+  @@schema("thien_khue")
+}
+
+/// Nguon cua nguoi ban duoc ghi nhan tren mot don
+enum NguonDon {
+  SALE
+  CTV
+  KOC
+  KOL
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiGhiNhan {
+  HOP_LE
+  CHO_XAC_MINH
+  BI_HUY
+  DA_DOI_SOAT
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiHoaHong {
+  CHO_DOI_SOAT
+  DU_DIEU_KIEN
+  DA_TRA
+  BI_TRU
+
+  @@schema("thien_khue")
+}
+
+enum HangThanhVien {
+  THAN_THIET
+  VIP
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiMoiKh {
+  DA_MOI
+  THAM_GIA
+  TU_CHOI
+  DA_GUI_MAU
+  DA_PHAN_HOI
+  ROI_CHUONG_TRINH
+
+  @@schema("thien_khue")
+}
+
+enum LoaiDoiTac {
+  DOANH_NGHIEP
+  NGAN_HANG
+  TO_CHUC
+  NHA_CUNG_CAP_QUA
+
+  @@schema("thien_khue")
+}
+
+/// Dung chung cho qua tang + voucher: phai qua tham dinh va Thien Khue duyet moi hien thi
+enum TrangThaiDuyetQua {
+  CHO_THAM_DINH
+  DA_DUYET
+  TU_CHOI
+
+  @@schema("thien_khue")
+}
+
+enum LoaiGiam {
+  PHAN_TRAM
+  SO_TIEN
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiCapPhat {
+  DA_CAP
+  DA_DUNG
+  HET_HAN
+  HUY
+
+  @@schema("thien_khue")
+}
+
+enum LoaiHopDong {
+  DAT_QUA
+  DONG_THUONG_HIEU
+  TAI_TRO
+  KHAC
+
+  @@schema("thien_khue")
+}
+
+enum TrangThaiHopDong {
+  NHAP
+  HIEU_LUC
+  KET_THUC
+  HUY
+
+  @@schema("thien_khue")
+}
+
+enum LoaiDeXuat {
+  CAP_QUYEN_SKU
+  CHUYEN_VAI
+  KICH_HOAT_LAM_VIEC
+  DUYET_QUA_TANG
+  DUYET_VOUCHER
+  XAC_MINH_DON
+  DIEU_CHINH_HOA_HONG
+  CHI_TRA_HOA_HONG
+  DOI_CHINH_SACH
+  XUAT_DU_LIEU_KHACH
+  KHAC
+
+  @@schema("thien_khue")
+}
+
+/// Maker-checker: CHO_KIEM -> CHO_DUYET -> DA_DUYET | TU_CHOI; HUY khi nguoi de xuat rut
+enum TrangThaiDeXuat {
+  CHO_KIEM
+  CHO_DUYET
+  DA_DUYET
+  TU_CHOI
+  HUY
+
+  @@schema("thien_khue")
+}
+
+enum TacNhan {
+  NGUOI
+  HE_THONG
+  AI
+
+  @@schema("thien_khue")
+}
+
+enum LoaiThongBao {
+  HE_THONG
+  DAO_TAO
+  QUYEN_SKU
+  KHACH_MOI
+  DON_HANG
+  HOA_HONG
+  CHIEN_DICH
+  PHE_DUYET
+
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ HO SO & VAI
+
+/// Ho so goc duy nhat — id = auth.users.id (Supabase Auth cua CRM)
+model ho_so {
+  id                  String    @id @db.Uuid
+  ho_ten              String
+  email               String?   @unique
+  sdt                 String?
+  /// SDT chuan hoa (chuanHoaSdt) — noi voi khach CRM khi ho so cung la khach
+  sdt_chuan           String?
+  /// SDT da xac minh la cua chu ho so (nhan vien goi xac nhan; sau nay OTP). Chi khi co moi noi voi du lieu khach CRM.
+  /// Doi sdt_chuan -> tu xoa (service + trigger DB). Mot SDT chi mot ho so da xac minh (unique mot phan, SQL tay)
+  sdt_xac_minh_luc    DateTime? @db.Timestamptz(6)
+  /// ho_so.id nhan vien xac minh (khong FK); null khi xac minh bang OTP
+  sdt_xac_minh_boi_id String?   @db.Uuid
+  anh_dai_dien        String?
+  /// public.users.id neu la nhan su CRM (khong FK)
+  crm_user_id         String?   @unique @db.Uuid
+  /// Chi true khi da hoc dat (KIEN-TRUC muc 5)
+  kich_hoat_lam_viec  Boolean   @default(false)
+  kich_hoat_luc       DateTime? @db.Timestamptz(6)
+  ghi_chu             String?
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  vai_tro             vai_tro_ho_so[]
+  lich_su_vai_tro     lich_su_vai_tro[]
+  luot_lam            luot_lam[]
+  tien_do_bai_hoc     tien_do_bai_hoc[]
+  bai_thuc_hanh       bai_thuc_hanh[]
+  quyen_sku           quyen_sku[]
+  chung_chi           chung_chi[]
+  ca_truc             ca_truc[]
+  nang_luc            nang_luc[]
+  giao_khach          giao_khach[]
+  ma_gioi_thieu       ma_gioi_thieu[]
+  tham_gia_chien_dich tham_gia_chien_dich[]
+  noi_dung_koc        noi_dung_koc[]
+  hoa_hong            hoa_hong[]
+  dieu_chinh_hoa_hong dieu_chinh_hoa_hong[]
+  thong_bao           thong_bao[]
+  phieu_luyen_ai      phieu_luyen_ai[]
+  phien_luyen_ai      phien_luyen_ai[]
+
+  @@index([sdt_chuan])
+  @@schema("thien_khue")
+}
+
+/// Mot dong / (ho so, vai). Doi trang thai thi ghi them lich_su_vai_tro
+model vai_tro_ho_so {
+  id         String       @id @default(uuid()) @db.Uuid
+  ho_so_id   String       @db.Uuid
+  vai        Vai
+  trang_thai TrangThaiVai @default(DANG_HOC)
+  tu_luc     DateTime     @default(now()) @db.Timestamptz(6)
+  den_luc    DateTime?    @db.Timestamptz(6)
+  /// CRM | DANG_KY | QUAN_TRI | HE_THONG
+  nguon      String?
+  created_at DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at DateTime     @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so ho_so @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@unique([ho_so_id, vai])
+  @@index([vai, trang_thai])
+  @@schema("thien_khue")
+}
+
+/// Lich su chuyen vai — CHI INSERT (trigger chan UPDATE / DELETE)
+model lich_su_vai_tro {
+  id               String        @id @default(uuid()) @db.Uuid
+  ho_so_id         String        @db.Uuid
+  vai              Vai
+  trang_thai_cu    TrangThaiVai?
+  trang_thai_moi   TrangThaiVai?
+  /// ho_so.id nguoi doi; null = he thong
+  nguoi_doi_id     String?       @db.Uuid
+  ly_do            String?
+  de_xuat_duyet_id String?       @db.Uuid
+  created_at       DateTime      @default(now()) @db.Timestamptz(6)
+
+  ho_so ho_so @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, created_at])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ DAO TAO (LMS)
+
+model khoa_hoc {
+  id                 String      @id @default(uuid()) @db.Uuid
+  /// Ma on dinh (slug) — seed upsert theo ma
+  ma                 String      @unique
+  ten                String
+  mo_ta              String?
+  loai               LoaiKhoaHoc
+  /// Vai phai / duoc hoc khoa nay
+  vai_ap_dung        Vai[]
+  /// Khoa SAN_PHAM: uuid cua public.mau (khong FK)
+  mau_id             String?     @db.Uuid
+  ma_mau             String?
+  /// Tang khi san pham doi thong tin quan trong -> quyen_sku cu chuyen CAN_HOC_LAI
+  phien_ban_tai_lieu Int         @default(1)
+  bat_buoc           Boolean     @default(true)
+  /// Can nop bai thuc hanh duoc duyet moi tinh dat
+  can_thuc_hanh      Boolean     @default(false)
+  yeu_cau_thuc_hanh  String?
+  /// Bat buoc luyen tu van voi AI (Sales Training) truoc khi bai thuc hanh vao CHO_CHAM.
+  /// Vd {"nguong":80,"can":{"TU_VAN":1,"DOI_TRA":1}} — null = khong yeu cau
+  yeu_cau_luyen_ai   Json?
+  mau_sac            String?
+  thu_tu             Int         @default(0)
+  bat                Boolean     @default(true)
+  created_at         DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime    @default(now()) @updatedAt @db.Timestamptz(6)
+
+  bai_hoc        bai_hoc[]
+  bai_kiem_tra   bai_kiem_tra[]
+  bai_thuc_hanh  bai_thuc_hanh[]
+  quyen_sku      quyen_sku[]
+  chung_chi      chung_chi[]
+  phieu_luyen_ai phieu_luyen_ai[]
+  phien_luyen_ai phien_luyen_ai[]
+
+  @@index([loai, bat])
+  @@index([mau_id])
+  @@schema("thien_khue")
+}
+
+model bai_hoc {
+  id              String            @id @default(uuid()) @db.Uuid
+  khoa_hoc_id     String            @db.Uuid
+  /// Ma on dinh trong khoa (vd "o1")
+  ma              String
+  tieu_de         String
+  /// Ten chuong / nhom bai (vd "Thuong hieu")
+  chuong          String?
+  loai_noi_dung   LoaiNoiDungBaiHoc @default(MARKDOWN)
+  /// Markdown
+  noi_dung        String?
+  video_url       String?
+  tom_tat         String?
+  thoi_luong_phut Int?
+  thu_tu          Int               @default(0)
+  bat             Boolean           @default(true)
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+
+  khoa_hoc        khoa_hoc          @relation(fields: [khoa_hoc_id], references: [id], onDelete: Cascade)
+  tien_do_bai_hoc tien_do_bai_hoc[]
+
+  @@unique([khoa_hoc_id, ma])
+  @@index([khoa_hoc_id, thu_tu])
+  @@schema("thien_khue")
+}
+
+model bai_kiem_tra {
+  id             String   @id @default(uuid()) @db.Uuid
+  khoa_hoc_id    String   @db.Uuid
+  ma             String   @unique
+  tieu_de        String
+  /// Phan tram toi thieu de dat (mac dinh 90)
+  nguong_dat     Int      @default(90)
+  bat_buoc       Boolean  @default(true)
+  /// null = hien het cau hoi
+  so_cau_hien    Int?
+  thoi_gian_phut Int?
+  /// null = khong gioi han so lan lam
+  so_lan_toi_da  Int?
+  bat            Boolean  @default(true)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  khoa_hoc khoa_hoc   @relation(fields: [khoa_hoc_id], references: [id], onDelete: Cascade)
+  cau_hoi  cau_hoi[]
+  luot_lam luot_lam[]
+
+  @@index([khoa_hoc_id])
+  @@schema("thien_khue")
+}
+
+/// dap_an KHONG BAO GIO tra ra client (chi cham o server)
+model cau_hoi {
+  id              String   @id @default(uuid()) @db.Uuid
+  bai_kiem_tra_id String   @db.Uuid
+  ma              String
+  noi_dung        String
+  /// Mang chuoi cac lua chon, vd ["300.000d", "450.000d"]
+  lua_chon        Json
+  /// Mang chi so lua chon dung (0-based), vd [1]
+  dap_an          Json
+  giai_thich      String?
+  diem            Int      @default(1)
+  thu_tu          Int      @default(0)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  bai_kiem_tra bai_kiem_tra @relation(fields: [bai_kiem_tra_id], references: [id], onDelete: Cascade)
+
+  @@unique([bai_kiem_tra_id, ma])
+  @@index([bai_kiem_tra_id, thu_tu])
+  @@schema("thien_khue")
+}
+
+model luot_lam {
+  id                 String    @id @default(uuid()) @db.Uuid
+  bai_kiem_tra_id    String    @db.Uuid
+  ho_so_id           String    @db.Uuid
+  /// Phan tram 0..100
+  diem               Int       @default(0)
+  so_cau_dung        Int       @default(0)
+  tong_cau           Int       @default(0)
+  dat                Boolean   @default(false)
+  /// { [cau_hoi_id]: number[] }
+  tra_loi            Json?
+  /// Cau hoi da phat cho luot nay (chot de, quan tri sua cau hoi giua chung khong lam lech)
+  cau_hoi_ids        String[]  @default([]) @db.Uuid
+  phien_ban_tai_lieu Int       @default(1)
+  bat_dau_luc        DateTime  @default(now()) @db.Timestamptz(6)
+  nop_luc            DateTime? @db.Timestamptz(6)
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  bai_kiem_tra bai_kiem_tra @relation(fields: [bai_kiem_tra_id], references: [id], onDelete: Cascade)
+  ho_so        ho_so        @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, bai_kiem_tra_id, created_at])
+  @@schema("thien_khue")
+}
+
+model tien_do_bai_hoc {
+  id             String    @id @default(uuid()) @db.Uuid
+  ho_so_id       String    @db.Uuid
+  bai_hoc_id     String    @db.Uuid
+  hoan_thanh_luc DateTime? @db.Timestamptz(6)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so   ho_so   @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  bai_hoc bai_hoc @relation(fields: [bai_hoc_id], references: [id], onDelete: Cascade)
+
+  @@unique([ho_so_id, bai_hoc_id])
+  @@index([bai_hoc_id])
+  @@schema("thien_khue")
+}
+
+/// Bai thuc hanh da nop (link / tep) — mentor / quan ly cham
+model bai_thuc_hanh {
+  id            String            @id @default(uuid()) @db.Uuid
+  khoa_hoc_id   String            @db.Uuid
+  ho_so_id      String            @db.Uuid
+  vai           Vai?
+  tieu_de       String?
+  mo_ta         String?
+  link          String?
+  tep_url       String?
+  trang_thai    TrangThaiThucHanh @default(CHO_CHAM)
+  diem          Int?
+  nguoi_cham_id String?           @db.Uuid
+  nhan_xet      String?
+  cham_luc      DateTime?         @db.Timestamptz(6)
+  nop_luc       DateTime          @default(now()) @db.Timestamptz(6)
+  nguon         NguonThucHanh     @default(NOP_TAY)
+  /// LUYEN_AI: anh chup cac phien luyen dat (diem tung ky nang, vi pham, tom tat, link xem) luc vao CHO_CHAM
+  bang_chung    Json?
+  created_at    DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+
+  khoa_hoc khoa_hoc @relation(fields: [khoa_hoc_id], references: [id], onDelete: Cascade)
+  ho_so    ho_so    @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, khoa_hoc_id])
+  @@index([trang_thai, nop_luc])
+  @@schema("thien_khue")
+}
+
+/// Quyen ban theo SKU — moi thao tac voi san pham phai qua QuyenSkuService
+model quyen_sku {
+  id                 String            @id @default(uuid()) @db.Uuid
+  ho_so_id           String            @db.Uuid
+  /// uuid public.mau (khong FK)
+  mau_id             String            @db.Uuid
+  ma_mau             String
+  trang_thai         TrangThaiQuyenSku @default(HOAT_DONG)
+  /// Phien ban tai lieu khoa SAN_PHAM luc cap quyen
+  phien_ban_tai_lieu Int               @default(1)
+  khoa_hoc_id        String?           @db.Uuid
+  cap_luc            DateTime          @default(now()) @db.Timestamptz(6)
+  nguoi_cap_id       String?           @db.Uuid
+  thu_hoi_luc        DateTime?         @db.Timestamptz(6)
+  ly_do              String?
+  /// { diem, luot_lam_id, bai_thuc_hanh_id, nguoi_cham_id, nhan_xet, duyet_luc, ... }
+  bang_chung         Json?
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so    ho_so     @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  khoa_hoc khoa_hoc? @relation(fields: [khoa_hoc_id], references: [id], onDelete: SetNull)
+
+  @@unique([ho_so_id, mau_id])
+  @@index([mau_id, trang_thai])
+  @@schema("thien_khue")
+}
+
+model chung_chi {
+  id                 String    @id @default(uuid()) @db.Uuid
+  ho_so_id           String    @db.Uuid
+  khoa_hoc_id        String    @db.Uuid
+  ma_chung_chi       String    @unique
+  phien_ban_tai_lieu Int       @default(1)
+  diem               Int?
+  cap_luc            DateTime  @default(now()) @db.Timestamptz(6)
+  het_han_luc        DateTime? @db.Timestamptz(6)
+  thu_hoi_luc        DateTime? @db.Timestamptz(6)
+  bang_chung         Json?
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  ho_so    ho_so    @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  khoa_hoc khoa_hoc @relation(fields: [khoa_hoc_id], references: [id], onDelete: Cascade)
+
+  @@unique([ho_so_id, khoa_hoc_id])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ SALE / CSKH
+
+/// Ca truc cua Sale / CSKH — phan bo khach theo ca + tai
+model ca_truc {
+  id              String   @id @default(uuid()) @db.Uuid
+  ho_so_id        String   @db.Uuid
+  ngay            DateTime @db.Date
+  /// "HH:mm" gio Viet Nam
+  tu_gio          String
+  den_gio         String
+  vai             Vai      @default(SALE)
+  /// Tai toi da trong ca (null = khong gioi han)
+  so_khach_toi_da Int?
+  ghi_chu         String?
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so      ho_so        @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  giao_khach giao_khach[]
+
+  @@unique([ho_so_id, ngay, tu_gio])
+  @@index([ngay])
+  @@schema("thien_khue")
+}
+
+/// Nang luc tu van: theo ma mau hoac nhom (vd SIZE_LON, KHAN_LUA)
+model nang_luc {
+  id         String   @id @default(uuid()) @db.Uuid
+  ho_so_id   String   @db.Uuid
+  ma_mau     String?
+  nhom       String?
+  /// 1..5
+  muc        Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so ho_so @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id])
+  @@index([ma_mau])
+  @@index([nhom])
+  @@schema("thien_khue")
+}
+
+/// Khach CRM (theo sdt_chuan) giao cho Sale / CSKH phu trach.
+/// Moi sdt_chuan chi mot dong DANG_PHU_TRACH (service tu kiem, trong transaction).
+model giao_khach {
+  id            String             @id @default(uuid()) @db.Uuid
+  sdt_chuan     String
+  ten_khach     String?
+  ho_so_id      String             @db.Uuid
+  nguon         NguonGiaoKhach     @default(TU_DONG)
+  trang_thai    TrangThaiGiaoKhach @default(DANG_PHU_TRACH)
+  giao_luc      DateTime           @default(now()) @db.Timestamptz(6)
+  ket_thuc_luc  DateTime?          @db.Timestamptz(6)
+  ly_do         String?
+  nguoi_giao_id String?            @db.Uuid
+  ca_truc_id    String?            @db.Uuid
+  lead_id       String?            @db.Uuid
+  created_at    DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so   ho_so    @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  ca_truc ca_truc? @relation(fields: [ca_truc_id], references: [id], onDelete: SetNull)
+  lead    lead?    @relation(fields: [lead_id], references: [id], onDelete: SetNull)
+
+  @@index([sdt_chuan, trang_thai])
+  @@index([ho_so_id, trang_thai])
+  @@schema("thien_khue")
+}
+
+/// Khach dang ky tu trang cong khai (mua hang, hoc, hop tac)
+model lead {
+  id              String        @id @default(uuid()) @db.Uuid
+  ten             String
+  sdt             String
+  sdt_chuan       String
+  email           String?
+  loai            LoaiLead      @default(MUA_HANG)
+  nhu_cau         String?
+  ma_mau_quan_tam String?
+  /// Trang / kenh dang ky, vd "TRANG_CHU", "DAO_TAO", "VIP"
+  nguon           String?
+  ma_gioi_thieu   String?
+  dong_y_lien_he  Boolean       @default(true)
+  trang_thai      TrangThaiLead @default(MOI)
+  /// ho_so.id duoc phan bo
+  phan_bo_cho     String?       @db.Uuid
+  phan_bo_luc     DateTime?     @db.Timestamptz(6)
+  ghi_chu         String?
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+
+  giao_khach giao_khach[]
+
+  @@index([sdt_chuan])
+  @@index([trang_thai, created_at])
+  @@index([phan_bo_cho])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ MANG LUOI (CTV, TTS, KOL/KOC)
+
+/// Ma / duong dan gioi thieu — chi cap cho SKU da co quyen_sku HOAT_DONG
+model ma_gioi_thieu {
+  id            String   @id @default(uuid()) @db.Uuid
+  ho_so_id      String   @db.Uuid
+  /// uuid public.mau (null = ma chung, khong gan SKU)
+  mau_id        String?  @db.Uuid
+  ma_mau        String?
+  ma            String   @unique
+  chien_dich_id String?  @db.Uuid
+  bat           Boolean  @default(true)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so      ho_so        @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  chien_dich chien_dich?  @relation(fields: [chien_dich_id], references: [id], onDelete: SetNull)
+  luot_click luot_click[]
+
+  @@index([ho_so_id])
+  @@index([mau_id])
+  @@index([ho_so_id, mau_id, chien_dich_id])
+  @@schema("thien_khue")
+}
+
+model luot_click {
+  id               String   @id @default(uuid()) @db.Uuid
+  ma_gioi_thieu_id String   @db.Uuid
+  /// Bam (hash) IP — khong luu IP tho
+  ip_bam           String?
+  user_agent       String?
+  nguon_url        String?
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  ma_gioi_thieu ma_gioi_thieu @relation(fields: [ma_gioi_thieu_id], references: [id], onDelete: Cascade)
+
+  @@index([ma_gioi_thieu_id, created_at])
+  @@schema("thien_khue")
+}
+
+model chien_dich {
+  id           String             @id @default(uuid()) @db.Uuid
+  ten          String
+  mo_ta        String?
+  /// uuid public.mau ap dung
+  mau_ids      String[]           @db.Uuid
+  ma_maus      String[]
+  vai_ap_dung  Vai[]
+  ngan_sach    Decimal?           @db.Decimal(14, 0)
+  bat_dau      DateTime?          @db.Timestamptz(6)
+  han          DateTime?          @db.Timestamptz(6)
+  trang_thai   TrangThaiChienDich @default(NHAP)
+  nguoi_tao_id String?            @db.Uuid
+  created_at   DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+
+  tham_gia      tham_gia_chien_dich[]
+  noi_dung_koc  noi_dung_koc[]
+  ma_gioi_thieu ma_gioi_thieu[]
+
+  @@index([trang_thai, han])
+  @@schema("thien_khue")
+}
+
+model tham_gia_chien_dich {
+  id             String           @id @default(uuid()) @db.Uuid
+  chien_dich_id  String           @db.Uuid
+  ho_so_id       String           @db.Uuid
+  trang_thai     TrangThaiThamGia @default(CHO_DUYET)
+  ghi_chu        String?
+  nguoi_duyet_id String?          @db.Uuid
+  duyet_luc      DateTime?        @db.Timestamptz(6)
+  created_at     DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+
+  chien_dich chien_dich @relation(fields: [chien_dich_id], references: [id], onDelete: Cascade)
+  ho_so      ho_so      @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@unique([chien_dich_id, ho_so_id])
+  @@index([ho_so_id])
+  @@schema("thien_khue")
+}
+
+/// Kich ban / video KOL-KOC nop len de duyet + so lieu hieu qua
+model noi_dung_koc {
+  id                   String           @id @default(uuid()) @db.Uuid
+  ho_so_id             String           @db.Uuid
+  chien_dich_id        String?          @db.Uuid
+  mau_id               String?          @db.Uuid
+  ma_mau               String?
+  loai                 LoaiNoiDungKoc   @default(VIDEO)
+  tieu_de              String
+  kich_ban             String?
+  link_video           String?
+  /// TIKTOK | FACEBOOK | INSTAGRAM | YOUTUBE | KHAC
+  nen_tang             String?
+  trang_thai           TrangThaiNoiDung @default(CHO_DUYET)
+  nguoi_duyet_id       String?          @db.Uuid
+  nhan_xet             String?
+  duyet_luc            DateTime?        @db.Timestamptz(6)
+  luot_xem             Int              @default(0)
+  luot_tuong_tac       Int              @default(0)
+  so_lieu_cap_nhat_luc DateTime?        @db.Timestamptz(6)
+  created_at           DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ho_so      ho_so       @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  chien_dich chien_dich? @relation(fields: [chien_dich_id], references: [id], onDelete: SetNull)
+
+  @@index([ho_so_id, trang_thai])
+  @@index([chien_dich_id])
+  @@index([trang_thai, created_at])
+  @@schema("thien_khue")
+}
+
+/// Ghi nhan nguoi ban cho mot don CRM — MOT DON MOT DONG (crm_don_id unique).
+/// Ma gioi thieu khac nguoi chot -> CHO_XAC_MINH, khong tu chi tra.
+model ghi_nhan_don {
+  id                  String           @id @default(uuid()) @db.Uuid
+  /// public.don_hang.id (khong FK)
+  crm_don_id          String           @unique @db.Uuid
+  ma_don              String
+  sdt_chuan           String?
+  tong_tien           Decimal          @default(0) @db.Decimal(14, 0)
+  /// Nguoi ban duoc ghi nhan cuoi cung (ho_so.id)
+  nguoi_ban_ho_so_id  String?          @db.Uuid
+  nguon               NguonDon
+  ma_gioi_thieu       String?
+  ma_gioi_thieu_id    String?          @db.Uuid
+  /// Sale chot don (neu khac nguoi gioi thieu -> xac minh)
+  nguoi_chot_ho_so_id String?          @db.Uuid
+  trang_thai          TrangThaiGhiNhan @default(HOP_LE)
+  ly_do               String?
+  nguoi_xac_minh_id   String?          @db.Uuid
+  xac_minh_luc        DateTime?        @db.Timestamptz(6)
+  created_at          DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+
+  hoa_hong hoa_hong?
+
+  @@index([nguoi_ban_ho_so_id, trang_thai])
+  @@index([trang_thai, created_at])
+  @@index([sdt_chuan])
+  @@schema("thien_khue")
+}
+
+/// Hoa hong — moi ghi_nhan_don toi da mot dong (khong chi tra hai lan)
+model hoa_hong {
+  id               String           @id @default(uuid()) @db.Uuid
+  ghi_nhan_don_id  String           @unique @db.Uuid
+  ho_so_id         String           @db.Uuid
+  so_tien          Decimal          @db.Decimal(14, 0)
+  /// Phan tram ap dung luc tinh
+  ty_le            Decimal?         @db.Decimal(5, 2)
+  trang_thai       TrangThaiHoaHong @default(CHO_DOI_SOAT)
+  /// Ky doi soat "YYYY-MM"
+  ky               String
+  tra_luc          DateTime?        @db.Timestamptz(6)
+  de_xuat_duyet_id String?          @db.Uuid
+  created_at       DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+
+  ghi_nhan_don ghi_nhan_don          @relation(fields: [ghi_nhan_don_id], references: [id], onDelete: Cascade)
+  ho_so        ho_so                 @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  dieu_chinh   dieu_chinh_hoa_hong[]
+
+  @@index([ho_so_id, ky, trang_thai])
+  @@schema("thien_khue")
+}
+
+/// Dieu chinh (+/-) vao vi hoa hong — phai qua de_xuat_duyet
+model dieu_chinh_hoa_hong {
+  id                 String   @id @default(uuid()) @db.Uuid
+  hoa_hong_id        String?  @db.Uuid
+  ho_so_id           String   @db.Uuid
+  /// Am = tru, duong = cong
+  so_tien            Decimal  @db.Decimal(14, 0)
+  ly_do              String
+  ky                 String
+  /// Unique: mot de xuat DIEU_CHINH_HOA_HONG chi ap dung mot lan (NULL khong bi rang buoc)
+  de_xuat_duyet_id   String?  @unique @db.Uuid
+  /// de_xuat_duyet.id cua de xuat CHI_TRA_HOA_HONG da duyet chi tra khoan nay (khong FK). NULL = chua tra
+  de_xuat_chi_tra_id String?  @db.Uuid
+  nguoi_tao_id       String?  @db.Uuid
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  hoa_hong hoa_hong? @relation(fields: [hoa_hong_id], references: [id], onDelete: SetNull)
+  ho_so    ho_so     @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, ky])
+  @@index([de_xuat_chi_tra_id])
+  @@schema("thien_khue")
+}
+
+/// Ty le hoa hong theo vai (+ rieng tung mau neu co mau_id)
+model ty_le_hoa_hong {
+  id           String    @id @default(uuid()) @db.Uuid
+  vai          Vai
+  mau_id       String?   @db.Uuid
+  ma_mau       String?
+  /// Phan tram, vd 10.00
+  ty_le        Decimal   @db.Decimal(5, 2)
+  hieu_luc_tu  DateTime  @default(now()) @db.Timestamptz(6)
+  hieu_luc_den DateTime? @db.Timestamptz(6)
+  bat          Boolean   @default(true)
+  ghi_chu      String?
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([vai, mau_id, bat])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ KHACH HANG & DOI TAC
+
+/// Cau hinh hang the: tich luy tu don hop le CRM (tinh luc doc, khong luu hang)
+model hang_thanh_vien_cau_hinh {
+  id                 String        @id @default(uuid()) @db.Uuid
+  hang               HangThanhVien @unique
+  ten                String
+  /// Tong mua hop le toi thieu (dong)
+  nguong_tich_luy    Decimal       @db.Decimal(14, 0)
+  giam_gia_phan_tram Decimal       @db.Decimal(5, 2)
+  quyen_loi          String?
+  thu_tu             Int           @default(0)
+  bat                Boolean       @default(true)
+  created_at         DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@schema("thien_khue")
+}
+
+/// Moi khach (>= 10 lan mua hop le) vao chuong trinh Khach hang hanh phuc
+model moi_kh_hanh_phuc {
+  id                   String         @id @default(uuid()) @db.Uuid
+  sdt_chuan            String
+  ten_khach            String?
+  so_lan_mua_luc_moi   Int            @default(0)
+  trang_thai           TrangThaiMoiKh @default(DA_MOI)
+  /// Dong y dung hinh / video de truyen thong — TACH RIENG voi viec tham gia
+  dong_y_dung_hinh     Boolean        @default(false)
+  dong_y_dung_hinh_luc DateTime?      @db.Timestamptz(6)
+  nguoi_moi_id         String?        @db.Uuid
+  moi_luc              DateTime       @default(now()) @db.Timestamptz(6)
+  tra_loi_luc          DateTime?      @db.Timestamptz(6)
+  ghi_chu              String?
+  created_at           DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+
+  phan_hoi phan_hoi_mau_thu[]
+
+  /// Moi khach chi mot loi moi (tu choi / roi chuong trinh thi khong moi lai)
+  @@unique([sdt_chuan])
+  @@index([trang_thai])
+  @@schema("thien_khue")
+}
+
+/// Phan hoi rieng tu ve mau thu (size, chat lieu, kieu dang)
+model phan_hoi_mau_thu {
+  id                  String   @id @default(uuid()) @db.Uuid
+  moi_kh_hanh_phuc_id String   @db.Uuid
+  mau_id              String?  @db.Uuid
+  ma_mau              String?
+  /// 1..5
+  diem_size           Int?
+  diem_chat_lieu      Int?
+  diem_kieu_dang      Int?
+  noi_dung            String
+  hinh_anh            String[]
+  /// Khach cho phep dung hinh cua phan hoi nay (mac dinh KHONG)
+  cho_phep_dung_hinh  Boolean  @default(false)
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+
+  moi moi_kh_hanh_phuc @relation(fields: [moi_kh_hanh_phuc_id], references: [id], onDelete: Cascade)
+
+  @@index([moi_kh_hanh_phuc_id])
+  @@index([mau_id])
+  @@schema("thien_khue")
+}
+
+model doi_tac {
+  id            String     @id @default(uuid()) @db.Uuid
+  ten           String
+  loai          LoaiDoiTac
+  ma_so_thue    String?
+  nguoi_lien_he String?
+  sdt           String?
+  email         String?
+  dia_chi       String?
+  /// Tai khoan dang nhap cua doi tac (ho_so co vai DOI_TAC)
+  ho_so_id      String?    @db.Uuid
+  bat           Boolean    @default(true)
+  ghi_chu       String?
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
+
+  qua_tang qua_tang[]
+  voucher  voucher[]
+  hop_dong hop_dong_doi_tac[]
+
+  @@index([loai, bat])
+  @@schema("thien_khue")
+}
+
+/// Qua tang hien vat — tham dinh chat luong + Thien Khue duyet moi hien thi
+model qua_tang {
+  id                 String            @id @default(uuid()) @db.Uuid
+  doi_tac_id         String?           @db.Uuid
+  ten                String
+  mo_ta              String?
+  hinh_anh           String?
+  gia_tri            Decimal?          @db.Decimal(14, 0)
+  so_luong           Int?
+  hang_ap_dung       HangThanhVien[]
+  trang_thai         TrangThaiDuyetQua @default(CHO_THAM_DINH)
+  nguoi_de_xuat_id   String?           @db.Uuid
+  nguoi_tham_dinh_id String?           @db.Uuid
+  ket_qua_tham_dinh  String?
+  nguoi_duyet_id     String?           @db.Uuid
+  duyet_luc          DateTime?         @db.Timestamptz(6)
+  ly_do_tu_choi      String?
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+
+  doi_tac  doi_tac?          @relation(fields: [doi_tac_id], references: [id], onDelete: SetNull)
+  cap_phat cap_phat_uu_dai[]
+
+  @@index([trang_thai])
+  @@index([doi_tac_id])
+  @@schema("thien_khue")
+}
+
+model voucher {
+  id                 String            @id @default(uuid()) @db.Uuid
+  ma                 String            @unique
+  ten                String
+  doi_tac_id         String?           @db.Uuid
+  loai_giam          LoaiGiam          @default(PHAN_TRAM)
+  /// PHAN_TRAM: 0..100; SO_TIEN: dong
+  gia_tri            Decimal           @db.Decimal(14, 2)
+  don_toi_thieu      Decimal?          @db.Decimal(14, 0)
+  hang_ap_dung       HangThanhVien[]
+  so_luong           Int?
+  da_cap             Int               @default(0)
+  bat_dau            DateTime?         @db.Timestamptz(6)
+  het_han            DateTime?         @db.Timestamptz(6)
+  trang_thai         TrangThaiDuyetQua @default(CHO_THAM_DINH)
+  /// Nguoi tao voucher (maker) — khong duoc tu tham dinh / duyet
+  nguoi_de_xuat_id   String?           @db.Uuid
+  nguoi_tham_dinh_id String?           @db.Uuid
+  nguoi_duyet_id     String?           @db.Uuid
+  duyet_luc          DateTime?         @db.Timestamptz(6)
+  created_at         DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime          @default(now()) @updatedAt @db.Timestamptz(6)
+
+  doi_tac  doi_tac?          @relation(fields: [doi_tac_id], references: [id], onDelete: SetNull)
+  cap_phat cap_phat_uu_dai[]
+
+  @@index([trang_thai, het_han])
+  @@schema("thien_khue")
+}
+
+/// Cap voucher / qua cho khach (theo sdt_chuan CRM)
+model cap_phat_uu_dai {
+  id           String           @id @default(uuid()) @db.Uuid
+  sdt_chuan    String
+  voucher_id   String?          @db.Uuid
+  qua_tang_id  String?          @db.Uuid
+  ly_do        String?
+  trang_thai   TrangThaiCapPhat @default(DA_CAP)
+  nguoi_cap_id String?          @db.Uuid
+  cap_luc      DateTime         @default(now()) @db.Timestamptz(6)
+  dung_luc     DateTime?        @db.Timestamptz(6)
+  /// public.don_hang.id da dung uu dai (khong FK)
+  crm_don_id   String?          @db.Uuid
+  created_at   DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+
+  voucher  voucher?  @relation(fields: [voucher_id], references: [id], onDelete: SetNull)
+  qua_tang qua_tang? @relation(fields: [qua_tang_id], references: [id], onDelete: SetNull)
+
+  @@index([sdt_chuan, trang_thai])
+  @@schema("thien_khue")
+}
+
+/// Hop dong doi tac chien luoc — tach doanh thu qua / chi phi tai tro / ket qua chien dich
+model hop_dong_doi_tac {
+  id                 String           @id @default(uuid()) @db.Uuid
+  doi_tac_id         String           @db.Uuid
+  so_hop_dong        String?          @unique
+  ten                String
+  loai               LoaiHopDong      @default(DAT_QUA)
+  gia_tri_hop_dong   Decimal?         @db.Decimal(14, 0)
+  doanh_thu_qua      Decimal          @default(0) @db.Decimal(14, 0)
+  chi_phi_tai_tro    Decimal          @default(0) @db.Decimal(14, 0)
+  /// { luot_tiep_can, don_hang, doanh_thu, ... }
+  ket_qua_chien_dich Json?
+  ket_qua_ghi_chu    String?
+  bat_dau            DateTime?        @db.Date
+  ket_thuc           DateTime?        @db.Date
+  trang_thai         TrangThaiHopDong @default(NHAP)
+  nguoi_phu_trach_id String?          @db.Uuid
+  created_at         DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime         @default(now()) @updatedAt @db.Timestamptz(6)
+
+  doi_tac doi_tac @relation(fields: [doi_tac_id], references: [id], onDelete: Cascade)
+
+  @@index([doi_tac_id, trang_thai])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ QUAN TRI
+
+/// Maker-checker: nguoi de xuat / nguoi kiem / nguoi duyet la 3 nguoi khac nhau (CHECK o DB)
+model de_xuat_duyet {
+  id               String          @id @default(uuid()) @db.Uuid
+  loai             LoaiDeXuat
+  /// Ten bang / doi tuong, vd "quyen_sku", "ghi_nhan_don"
+  doi_tuong        String
+  doi_tuong_id     String?
+  /// Noi dung thay doi de xuat (truoc / sau ...)
+  du_lieu          Json
+  ly_do            String?
+  nguoi_de_xuat_id String          @db.Uuid
+  nguoi_kiem_id    String?         @db.Uuid
+  kiem_luc         DateTime?       @db.Timestamptz(6)
+  y_kien_kiem      String?
+  nguoi_duyet_id   String?         @db.Uuid
+  duyet_luc        DateTime?       @db.Timestamptz(6)
+  y_kien_duyet     String?
+  trang_thai       TrangThaiDeXuat @default(CHO_KIEM)
+  created_at       DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([trang_thai, loai, created_at])
+  @@index([doi_tuong, doi_tuong_id])
+  @@index([nguoi_de_xuat_id])
+  /// Unique mot phan (SQL tay, migration 20261007150000): (loai, doi_tuong, doi_tuong_id) khi CHO_KIEM / CHO_DUYET
+  /// cho XAC_MINH_DON, DUYET_QUA_TANG, DUYET_VOUCHER, CHI_TRA_HOA_HONG
+  @@schema("thien_khue")
+}
+
+/// Nhat ky moi hanh dong quan trong (ca AI) — CHI INSERT (trigger chan UPDATE / DELETE)
+model nhat_ky {
+  id           String   @id @default(uuid()) @db.Uuid
+  /// ho_so.id; null = he thong
+  ho_so_id     String?  @db.Uuid
+  tac_nhan     TacNhan  @default(NGUOI)
+  hanh_dong    String
+  doi_tuong    String
+  doi_tuong_id String?
+  du_lieu      Json?
+  ip           String?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([doi_tuong, doi_tuong_id])
+  @@index([ho_so_id, created_at])
+  @@index([created_at])
+  @@schema("thien_khue")
+}
+
+model thong_bao {
+  id         String       @id @default(uuid()) @db.Uuid
+  ho_so_id   String       @db.Uuid
+  loai       LoaiThongBao @default(HE_THONG)
+  tieu_de    String
+  noi_dung   String?
+  /// Duong dan trong web, vd "/hoc-vien/khoa-hoc/abc"
+  lien_ket   String?
+  du_lieu    Json?
+  da_doc     Boolean      @default(false)
+  doc_luc    DateTime?    @db.Timestamptz(6)
+  created_at DateTime     @default(now()) @db.Timestamptz(6)
+
+  ho_so ho_so @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, da_doc, created_at])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ HO TRO CHUYEN MON (ban-hang)
+
+enum TrangThaiYeuCauHoTro {
+  MO
+  DA_XU_LY
+
+  @@schema("thien_khue")
+}
+
+/// KOL / KOC gui yeu cau ho tro chuyen mon -> giao cho Sale / CSKH dang truc
+model yeu_cau_ho_tro {
+  id              String               @id @default(uuid()) @db.Uuid
+  /// ho_so.id KOL / KOC gui
+  nguoi_gui_id    String               @db.Uuid
+  /// ho_so.id Sale / CSKH duoc giao
+  nguoi_ho_tro_id String               @db.Uuid
+  ma_mau          String?
+  noi_dung        String
+  lien_ket        String?
+  trang_thai      TrangThaiYeuCauHoTro @default(MO)
+  tra_loi         String?
+  xu_ly_luc       DateTime?            @db.Timestamptz(6)
+  created_at      DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime             @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([nguoi_ho_tro_id, trang_thai])
+  @@index([nguoi_gui_id, created_at])
+  @@schema("thien_khue")
+}
+
+// ------------------------------------------------------------------ LUYEN TU VAN VOI AI (Sales Training)
+// Hop dong: docs/TICH-HOP-SALES-TRAINING.md. Sales Training (repo rieng, DB rieng) goi server->server ky HMAC.
+
+/// Phieu vao Sales Training: dung MOT lan, han 10 phut. Sales Training doi phieu lay ngu canh (ho so, loai, khoa).
+model phieu_luyen_ai {
+  id          String      @id @default(uuid()) @db.Uuid
+  /// Chuoi ngau nhien (base64url) — khong doan duoc
+  ma          String      @unique
+  ho_so_id    String      @db.Uuid
+  khoa_hoc_id String      @db.Uuid
+  loai        LoaiLuyenAi
+  het_han     DateTime    @db.Timestamptz(6)
+  /// Luc Sales Training doi phieu (null = chua dung)
+  dung_luc    DateTime?   @db.Timestamptz(6)
+  /// LUYEN (mac dinh) | XEM. Phieu XEM: ho_so_id = nguoi XEM (chu phien / mentor / quan ly), khoa_hoc_id + loai lay tu phien
+  muc_dich    MucDichPhieuLuyenAi @default(LUYEN)
+  /// Chi phieu XEM: id phien ben Sales Training duoc phep xem
+  phien_id_st String?
+  /// Chi phieu XEM: CHU | MENTOR | QUAN_LY — tinh luc phat phieu
+  vai_xem     String?
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+
+  ho_so    ho_so    @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  khoa_hoc khoa_hoc @relation(fields: [khoa_hoc_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, created_at])
+  @@schema("thien_khue")
+}
+
+/// Ket qua mot phien luyen Sales Training gui ve (chi diem + tom tat, KHONG co transcript). Idempotent theo phien_id_st.
+model phien_luyen_ai {
+  id            String      @id @default(uuid()) @db.Uuid
+  /// id phien luyen tap ben Sales Training
+  phien_id_st   String      @unique
+  ma_phieu      String?
+  ho_so_id      String      @db.Uuid
+  khoa_hoc_id   String      @db.Uuid
+  loai          LoaiLuyenAi
+  diem_tong     Int
+  /// {khai_thac, lang_nghe, gia_tri, phan_doi, chot, tuan_thu}
+  diem_ky_nang  Json
+  so_vi_pham    Int         @default(0)
+  /// [{loai, trich}] — loi cam ket sai chinh sach
+  vi_pham       Json        @default("[]")
+  tom_tat       String?
+  diem_manh     Json        @default("[]")
+  can_cai_thien Json        @default("[]")
+  /// diem_tong >= nguong (>= 80) va 0 vi pham — tinh luc nhan
+  dat           Boolean
+  link_xem      String?
+  ket_thuc_luc  DateTime?   @db.Timestamptz(6)
+  nhan_luc      DateTime    @default(now()) @db.Timestamptz(6)
+
+  ho_so    ho_so    @relation(fields: [ho_so_id], references: [id], onDelete: Cascade)
+  khoa_hoc khoa_hoc @relation(fields: [khoa_hoc_id], references: [id], onDelete: Cascade)
+
+  @@index([ho_so_id, khoa_hoc_id, loai])
+  @@schema("thien_khue")
+}

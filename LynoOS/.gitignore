@@ -1,0 +1,20 @@
+node_modules/
+.next/
+.next-build/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+.env*
+!.env.example
+.DS_Store
+*.log
+
+# Khoa that khi deploy
+deploy/api.env
+.deploy-ssh/
+lynoos-source.tar.gz
+lynoos-images.tar.gz
+lyno-source.html
+.pnpm-store/

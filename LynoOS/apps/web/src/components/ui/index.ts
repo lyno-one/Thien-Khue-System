@@ -1,0 +1,10 @@
+// Bo UI dung chung theo he trang xanh (CRM Lyno DESIGN.md) — import { Nut, ONhap, The, Bang, HopThoai, DangTai, lopNutChinh, lopO } from "@/components/ui";
+export * from "./nut";
+export * from "./o-nhap";
+export * from "./the";
+export * from "./nhan";
+export * from "./bang";
+export * from "./trang-thai";
+export * from "./hop-thoai";
+export * from "./logo";
+export * from "./lop";

@@ -1,0 +1,13 @@
+# Caddy tu xin / gia han chung chi HTTPS (Let's Encrypt) cho {$DOMAIN} — DNS phai tro dung ve VPS truoc khi chay.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Nest dat prefix /api -> giu nguyen duong dan
+	handle /api/* {
+		reverse_proxy api:3310
+	}
+
+	handle {
+		reverse_proxy web:3300
+	}
+}
