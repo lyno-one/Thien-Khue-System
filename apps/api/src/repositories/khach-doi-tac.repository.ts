@@ -344,6 +344,28 @@ export class UuDaiRepository {
     return kq.count;
   }
 
+  /** Sua qua — chi khi chua ai tham dinh (CHO_THAM_DINH) hoac da TU_CHOI. Tra so dong da doi */
+  async suaQuaChuaDuyet(id: string, data: Prisma.qua_tangUpdateManyArgs["data"], db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const kq = await db.qua_tang.updateMany({ where: { id, OR: [{ trang_thai: "CHO_THAM_DINH", nguoi_tham_dinh_id: null }, { trang_thai: "TU_CHOI" }] }, data });
+    return kq.count;
+  }
+
+  /** Xoa qua chua duoc duyet (CHO_THAM_DINH / TU_CHOI). Tra so dong da xoa */
+  async xoaQuaChuaDuyet(id: string, db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const kq = await db.qua_tang.deleteMany({ where: { id, trang_thai: { in: ["CHO_THAM_DINH", "TU_CHOI"] } } });
+    return kq.count;
+  }
+
+  /** Ngung qua DA_DUYET (chuyen TU_CHOI + ly do) — chi khi dang DA_DUYET. Tra so dong da doi */
+  async ghiNgungQua(id: string, lyDo: string, db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const kq = await db.qua_tang.updateMany({ where: { id, trang_thai: "DA_DUYET" }, data: { trang_thai: "TU_CHOI", ly_do_tu_choi: lyDo } });
+    return kq.count;
+  }
+
+  demCapPhatCuaQua(quaTangId: string, db: Prisma.TransactionClient = this.prisma) {
+    return db.cap_phat_uu_dai.count({ where: { qua_tang_id: quaTangId } });
+  }
+
   // ---------------------------------------------------------------- voucher
 
   /** [trang voucher kem ten doi tac, tong so dong] */
@@ -387,6 +409,28 @@ export class UuDaiRepository {
   async ghiDuyetVoucher(id: string, data: Prisma.voucherUpdateManyArgs["data"], db: Prisma.TransactionClient = this.prisma): Promise<number> {
     const kq = await db.voucher.updateMany({ where: { id, trang_thai: "CHO_THAM_DINH" }, data });
     return kq.count;
+  }
+
+  /** Sua voucher — chi khi CHO_THAM_DINH hoac da TU_CHOI. Tra so dong da doi */
+  async suaVoucherChuaDuyet(id: string, data: Prisma.voucherUpdateManyArgs["data"], db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const kq = await db.voucher.updateMany({ where: { id, trang_thai: { in: ["CHO_THAM_DINH", "TU_CHOI"] } }, data });
+    return kq.count;
+  }
+
+  /** Xoa voucher chua duoc duyet. Tra so dong da xoa */
+  async xoaVoucherChuaDuyet(id: string, db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const kq = await db.voucher.deleteMany({ where: { id, trang_thai: { in: ["CHO_THAM_DINH", "TU_CHOI"] } } });
+    return kq.count;
+  }
+
+  /** Ngung voucher DA_DUYET bang cach dat het_han = bay gio. Tra so dong da doi */
+  async ghiNgungVoucher(id: string, bayGio: Date, db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const kq = await db.voucher.updateMany({ where: { id, trang_thai: "DA_DUYET", OR: [{ het_han: null }, { het_han: { gt: bayGio } }] }, data: { het_han: bayGio } });
+    return kq.count;
+  }
+
+  demCapPhatCuaVoucher(voucherId: string, db: Prisma.TransactionClient = this.prisma) {
+    return db.cap_phat_uu_dai.count({ where: { voucher_id: voucherId } });
   }
 
   // ---------------------------------------------------------------- giu suat

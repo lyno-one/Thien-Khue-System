@@ -169,6 +169,8 @@ export interface Voucher {
   bat_dau: string | null;
   het_han: string | null;
   trang_thai: TrangThaiDuyetQua;
+  /** Nguoi tao (maker) — chi nguoi nay sua / huy duoc khi chua duyet */
+  nguoi_de_xuat_id?: string | null;
   nguoi_duyet_id: string | null;
   duyet_luc: string | null;
   created_at: string;
@@ -238,6 +240,30 @@ export interface TaoQuaTangBody {
   gia_tri?: number | null;
   so_luong?: number | null;
   hang_ap_dung?: HangThanhVien[];
+}
+/** PATCH /khach-doi-tac/qua-tang/:id — chi nguoi de xuat, khi chua duoc tham dinh / duyet (hoac da bi tu choi -> gui lai) */
+export interface CapNhatQuaTangBody {
+  ten?: string;
+  mo_ta?: string | null;
+  hinh_anh?: string | null;
+  gia_tri?: number | null;
+  so_luong?: number | null;
+  hang_ap_dung?: HangThanhVien[];
+}
+/** PATCH /khach-doi-tac/voucher/:id — chi nguoi tao, khi chua duoc duyet (hoac da bi tu choi -> gui lai); ma giu nguyen */
+export interface CapNhatVoucherBody {
+  ten?: string;
+  loai_giam?: LoaiGiam;
+  gia_tri?: number;
+  don_toi_thieu?: number | null;
+  hang_ap_dung?: HangThanhVien[];
+  so_luong?: number | null;
+  bat_dau?: string | null;
+  het_han?: string | null;
+}
+/** POST /khach-doi-tac/qua-tang/:id/ngung | /voucher/:id/ngung (chi THIEN_KHUE) */
+export interface NgungUuDaiBody {
+  ly_do: string;
 }
 /** POST /khach-doi-tac/qua-tang/:id/tham-dinh (QUAN_LY, khac nguoi de xuat) */
 export interface ThamDinhQuaBody {

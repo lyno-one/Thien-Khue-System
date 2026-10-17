@@ -57,6 +57,21 @@ export class TaoQuaTangDto {
   @IsOptional() @IsArray() @IsIn(HANG, { each: true }) hang_ap_dung?: Hang[];
 }
 
+/** Sua qua chua duoc duyet (khong doi doi tac) — qua da TU_CHOI sua xong tu quay lai CHO_THAM_DINH */
+export class CapNhatQuaTangDto {
+  @IsOptional() @IsString() @IsNotEmpty() @MaxLength(200) ten?: string;
+  @IsOptional() @IsString() @MaxLength(2000) mo_ta?: string | null;
+  @IsOptional() @IsString() @MaxLength(1000) hinh_anh?: string | null;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) gia_tri?: number | null;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) so_luong?: number | null;
+  @IsOptional() @IsArray() @IsIn(HANG, { each: true }) hang_ap_dung?: Hang[];
+}
+
+/** Ngung qua / voucher da duyet (chi Thien Khue) — bat buoc ghi ly do */
+export class NgungUuDaiDto {
+  @IsString() @IsNotEmpty() @MaxLength(1000) ly_do: string;
+}
+
 export class ThamDinhQuaDto {
   @IsBoolean() dat: boolean;
   @IsString() @IsNotEmpty() @MaxLength(2000) ket_qua: string;
@@ -73,6 +88,18 @@ export class TaoVoucherDto {
   @IsOptional() @IsUUID() doi_tac_id?: string | null;
   @IsIn(["PHAN_TRAM", "SO_TIEN"]) loai_giam: "PHAN_TRAM" | "SO_TIEN";
   @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) gia_tri: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) don_toi_thieu?: number | null;
+  @IsOptional() @IsArray() @IsIn(HANG, { each: true }) hang_ap_dung?: Hang[];
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) so_luong?: number | null;
+  @IsOptional() @IsDateString() bat_dau?: string | null;
+  @IsOptional() @IsDateString() het_han?: string | null;
+}
+
+/** Sua voucher chua duoc duyet (ma voucher giu nguyen) */
+export class CapNhatVoucherDto {
+  @IsOptional() @IsString() @IsNotEmpty() @MaxLength(200) ten?: string;
+  @IsOptional() @IsIn(["PHAN_TRAM", "SO_TIEN"]) loai_giam?: "PHAN_TRAM" | "SO_TIEN";
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) gia_tri?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) don_toi_thieu?: number | null;
   @IsOptional() @IsArray() @IsIn(HANG, { each: true }) hang_ap_dung?: Hang[];
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) so_luong?: number | null;

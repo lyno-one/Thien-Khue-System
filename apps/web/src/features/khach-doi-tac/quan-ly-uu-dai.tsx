@@ -58,6 +58,8 @@ function DanhSachQua({ phienBan, lamMoi }: { phienBan: number; lamMoi: () => voi
   const ds = useTai(() => apiKdt.dsQua({ trang }), [trang, phienBan]);
   const [taoMo, setTaoMo] = useState(false);
   const [xuLy, setXuLy] = useState<{ qua: QuaTang; buoc: "tham-dinh" | "duyet" } | null>(null);
+  const [sua, setSua] = useState<QuaTang | null>(null);
+  const [hanhDong, setHanhDong] = useState<{ loai: "huy" | "ngung"; qua: QuaTang } | null>(null);
   const laThienKhue = laThienKhueThat(nguoiDung);
   const toi = nguoiDung?.id;
 
@@ -103,22 +105,52 @@ function DanhSachQua({ phienBan, lamMoi }: { phienBan: number; lamMoi: () => voi
                 tieuDe: "",
                 canPhai: true,
                 hienThi: q => {
-                  if (q.trang_thai !== "CHO_THAM_DINH") return null;
                   const laNguoiDeXuat = q.nguoi_de_xuat_id === toi;
-                  if (!q.nguoi_tham_dinh_id)
-                    return laNguoiDeXuat ? (
-                      <span className="text-xs text-chu-phu">Chờ người khác thẩm định</span>
-                    ) : (
-                      <Nut co="nho" kieu="vien" onClick={() => setXuLy({ qua: q, buoc: "tham-dinh" })}>
-                        Thẩm định
+                  // Nguoi de xuat: sua khi chua ai tham dinh (hoac da bi tu choi -> sua de gui lai), huy khi chua duoc duyet
+                  const suaDuoc = laNguoiDeXuat && (q.trang_thai === "TU_CHOI" || (q.trang_thai === "CHO_THAM_DINH" && !q.nguoi_tham_dinh_id));
+                  const huyDuoc = laNguoiDeXuat && q.trang_thai !== "DA_DUYET";
+                  let buoc: React.ReactNode = null;
+                  if (q.trang_thai === "DA_DUYET") {
+                    buoc = laThienKhue ? (
+                      <Nut co="nho" kieu="vien-loi" onClick={() => setHanhDong({ loai: "ngung", qua: q })}>
+                        Ngừng áp dụng
                       </Nut>
-                    );
-                  if (!laThienKhue) return null;
-                  if (laNguoiDeXuat || q.nguoi_tham_dinh_id === toi) return <span className="text-xs text-chu-phu">Không tự duyệt</span>;
+                    ) : null;
+                  } else if (q.trang_thai === "CHO_THAM_DINH") {
+                    if (!q.nguoi_tham_dinh_id) {
+                      buoc = laNguoiDeXuat ? (
+                        <span className="text-xs text-chu-phu">Chờ người khác thẩm định</span>
+                      ) : (
+                        <Nut co="nho" kieu="vien" onClick={() => setXuLy({ qua: q, buoc: "tham-dinh" })}>
+                          Thẩm định
+                        </Nut>
+                      );
+                    } else if (laThienKhue) {
+                      buoc =
+                        laNguoiDeXuat || q.nguoi_tham_dinh_id === toi ? (
+                          <span className="text-xs text-chu-phu">Không tự duyệt</span>
+                        ) : (
+                          <Nut co="nho" onClick={() => setXuLy({ qua: q, buoc: "duyet" })}>
+                            Duyệt
+                          </Nut>
+                        );
+                    }
+                  }
+                  if (!suaDuoc && !huyDuoc && !buoc) return null;
                   return (
-                    <Nut co="nho" onClick={() => setXuLy({ qua: q, buoc: "duyet" })}>
-                      Duyệt
-                    </Nut>
+                    <span className="flex flex-wrap items-center justify-end gap-2">
+                      {suaDuoc && (
+                        <Nut co="nho" kieu="vien" onClick={() => setSua(q)}>
+                          {q.trang_thai === "TU_CHOI" ? "Sửa & gửi lại" : "Sửa"}
+                        </Nut>
+                      )}
+                      {huyDuoc && (
+                        <Nut co="nho" kieu="vien-loi" onClick={() => setHanhDong({ loai: "huy", qua: q })}>
+                          Huỷ
+                        </Nut>
+                      )}
+                      {buoc}
+                    </span>
                   );
                 }
               }
@@ -133,6 +165,30 @@ function DanhSachQua({ phienBan, lamMoi }: { phienBan: number; lamMoi: () => voi
           dong={() => setTaoMo(false)}
           xong={() => {
             setTaoMo(false);
+            lamMoi();
+          }}
+        />
+      )}
+      {sua && (
+        <HopThoaiTaoQua
+          sua={sua}
+          dong={() => setSua(null)}
+          xong={() => {
+            setSua(null);
+            lamMoi();
+          }}
+        />
+      )}
+      {hanhDong && (
+        <HopThoaiHanhDong
+          tieuDe={hanhDong.loai === "huy" ? `Huỷ quà "${hanhDong.qua.ten}"` : `Ngừng áp dụng quà "${hanhDong.qua.ten}"`}
+          moTa={hanhDong.loai === "huy" ? "Quà sẽ bị xoá khỏi danh sách đề xuất. Không hoàn tác được." : "Quà không còn hiện cho khách và không cấp thêm được. Lượt đã cấp giữ nguyên."}
+          nhanNut={hanhDong.loai === "huy" ? "Huỷ quà" : "Ngừng áp dụng"}
+          canLyDo={hanhDong.loai === "ngung"}
+          chay={lyDo => (hanhDong.loai === "huy" ? apiKdt.huyQua(hanhDong.qua.id) : apiKdt.ngungQua(hanhDong.qua.id, { ly_do: lyDo }))}
+          dong={() => setHanhDong(null)}
+          xong={() => {
+            setHanhDong(null);
             lamMoi();
           }}
         />
@@ -158,43 +214,42 @@ function DanhSachQua({ phienBan, lamMoi }: { phienBan: number; lamMoi: () => voi
   );
 }
 
-function HopThoaiTaoQua({ dong, xong }: { dong: () => void; xong: () => void }) {
+/** Tao moi, hoac (co `sua`) sua qua cua minh — qua bi tu choi sua xong quay lai cho tham dinh */
+function HopThoaiTaoQua({ dong, xong, sua }: { dong: () => void; xong: () => void; sua?: QuaTang }) {
   const dsDoiTac = useDsDoiTac();
-  const [ten, setTen] = useState("");
-  const [moTa, setMoTa] = useState("");
-  const [hinh, setHinh] = useState("");
-  const [giaTri, setGiaTri] = useState("");
-  const [soLuong, setSoLuong] = useState("");
-  const [doiTac, setDoiTac] = useState("");
-  const [hang, setHang] = useState<HangThanhVien[]>(["VIP"]);
+  const [ten, setTen] = useState(sua?.ten ?? "");
+  const [moTa, setMoTa] = useState(sua?.mo_ta ?? "");
+  const [hinh, setHinh] = useState(sua?.hinh_anh ?? "");
+  const [giaTri, setGiaTri] = useState(sua?.gia_tri != null ? String(sua.gia_tri) : "");
+  const [soLuong, setSoLuong] = useState(sua?.so_luong != null ? String(sua.so_luong) : "");
+  const [doiTac, setDoiTac] = useState(sua?.doi_tac_id ?? "");
+  const [hang, setHang] = useState<HangThanhVien[]>(sua?.hang_ap_dung ?? ["VIP"]);
   const tt = useThaoTac();
   const luu = async () => {
-    const r = await tt.chay(() =>
-      apiKdt.taoQua({
-        ten: ten.trim(),
-        mo_ta: moTa.trim() || null,
-        hinh_anh: hinh.trim() || null,
-        gia_tri: giaTri ? Number(giaTri) : null,
-        so_luong: soLuong ? Number(soLuong) : null,
-        doi_tac_id: doiTac || null,
-        hang_ap_dung: hang
-      })
-    );
+    const chung = {
+      ten: ten.trim(),
+      mo_ta: moTa.trim() || null,
+      hinh_anh: hinh.trim() || null,
+      gia_tri: giaTri ? Number(giaTri) : null,
+      so_luong: soLuong ? Number(soLuong) : null,
+      hang_ap_dung: hang
+    };
+    const r = await tt.chay(() => (sua ? apiKdt.suaQua(sua.id, chung) : apiKdt.taoQua({ ...chung, doi_tac_id: doiTac || null })));
     if (r) xong();
   };
   return (
     <HopThoai
       mo
       dong={dong}
-      tieuDe="Đề xuất quà tặng"
-      moTa="Quà mới ở trạng thái chờ thẩm định — chưa hiện cho khách."
+      tieuDe={sua ? "Sửa quà tặng" : "Đề xuất quà tặng"}
+      moTa={sua?.trang_thai === "TU_CHOI" ? "Sửa xong, quà quay lại chờ thẩm định từ đầu." : "Quà mới ở trạng thái chờ thẩm định — chưa hiện cho khách."}
       chanTrang={
         <>
           <Nut kieu="trong" onClick={dong}>
             Huỷ
           </Nut>
           <Nut onClick={() => void luu()} dangXuLy={tt.dangXuLy} disabled={!ten.trim()}>
-            Gửi đề xuất
+            {sua ? (sua.trang_thai === "TU_CHOI" ? "Lưu & gửi lại" : "Lưu") : "Gửi đề xuất"}
           </Nut>
         </>
       }
@@ -202,7 +257,7 @@ function HopThoaiTaoQua({ dong, xong }: { dong: () => void; xong: () => void }) 
       <div className="flex flex-col gap-4">
         {tt.loi && <ThongBaoNoiDong kieu="loi">{tt.loi}</ThongBaoNoiDong>}
         <ONhap nhan="Tên quà" batBuoc value={ten} onChange={e => setTen(e.target.value)} />
-        <OChon nhan="Đối tác cung cấp" value={doiTac} onChange={e => setDoiTac(e.target.value)} luaChon={dsDoiTac} />
+        <OChon nhan="Đối tác cung cấp" value={doiTac} onChange={e => setDoiTac(e.target.value)} luaChon={dsDoiTac} disabled={!!sua} />
         <OVanBan nhan="Mô tả" rows={3} value={moTa} onChange={e => setMoTa(e.target.value)} />
         <ONhap nhan="Link hình ảnh" value={hinh} onChange={e => setHinh(e.target.value)} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -269,6 +324,58 @@ function HopThoaiXuLy({
   );
 }
 
+/** Hop thoai xac nhan huy / ngung (ngung bat buoc ghi ly do) */
+function HopThoaiHanhDong({
+  tieuDe,
+  moTa,
+  nhanNut,
+  canLyDo,
+  chay,
+  dong,
+  xong
+}: {
+  tieuDe: string;
+  moTa: string;
+  nhanNut: string;
+  canLyDo: boolean;
+  chay: (lyDo: string) => Promise<unknown>;
+  dong: () => void;
+  xong: () => void;
+}) {
+  const [lyDo, setLyDo] = useState("");
+  const tt = useThaoTac();
+  const gui = async () => {
+    if (canLyDo && !lyDo.trim()) {
+      tt.datLoi("Cần ghi lý do");
+      return;
+    }
+    if (await tt.chay(() => chay(lyDo.trim()))) xong();
+  };
+  return (
+    <HopThoai
+      mo
+      dong={dong}
+      tieuDe={tieuDe}
+      moTa={moTa}
+      chanTrang={
+        <>
+          <Nut kieu="trong" onClick={dong}>
+            Không
+          </Nut>
+          <Nut kieu="nguy-hiem" onClick={() => void gui()} dangXuLy={tt.dangXuLy}>
+            {nhanNut}
+          </Nut>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        {tt.loi && <ThongBaoNoiDong kieu="loi">{tt.loi}</ThongBaoNoiDong>}
+        {canLyDo && <OVanBan nhan="Lý do (bắt buộc)" rows={3} value={lyDo} onChange={e => setLyDo(e.target.value)} />}
+      </div>
+    </HopThoai>
+  );
+}
+
 // ------------------------------------------------------------------ voucher
 
 function DanhSachVoucher({ phienBan, lamMoi }: { phienBan: number; lamMoi: () => void }) {
@@ -277,6 +384,9 @@ function DanhSachVoucher({ phienBan, lamMoi }: { phienBan: number; lamMoi: () =>
   const ds = useTai(() => apiKdt.dsVoucher({ trang }), [trang, phienBan]);
   const [taoMo, setTaoMo] = useState(false);
   const [duyet, setDuyet] = useState<Voucher | null>(null);
+  const [sua, setSua] = useState<Voucher | null>(null);
+  const [hanhDong, setHanhDong] = useState<{ loai: "huy" | "ngung"; v: Voucher } | null>(null);
+  const toi = nguoiDung?.id;
   return (
     <The>
       <TheTieuDe
@@ -309,12 +419,37 @@ function DanhSachVoucher({ phienBan, lamMoi }: { phienBan: number; lamMoi: () =>
                 khoa: "tac",
                 tieuDe: "",
                 canPhai: true,
-                hienThi: v =>
-                  v.trang_thai === "CHO_THAM_DINH" && laThienKhueThat(nguoiDung) ? (
-                    <Nut co="nho" onClick={() => setDuyet(v)}>
-                      Duyệt
-                    </Nut>
-                  ) : null
+                hienThi: v => {
+                  const laNguoiTao = !!toi && v.nguoi_de_xuat_id === toi;
+                  const suaDuoc = laNguoiTao && v.trang_thai !== "DA_DUYET";
+                  const duyetDuoc = v.trang_thai === "CHO_THAM_DINH" && laThienKhueThat(nguoiDung);
+                  const ngungDuoc = v.trang_thai === "DA_DUYET" && laThienKhueThat(nguoiDung) && (!v.het_han || new Date(v.het_han) > new Date());
+                  if (!suaDuoc && !duyetDuoc && !ngungDuoc) return null;
+                  return (
+                    <span className="flex flex-wrap items-center justify-end gap-2">
+                      {suaDuoc && (
+                        <>
+                          <Nut co="nho" kieu="vien" onClick={() => setSua(v)}>
+                            {v.trang_thai === "TU_CHOI" ? "Sửa & gửi lại" : "Sửa"}
+                          </Nut>
+                          <Nut co="nho" kieu="vien-loi" onClick={() => setHanhDong({ loai: "huy", v })}>
+                            Huỷ
+                          </Nut>
+                        </>
+                      )}
+                      {duyetDuoc && (
+                        <Nut co="nho" onClick={() => setDuyet(v)}>
+                          Duyệt
+                        </Nut>
+                      )}
+                      {ngungDuoc && (
+                        <Nut co="nho" kieu="vien-loi" onClick={() => setHanhDong({ loai: "ngung", v })}>
+                          Ngừng áp dụng
+                        </Nut>
+                      )}
+                    </span>
+                  );
+                }
               }
             ]}
             rong={<p className="m-0 text-sm text-chu-phu">Chưa có voucher.</p>}
@@ -327,6 +462,30 @@ function DanhSachVoucher({ phienBan, lamMoi }: { phienBan: number; lamMoi: () =>
           dong={() => setTaoMo(false)}
           xong={() => {
             setTaoMo(false);
+            lamMoi();
+          }}
+        />
+      )}
+      {sua && (
+        <HopThoaiTaoVoucher
+          sua={sua}
+          dong={() => setSua(null)}
+          xong={() => {
+            setSua(null);
+            lamMoi();
+          }}
+        />
+      )}
+      {hanhDong && (
+        <HopThoaiHanhDong
+          tieuDe={hanhDong.loai === "huy" ? `Huỷ voucher ${hanhDong.v.ma}` : `Ngừng áp dụng voucher ${hanhDong.v.ma}`}
+          moTa={hanhDong.loai === "huy" ? "Voucher sẽ bị xoá. Không hoàn tác được." : "Voucher hết hiệu lực ngay: không hiện cho khách, không cấp thêm. Lượt đã cấp vẫn giữ trong lịch sử."}
+          nhanNut={hanhDong.loai === "huy" ? "Huỷ voucher" : "Ngừng áp dụng"}
+          canLyDo={hanhDong.loai === "ngung"}
+          chay={lyDo => (hanhDong.loai === "huy" ? apiKdt.huyVoucher(hanhDong.v.id) : apiKdt.ngungVoucher(hanhDong.v.id, { ly_do: lyDo }))}
+          dong={() => setHanhDong(null)}
+          xong={() => {
+            setHanhDong(null);
             lamMoi();
           }}
         />
@@ -350,32 +509,34 @@ function DanhSachVoucher({ phienBan, lamMoi }: { phienBan: number; lamMoi: () =>
   );
 }
 
-function HopThoaiTaoVoucher({ dong, xong }: { dong: () => void; xong: () => void }) {
+/** Ngay (YYYY-MM-DD) theo gio Viet Nam, de do vao o `type=date` */
+const ngayVn = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }) : "");
+
+/** Tao moi, hoac (co `sua`) sua voucher cua minh — ma giu nguyen; voucher bi tu choi sua xong quay lai cho duyet */
+function HopThoaiTaoVoucher({ dong, xong, sua }: { dong: () => void; xong: () => void; sua?: Voucher }) {
   const dsDoiTac = useDsDoiTac();
-  const [ma, setMa] = useState("");
-  const [ten, setTen] = useState("");
-  const [loai, setLoai] = useState<"PHAN_TRAM" | "SO_TIEN">("PHAN_TRAM");
-  const [giaTri, setGiaTri] = useState("");
-  const [donToiThieu, setDonToiThieu] = useState("");
-  const [soLuong, setSoLuong] = useState("");
-  const [hetHan, setHetHan] = useState("");
-  const [doiTac, setDoiTac] = useState("");
-  const [hang, setHang] = useState<HangThanhVien[]>(["VIP"]);
+  const [ma, setMa] = useState(sua?.ma ?? "");
+  const [ten, setTen] = useState(sua?.ten ?? "");
+  const [loai, setLoai] = useState<"PHAN_TRAM" | "SO_TIEN">(sua?.loai_giam ?? "PHAN_TRAM");
+  const [giaTri, setGiaTri] = useState(sua ? String(sua.gia_tri) : "");
+  const [donToiThieu, setDonToiThieu] = useState(sua?.don_toi_thieu != null ? String(sua.don_toi_thieu) : "");
+  const [soLuong, setSoLuong] = useState(sua?.so_luong != null ? String(sua.so_luong) : "");
+  const [hetHan, setHetHan] = useState(ngayVn(sua?.het_han));
+  const [doiTac, setDoiTac] = useState(sua?.doi_tac_id ?? "");
+  const [hang, setHang] = useState<HangThanhVien[]>(sua?.hang_ap_dung ?? ["VIP"]);
   const tt = useThaoTac();
   const luu = async () => {
-    const r = await tt.chay(() =>
-      apiKdt.taoVoucher({
-        ma: ma.trim().toUpperCase(),
-        ten: ten.trim(),
-        loai_giam: loai,
-        gia_tri: Number(giaTri),
-        don_toi_thieu: donToiThieu ? Number(donToiThieu) : null,
-        so_luong: soLuong ? Number(soLuong) : null,
-        het_han: hetHan ? new Date(`${hetHan}T23:59:59+07:00`).toISOString() : null,
-        doi_tac_id: doiTac || null,
-        hang_ap_dung: hang
-      })
-    );
+    const chung = {
+      ten: ten.trim(),
+      loai_giam: loai,
+      gia_tri: Number(giaTri),
+      don_toi_thieu: donToiThieu ? Number(donToiThieu) : null,
+      so_luong: soLuong ? Number(soLuong) : null,
+      // Giu nguyen han cu neu nguoi dung khong doi ngay (tranh lam tron lai thanh 23:59:59)
+      het_han: !hetHan ? null : hetHan === ngayVn(sua?.het_han) ? sua!.het_han : new Date(`${hetHan}T23:59:59+07:00`).toISOString(),
+      hang_ap_dung: hang
+    };
+    const r = await tt.chay(() => (sua ? apiKdt.suaVoucher(sua.id, chung) : apiKdt.taoVoucher({ ...chung, ma: ma.trim().toUpperCase(), doi_tac_id: doiTac || null })));
     if (r) xong();
   };
   return (
@@ -383,14 +544,15 @@ function HopThoaiTaoVoucher({ dong, xong }: { dong: () => void; xong: () => void
       mo
       dong={dong}
       rong="lon"
-      tieuDe="Tạo voucher"
+      tieuDe={sua ? `Sửa voucher ${sua.ma}` : "Tạo voucher"}
+      moTa={sua?.trang_thai === "TU_CHOI" ? "Sửa xong, voucher quay lại chờ Thiên Khuê duyệt." : undefined}
       chanTrang={
         <>
           <Nut kieu="trong" onClick={dong}>
             Huỷ
           </Nut>
           <Nut onClick={() => void luu()} dangXuLy={tt.dangXuLy} disabled={!ma.trim() || !ten.trim() || !giaTri}>
-            Tạo (chờ duyệt)
+            {sua ? (sua.trang_thai === "TU_CHOI" ? "Lưu & gửi lại" : "Lưu") : "Tạo (chờ duyệt)"}
           </Nut>
         </>
       }
@@ -398,7 +560,7 @@ function HopThoaiTaoVoucher({ dong, xong }: { dong: () => void; xong: () => void
       <div className="flex flex-col gap-4">
         {tt.loi && <ThongBaoNoiDong kieu="loi">{tt.loi}</ThongBaoNoiDong>}
         <div className="grid gap-4 sm:grid-cols-2">
-          <ONhap nhan="Mã" batBuoc value={ma} onChange={e => setMa(e.target.value.toUpperCase())} placeholder="VIP10-TET" />
+          <ONhap nhan="Mã" batBuoc value={ma} onChange={e => setMa(e.target.value.toUpperCase())} placeholder="VIP10-TET" disabled={!!sua} goiY={sua ? "Không đổi được mã" : undefined} />
           <ONhap nhan="Tên" batBuoc value={ten} onChange={e => setTen(e.target.value)} />
           <OChon
             nhan="Kiểu giảm"
@@ -413,7 +575,7 @@ function HopThoaiTaoVoucher({ dong, xong }: { dong: () => void; xong: () => void
           <ONhap nhan="Đơn tối thiểu (đồng)" type="number" min={0} value={donToiThieu} onChange={e => setDonToiThieu(e.target.value)} />
           <ONhap nhan="Số lượng" type="number" min={1} value={soLuong} onChange={e => setSoLuong(e.target.value)} goiY="Bỏ trống = không giới hạn" />
           <ONhap nhan="Hết hạn" type="date" value={hetHan} onChange={e => setHetHan(e.target.value)} />
-          <OChon nhan="Đối tác" value={doiTac} onChange={e => setDoiTac(e.target.value)} luaChon={dsDoiTac} />
+          <OChon nhan="Đối tác" value={doiTac} onChange={e => setDoiTac(e.target.value)} luaChon={dsDoiTac} disabled={!!sua} />
         </div>
         <ChonHang ds={hang} doi={setHang} />
       </div>

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseEnumPipe, ParseUUIDPipe, Patch, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseEnumPipe, ParseUUIDPipe, Patch, Post, Put, Query } from "@nestjs/common";
 import { HangThanhVien } from "@prisma/client";
 import { CongKhai, NguoiDung, Vai } from "../common/decorators/xac-thuc.decorator";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
@@ -9,6 +9,9 @@ import {
   CapNhatDoiTacDto,
   CapNhatHopDongDto,
   CapNhatMoiKhDto,
+  CapNhatQuaTangDto,
+  CapNhatVoucherDto,
+  NgungUuDaiDto,
   CapPhatDto,
   CapPhatTheoHangDto,
   DongYHinhDto,
@@ -157,6 +160,26 @@ export class KhachDoiTacController {
     return this.uuDai.taoQua(nd, dto);
   }
 
+  /** Sua qua chua duoc duyet — chi nguoi de xuat (kiem trong service) */
+  @Vai("QUAN_LY", "DOI_TAC")
+  @Patch("qua-tang/:id")
+  suaQua(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: CapNhatQuaTangDto) {
+    return this.uuDai.suaQua(nd, id, dto);
+  }
+
+  /** Huy (xoa) qua chua duoc duyet — chi nguoi de xuat */
+  @Vai("QUAN_LY", "DOI_TAC")
+  @Delete("qua-tang/:id")
+  huyQua(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string) {
+    return this.uuDai.huyQua(nd, id);
+  }
+
+  @Vai("THIEN_KHUE")
+  @Post("qua-tang/:id/ngung")
+  ngungQua(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: NgungUuDaiDto) {
+    return this.uuDai.ngungQua(nd, id, dto);
+  }
+
   @Vai("QUAN_LY")
   @Post("qua-tang/:id/tham-dinh")
   thamDinhQua(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: ThamDinhQuaDto) {
@@ -182,6 +205,24 @@ export class KhachDoiTacController {
   @Post("voucher")
   taoVoucher(@NguoiDung() nd: ThongTinNguoiDung, @Body() dto: TaoVoucherDto) {
     return this.uuDai.taoVoucher(nd, dto);
+  }
+
+  @Vai("QUAN_LY")
+  @Patch("voucher/:id")
+  suaVoucher(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: CapNhatVoucherDto) {
+    return this.uuDai.suaVoucher(nd, id, dto);
+  }
+
+  @Vai("QUAN_LY")
+  @Delete("voucher/:id")
+  huyVoucher(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string) {
+    return this.uuDai.huyVoucher(nd, id);
+  }
+
+  @Vai("THIEN_KHUE")
+  @Post("voucher/:id/ngung")
+  ngungVoucher(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() dto: NgungUuDaiDto) {
+    return this.uuDai.ngungVoucher(nd, id, dto);
   }
 
   @Vai("THIEN_KHUE")

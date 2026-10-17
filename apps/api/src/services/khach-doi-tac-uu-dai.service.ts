@@ -9,11 +9,14 @@ import { phanTrang, taoMetaPhanTrang } from "../common/utils/phan-trang";
 import type { ThongTinNguoiDung } from "../common/types/nguoi-dung.type";
 import type {
   CapNhatCapPhatDto,
+  CapNhatQuaTangDto,
+  CapNhatVoucherDto,
   CapPhatDto,
   CapPhatTheoHangDto,
   DuyetUuDaiDto,
   LocCapPhatQuery,
   LocUuDaiQuery,
+  NgungUuDaiDto,
   TaoQuaTangDto,
   TaoVoucherDto,
   ThamDinhQuaDto
@@ -33,6 +36,16 @@ const HANH_DONG_TAO_VOUCHER = "TAO_VOUCHER";
 /** Voucher con hieu luc tai thoi diem `luc` */
 function voucherConHan(v: { bat_dau: Date | null; het_han: Date | null }, luc = new Date()): boolean {
   return (!v.bat_dau || v.bat_dau <= luc) && (!v.het_han || v.het_han > luc);
+}
+
+/** Qua / voucher bi tu choi duoc sua va gui lai: xoa het dau vet tham dinh + duyet de xet lai tu dau */
+const DAT_LAI_DUYET_QUA = { trang_thai: "CHO_THAM_DINH", nguoi_tham_dinh_id: null, ket_qua_tham_dinh: null, nguoi_duyet_id: null, duyet_luc: null, ly_do_tu_choi: null } as const;
+const DAT_LAI_DUYET_VOUCHER = { trang_thai: "CHO_THAM_DINH", nguoi_tham_dinh_id: null, nguoi_duyet_id: null, duyet_luc: null } as const;
+
+/** Chi nguoi de xuat sua / huy (giu maker-checker). Ban ghi cu khong ro nguoi de xuat: QUAN_LY duoc xu ly */
+function kiemLaNguoiDeXuat(nd: ThongTinNguoiDung, nguoiDeXuatId: string | null, viec: string): void {
+  if (nguoiDeXuatId ? nguoiDeXuatId === nd.id : coVai(nd, ["QUAN_LY"])) return;
+  throw new ForbiddenException(`Chỉ người đề xuất mới được ${viec}`);
 }
 
 @Injectable()
@@ -214,6 +227,62 @@ export class UuDaiService {
     });
   }
 
+  /**
+   * Sua qua truoc khi duoc duyet — chi NGUOI DE XUAT (giu maker-checker: nguoi sua van la maker, khong thanh checker).
+   * Dang cho tham dinh va chua ai tham dinh: sua tai cho. Da bi tu choi: sua xong quay lai CHO_THAM_DINH de xet lai tu dau.
+   */
+  async suaQua(nd: ThongTinNguoiDung, id: string, dto: CapNhatQuaTangDto) {
+    const qua = await this.repo.layQua(id);
+    if (!qua) throw new NotFoundException("Không tìm thấy quà tặng");
+    kiemLaNguoiDeXuat(nd, qua.nguoi_de_xuat_id, "sửa");
+    const data: Prisma.qua_tangUpdateManyArgs["data"] = {};
+    if (dto.ten !== undefined) data.ten = dto.ten.trim();
+    if (dto.mo_ta !== undefined) data.mo_ta = dto.mo_ta;
+    if (dto.hinh_anh !== undefined) data.hinh_anh = dto.hinh_anh;
+    if (dto.gia_tri !== undefined) data.gia_tri = dto.gia_tri;
+    if (dto.so_luong !== undefined) data.so_luong = dto.so_luong;
+    if (dto.hang_ap_dung !== undefined) data.hang_ap_dung = dto.hang_ap_dung;
+    if (!Object.keys(data).length) throw new BadRequestException("Không có thông tin nào để cập nhật");
+    if (qua.trang_thai === "TU_CHOI") Object.assign(data, DAT_LAI_DUYET_QUA);
+    return this.repo.chayTrongGiaoDich(async tx => {
+      const soDong = await this.repo.suaQuaChuaDuyet(id, data, tx);
+      if (soDong !== 1) throw new ConflictException("Quà đã được thẩm định hoặc duyệt — không sửa được nữa, hãy huỷ và tạo lại");
+      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "SUA_QUA_TANG", doiTuong: "qua_tang", doiTuongId: id, duLieu: { truoc: { ten: qua.ten, trang_thai: qua.trang_thai }, gui_lai: qua.trang_thai === "TU_CHOI" } }, tx);
+      return this.repo.layQuaHoacLoi(id, tx);
+    });
+  }
+
+  /** Huy (xoa) qua chua duoc duyet — chi nguoi de xuat. Qua da duyet thi dung `ngungQua` */
+  async huyQua(nd: ThongTinNguoiDung, id: string) {
+    const qua = await this.repo.layQua(id);
+    if (!qua) throw new NotFoundException("Không tìm thấy quà tặng");
+    kiemLaNguoiDeXuat(nd, qua.nguoi_de_xuat_id, "huỷ");
+    return this.repo.chayTrongGiaoDich(async tx => {
+      if ((await this.repo.demCapPhatCuaQua(id, tx)) > 0) throw new ConflictException("Quà đã có lượt cấp phát — không xoá được");
+      const soDong = await this.repo.xoaQuaChuaDuyet(id, tx);
+      if (soDong !== 1) throw new ConflictException("Quà đã được duyệt — dùng thao tác Ngừng áp dụng (chỉ Thiên Khuê)");
+      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "HUY_QUA_TANG", doiTuong: "qua_tang", doiTuongId: id, duLieu: { ten: qua.ten, trang_thai: qua.trang_thai } }, tx);
+      return { id, da_huy: true };
+    });
+  }
+
+  /** Ngung qua DA_DUYET (khong hien cho khach, khong cap them) — chi Thien Khue that, bat buoc ly do. Luot da cap giu nguyen */
+  async ngungQua(nd: ThongTinNguoiDung, id: string, dto: NgungUuDaiDto) {
+    kiemThienKhueThat(nd, "ngừng áp dụng quà tặng");
+    const qua = await this.repo.layQua(id);
+    if (!qua) throw new NotFoundException("Không tìm thấy quà tặng");
+    if (qua.trang_thai !== "DA_DUYET") throw new ConflictException("Chỉ ngừng được quà đang áp dụng (đã duyệt)");
+    const lyDo = `Ngừng áp dụng: ${dto.ly_do.trim()}`;
+    return this.repo.chayTrongGiaoDich(async tx => {
+      const soDong = await this.repo.ghiNgungQua(id, lyDo, tx);
+      if (soDong !== 1) throw new ConflictException("Quà vừa được người khác xử lý");
+      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "NGUNG_QUA_TANG", doiTuong: "qua_tang", doiTuongId: id, duLieu: { ly_do: dto.ly_do.trim() } }, tx);
+      if (qua.nguoi_de_xuat_id)
+        await this.thongBao.gui({ hoSoId: qua.nguoi_de_xuat_id, loai: "PHE_DUYET", tieuDe: `Quà "${qua.ten}" đã ngừng áp dụng`, noiDung: dto.ly_do.trim(), lienKet: "/thanh-vien/quan-ly/uu-dai" }, tx);
+      return this.repo.layQuaHoacLoi(id, tx);
+    });
+  }
+
   // ---------------------------------------------------------------- voucher
 
   async danhSachVoucher(loc: LocUuDaiQuery) {
@@ -293,6 +362,68 @@ export class UuDaiService {
         },
         tx
       );
+      return this.repo.layVoucherHoacLoi(id, tx);
+    });
+  }
+
+  /** Sua voucher truoc khi duoc duyet — chi nguoi tao; ma voucher giu nguyen. Voucher bi tu choi sua xong quay lai CHO_THAM_DINH */
+  async suaVoucher(nd: ThongTinNguoiDung, id: string, dto: CapNhatVoucherDto) {
+    const v = await this.repo.layVoucher(id);
+    if (!v) throw new NotFoundException("Không tìm thấy voucher");
+    kiemLaNguoiDeXuat(nd, await this.layNguoiTaoVoucher(id), "sửa");
+    // Kiem tren gia tri sau khi gop (chi gui mot truong van phai hop le voi truong cu)
+    const loai = dto.loai_giam ?? v.loai_giam;
+    const giaTri = dto.gia_tri ?? Number(v.gia_tri);
+    const batDau = dto.bat_dau !== undefined ? (dto.bat_dau ? new Date(dto.bat_dau) : null) : v.bat_dau;
+    const hetHan = dto.het_han !== undefined ? (dto.het_han ? new Date(dto.het_han) : null) : v.het_han;
+    if (loai === "PHAN_TRAM" && giaTri > 100) throw new BadRequestException("Giảm theo phần trăm tối đa 100%");
+    if (batDau && hetHan && hetHan <= batDau) throw new BadRequestException("Ngày hết hạn phải sau ngày bắt đầu");
+    const data: Prisma.voucherUpdateManyArgs["data"] = {};
+    if (dto.ten !== undefined) data.ten = dto.ten.trim();
+    if (dto.loai_giam !== undefined) data.loai_giam = dto.loai_giam;
+    if (dto.gia_tri !== undefined) data.gia_tri = dto.gia_tri;
+    if (dto.don_toi_thieu !== undefined) data.don_toi_thieu = dto.don_toi_thieu;
+    if (dto.hang_ap_dung !== undefined) data.hang_ap_dung = dto.hang_ap_dung;
+    if (dto.so_luong !== undefined) data.so_luong = dto.so_luong;
+    if (dto.bat_dau !== undefined) data.bat_dau = batDau;
+    if (dto.het_han !== undefined) data.het_han = hetHan;
+    if (!Object.keys(data).length) throw new BadRequestException("Không có thông tin nào để cập nhật");
+    if (v.trang_thai === "TU_CHOI") Object.assign(data, DAT_LAI_DUYET_VOUCHER);
+    return this.repo.chayTrongGiaoDich(async tx => {
+      const soDong = await this.repo.suaVoucherChuaDuyet(id, data, tx);
+      if (soDong !== 1) throw new ConflictException("Voucher đã được duyệt — không sửa được nữa, hãy tạo voucher mới");
+      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "SUA_VOUCHER", doiTuong: "voucher", doiTuongId: id, duLieu: { ma: v.ma, gui_lai: v.trang_thai === "TU_CHOI" } }, tx);
+      return this.repo.layVoucherHoacLoi(id, tx);
+    });
+  }
+
+  /** Huy (xoa) voucher chua duoc duyet — chi nguoi tao. Voucher da duyet thi dung `ngungVoucher` */
+  async huyVoucher(nd: ThongTinNguoiDung, id: string) {
+    const v = await this.repo.layVoucher(id);
+    if (!v) throw new NotFoundException("Không tìm thấy voucher");
+    kiemLaNguoiDeXuat(nd, await this.layNguoiTaoVoucher(id), "huỷ");
+    return this.repo.chayTrongGiaoDich(async tx => {
+      if ((await this.repo.demCapPhatCuaVoucher(id, tx)) > 0) throw new ConflictException("Voucher đã có lượt cấp phát — không xoá được");
+      const soDong = await this.repo.xoaVoucherChuaDuyet(id, tx);
+      if (soDong !== 1) throw new ConflictException("Voucher đã được duyệt — dùng thao tác Ngừng áp dụng (chỉ Thiên Khuê)");
+      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "HUY_VOUCHER", doiTuong: "voucher", doiTuongId: id, duLieu: { ma: v.ma, trang_thai: v.trang_thai } }, tx);
+      return { id, da_huy: true };
+    });
+  }
+
+  /** Ngung voucher DA_DUYET: dat het han = bay gio (khach khong thay, khong cap them; ma da cap van giu lich su). Chi Thien Khue that */
+  async ngungVoucher(nd: ThongTinNguoiDung, id: string, dto: NgungUuDaiDto) {
+    kiemThienKhueThat(nd, "ngừng áp dụng voucher");
+    const v = await this.repo.layVoucher(id);
+    if (!v) throw new NotFoundException("Không tìm thấy voucher");
+    if (v.trang_thai !== "DA_DUYET") throw new ConflictException("Chỉ ngừng được voucher đang áp dụng (đã duyệt)");
+    const nguoiTao = await this.layNguoiTaoVoucher(id);
+    return this.repo.chayTrongGiaoDich(async tx => {
+      const soDong = await this.repo.ghiNgungVoucher(id, new Date(), tx);
+      if (soDong !== 1) throw new ConflictException("Voucher đã hết hạn hoặc vừa được người khác xử lý");
+      await this.nhatKy.ghi({ hoSoId: nd.id, hanhDong: "NGUNG_VOUCHER", doiTuong: "voucher", doiTuongId: id, duLieu: { ma: v.ma, ly_do: dto.ly_do.trim() } }, tx);
+      if (nguoiTao)
+        await this.thongBao.gui({ hoSoId: nguoiTao, loai: "PHE_DUYET", tieuDe: `Voucher ${v.ma} đã ngừng áp dụng`, noiDung: dto.ly_do.trim(), lienKet: "/thanh-vien/quan-ly/uu-dai" }, tx);
       return this.repo.layVoucherHoacLoi(id, tx);
     });
   }
