@@ -63,6 +63,23 @@ export interface PhanTrangMeta {
   tong_trang: number;
 }
 
+/** Thong bao trong app (GET /thong-bao) */
+export type LoaiThongBao = "HE_THONG" | "DAO_TAO" | "QUYEN_SKU" | "KHACH_MOI" | "DON_HANG" | "HOA_HONG" | "CHIEN_DICH" | "PHE_DUYET";
+export interface ThongBaoCuaToi {
+  id: string;
+  loai: LoaiThongBao;
+  tieu_de: string;
+  noi_dung: string | null;
+  /** Duong dan trong web, vd "/hoc-vien/khoa-hoc/abc" */
+  lien_ket: string | null;
+  da_doc: boolean;
+  created_at: string;
+}
+export interface DanhSachThongBao {
+  chua_doc: number;
+  ds: ThongBaoCuaToi[];
+}
+
 /** Vai kem trang thai cua ho so */
 export interface VaiChiTiet {
   vai: Vai;

@@ -75,6 +75,7 @@ export const NAV_APP: NhomNav[] = [
   {
     tieuDe: "Cá nhân",
     muc: [
+      { href: "/thong-bao", nhan: "Thông báo" },
       { href: "/tai-khoan", nhan: "Tài khoản" },
       { href: "/", nhan: "Website Thiên Khuê", chinhXac: true }
     ]

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LogoKhung, lopNhomNav, lopNutPhu } from "@/components/ui";
+import { ChuongThongBao } from "@/features/thong-bao/chuong-thong-bao";
 import { cn } from "@/lib/cn";
 import { chuCaiDau } from "@/lib/dinh-dang";
 import { useXacThuc } from "@/providers/auth-provider";
@@ -119,6 +120,7 @@ export function KhungSidebar({
           </div>
           {nguoiDung && (
             <div className="flex min-w-0 items-center gap-3">
+              <ChuongThongBao />
               <div className="hidden min-w-0 flex-col items-end text-right lg:flex">
                 <span className="truncate text-sm font-semibold text-chu">{nguoiDung.ho_so.ho_ten}</span>
                 {vaiHien && <span className="truncate text-xs text-chu-mo" title={vaiDayDu}>{vaiHien}</span>}

@@ -1,6 +1,7 @@
 import { Global, Module } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { HealthController } from "../controllers/health.controller";
+import { ThongBaoController } from "../controllers/thong-bao.controller";
 import { JwtGuard } from "../common/guards/jwt.guard";
 import { NguoiDungService, NhatKyService, ThongBaoService } from "../services/core.service";
 import { VaiGuard } from "../common/guards/vai.guard";
@@ -21,7 +22,7 @@ import { SupabaseAdminService } from "../infrastructure/supabase/supabase-admin.
  */
 @Global()
 @Module({
-  controllers: [HealthController],
+  controllers: [HealthController, ThongBaoController],
   providers: [
     PrismaService,
     CoreRepository,
