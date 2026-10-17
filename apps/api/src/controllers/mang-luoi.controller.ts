@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { CongKhai, NguoiDung, Vai } from "../common/decorators/xac-thuc.decorator";
 import { coMeta } from "../common/interceptors/bao-response.interceptor";
@@ -59,6 +59,13 @@ export class MangLuoiController {
   @Patch("ma-gioi-thieu/:id")
   doiTrangThaiMa(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() body: DoiTrangThaiMaDto) {
     return this.ma.doiTrangThai(nd.id, id, body.bat);
+  }
+
+  /** Xoa ma cua minh khi chua co click / don (da dung thi chi tat duoc) */
+  @Vai("CTV", "THUC_TAP", "KOL", "KOC")
+  @Delete("ma-gioi-thieu/:id")
+  xoaMa(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string) {
+    return this.ma.xoa(nd.id, id);
   }
 
   /** Tai lieu san pham cua cac SKU da duoc cap quyen */

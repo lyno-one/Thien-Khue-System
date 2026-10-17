@@ -90,6 +90,20 @@ export class MaGioiThieuService {
     return (await this.dinhDang(hoSoId, [id]))[0]!;
   }
 
+  /**
+   * Xoa ma cua chinh minh — chi khi ma chua co click va chua gan don nao (xoa se mat thong ke / hoa hong).
+   * Ma da dung thi chi tat duoc (`doiTrangThai`).
+   */
+  async xoa(hoSoId: string, id: string): Promise<{ id: string; da_xoa: true }> {
+    const ma = await this.maRepo.timTheoId(id);
+    if (!ma || ma.ho_so_id !== hoSoId) throw new NotFoundException("Không tìm thấy mã giới thiệu");
+    const gan = await this.maRepo.demDuLieuGanMa(id);
+    if (gan.click > 0 || gan.ghi_nhan > 0) throw new ConflictException("Mã đã có lượt truy cập hoặc đơn hàng — không xoá được, hãy tắt mã");
+    if ((await this.maRepo.xoaCuaChu(id, hoSoId)) !== 1) throw new ConflictException("Mã vừa được thay đổi, tải lại rồi thử lại");
+    await this.nhatKy.ghiAnToan({ hoSoId, hanhDong: "XOA_MA_GIOI_THIEU", doiTuong: "ma_gioi_thieu", doiTuongId: id, duLieu: { ma: ma.ma, ma_mau: ma.ma_mau } });
+    return { id, da_xoa: true };
+  }
+
   private async dinhDang(hoSoId: string, ids: string[]): Promise<MaGioiThieuCuaToi[]> {
     if (!ids.length) return [];
     const ds = await this.maRepo.layKemThongKe(ids);
@@ -274,6 +288,23 @@ export class ChienDichService {
       duLieu: { truoc: { trang_thai: cu.trang_thai, ma_maus: cu.ma_maus }, sau: { trang_thai: cd.trang_thai, ma_maus: cd.ma_maus } }
     });
     return dinhDangChienDich(cd);
+  }
+
+  /**
+   * Xoa chien dich — chi khi con NHAP va chua co nguoi tham gia / noi dung / ma gan vao.
+   * Chien dich da chay thi dat KET_THUC (giu lich su nghiem thu, hoa hong).
+   */
+  async xoa(nd: ThongTinNguoiDung, id: string): Promise<{ id: string; da_xoa: true }> {
+    const cd = await this.repo.timTheoId(id);
+    if (!cd) throw new NotFoundException("Không tìm thấy chiến dịch");
+    if (cd.trang_thai !== "NHAP") throw new ConflictException("Chỉ xoá được chiến dịch còn ở trạng thái Nháp — chiến dịch đã chạy hãy chuyển sang Kết thúc");
+    const gan = await this.repo.demDuLieuGanChienDich(id);
+    if (gan.tham_gia + gan.noi_dung + gan.ma > 0) {
+      throw new ConflictException(`Chiến dịch đã có ${gan.tham_gia} lượt đăng ký, ${gan.noi_dung} nội dung, ${gan.ma} mã giới thiệu — không xoá được, hãy chuyển sang Kết thúc`);
+    }
+    if ((await this.repo.xoaNhap(id)) !== 1) throw new ConflictException("Chiến dịch vừa được thay đổi, tải lại rồi thử lại");
+    await this.nhatKy.ghiAnToan({ hoSoId: nd.id, hanhDong: "XOA_CHIEN_DICH", doiTuong: "chien_dich", doiTuongId: id, duLieu: { ten: cd.ten, ma_maus: cd.ma_maus } });
+    return { id, da_xoa: true };
   }
 
   async danhSachQuanLy(): Promise<ChienDichQuanLy[]> {

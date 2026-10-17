@@ -50,6 +50,20 @@ export default function TrangMaGioiThieu() {
     }
   }
 
+  async function xoaMa(m: MaGioiThieuCuaToi) {
+    if (!window.confirm(`Xoá mã ${m.ma}? Mã chưa có lượt bấm hay đơn nào nên xoá không ảnh hưởng thống kê. Không hoàn tác được.`)) return;
+    setDangDoi(m.id);
+    setLoiTao(null);
+    try {
+      await api.delete(`/mang-luoi/ma-gioi-thieu/${m.id}`);
+      await ma.taiLai();
+    } catch (e) {
+      setLoiTao(thongDiepLoi(e));
+    } finally {
+      setDangDoi(null);
+    }
+  }
+
   return (
     <>
       <TieuDeTrang
@@ -139,6 +153,12 @@ export default function TrangMaGioiThieu() {
                   <Nut kieu="trong" co="nho" dangXuLy={dangDoi === m.id} onClick={() => doiTrangThai(m)}>
                     {m.bat ? "Tắt mã" : "Bật lại"}
                   </Nut>
+                  {/* Mã đã có lượt bấm / đơn thì chỉ tắt được (xoá sẽ mất thống kê) */}
+                  {m.so_click === 0 && m.so_don === 0 && (
+                    <Nut kieu="vien-loi" co="nho" dangXuLy={dangDoi === m.id} onClick={() => xoaMa(m)}>
+                      Xoá mã
+                    </Nut>
+                  )}
                 </div>
               </The>
             );

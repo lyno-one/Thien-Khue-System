@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
 import { NguoiDung, Vai } from "../common/decorators/xac-thuc.decorator";
 import { coMeta } from "../common/interceptors/bao-response.interceptor";
 import { phanTrang, taoMetaPhanTrang } from "../common/utils/phan-trang";
@@ -110,6 +110,11 @@ export class MangLuoiQuanLyController {
   @Patch("chien-dich/:id")
   suaChienDich(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string, @Body() body: CapNhatChienDichDto) {
     return this.chienDich.capNhat(nd, id, body);
+  }
+
+  @Delete("chien-dich/:id")
+  xoaChienDich(@NguoiDung() nd: ThongTinNguoiDung, @Param("id", ParseUUIDPipe) id: string) {
+    return this.chienDich.xoa(nd, id);
   }
 
   @Get("tham-gia")

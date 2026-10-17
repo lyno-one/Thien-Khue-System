@@ -299,19 +299,34 @@ function KhuChienDich() {
                 khoa: "doi",
                 tieuDe: "",
                 hienThi: r => (
-                  <select
-                    aria-label="Đổi trạng thái"
-                    value={r.trang_thai}
-                    disabled={dang === r.id}
-                    onChange={e => chay(r.id, () => api.patch(`/mang-luoi/quan-ly/chien-dich/${r.id}`, { trang_thai: e.target.value }), "Đã đổi trạng thái chiến dịch.")}
-                    className="h-9 rounded-lg border border-vien-dam bg-be-mat px-2 text-sm text-chu focus:border-chinh focus:outline-none focus:ring-2 focus:ring-chinh/20"
-                  >
-                    {Object.entries(NHAN_TRANG_THAI_CHIEN_DICH).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
+                  <span className="flex items-center gap-2">
+                    <select
+                      aria-label="Đổi trạng thái"
+                      value={r.trang_thai}
+                      disabled={dang === r.id}
+                      onChange={e => chay(r.id, () => api.patch(`/mang-luoi/quan-ly/chien-dich/${r.id}`, { trang_thai: e.target.value }), "Đã đổi trạng thái chiến dịch.")}
+                      className="h-9 rounded-lg border border-vien-dam bg-be-mat px-2 text-sm text-chu focus:border-chinh focus:outline-none focus:ring-2 focus:ring-chinh/20"
+                    >
+                      {Object.entries(NHAN_TRANG_THAI_CHIEN_DICH).map(([k, v]) => (
+                        <option key={k} value={k}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                    {/* Chỉ chiến dịch còn Nháp và chưa có ai đăng ký / nội dung mới xoá được; đã chạy thì chuyển Kết thúc */}
+                    {r.trang_thai === "NHAP" && r.so_tham_gia + r.so_cho_duyet + r.so_noi_dung === 0 && (
+                      <Nut
+                        kieu="vien-loi"
+                        co="nho"
+                        disabled={dang === r.id}
+                        onClick={() => {
+                          if (window.confirm(`Xoá chiến dịch "${r.ten}"? Không hoàn tác được.`)) void chay(r.id, () => api.delete(`/mang-luoi/quan-ly/chien-dich/${r.id}`), "Đã xoá chiến dịch.");
+                        }}
+                      >
+                        Xoá
+                      </Nut>
+                    )}
+                  </span>
                 )
               }
             ]}

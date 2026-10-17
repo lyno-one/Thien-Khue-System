@@ -119,6 +119,21 @@ export class MaGioiThieuRepository {
     await this.prisma.ma_gioi_thieu.update({ where: { id }, data: { bat } });
   }
 
+  /** So luot click + so ghi nhan don gan voi ma (de biet co xoa duoc khong) */
+  async demDuLieuGanMa(id: string): Promise<{ click: number; ghi_nhan: number }> {
+    const [click, ghiNhan] = await Promise.all([
+      this.prisma.luot_click.count({ where: { ma_gioi_thieu_id: id } }),
+      this.prisma.ghi_nhan_don.count({ where: { ma_gioi_thieu_id: id } })
+    ]);
+    return { click, ghi_nhan: ghiNhan };
+  }
+
+  /** Xoa ma cua chinh chu (where ho_so_id). Tra so dong da xoa */
+  async xoaCuaChu(id: string, hoSoId: string): Promise<number> {
+    const kq = await this.prisma.ma_gioi_thieu.deleteMany({ where: { id, ho_so_id: hoSoId } });
+    return kq.count;
+  }
+
   /** Ma kem ten chien dich + so click */
   layKemThongKe(ids: string[]) {
     return this.prisma.ma_gioi_thieu.findMany({
@@ -182,6 +197,22 @@ export class ChienDichRepository {
 
   capNhat(id: string, data: Prisma.chien_dichUpdateInput): Promise<chien_dich> {
     return this.prisma.chien_dich.update({ where: { id }, data });
+  }
+
+  /** So dong gan voi chien dich: nguoi tham gia, noi dung KOC, ma gioi thieu */
+  async demDuLieuGanChienDich(id: string): Promise<{ tham_gia: number; noi_dung: number; ma: number }> {
+    const [thamGia, noiDung, ma] = await Promise.all([
+      this.prisma.tham_gia_chien_dich.count({ where: { chien_dich_id: id } }),
+      this.prisma.noi_dung_koc.count({ where: { chien_dich_id: id } }),
+      this.prisma.ma_gioi_thieu.count({ where: { chien_dich_id: id } })
+    ]);
+    return { tham_gia: thamGia, noi_dung: noiDung, ma };
+  }
+
+  /** Xoa chien dich — chi khi con NHAP (chua chay). Tra so dong da xoa */
+  async xoaNhap(id: string): Promise<number> {
+    const kq = await this.prisma.chien_dich.deleteMany({ where: { id, trang_thai: "NHAP" } });
+    return kq.count;
   }
 
   danhSachMoiNhat(): Promise<chien_dich[]> {
