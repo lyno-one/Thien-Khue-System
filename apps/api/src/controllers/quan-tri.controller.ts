@@ -119,6 +119,12 @@ export class QuanTriController {
     return this.deXuat.layChinhSach();
   }
 
+  /** Bang ty le hoa hong (hien hanh + lich su) — chi doc, muon doi thi lap de xuat DOI_CHINH_SACH */
+  @Get("phe-duyet/ty-le-hoa-hong")
+  bangTyLeHoaHong() {
+    return this.deXuat.layBangTyLeHoaHong();
+  }
+
   @Get("de-xuat")
   async dsDeXuat(@NguoiDung() nd: ThongTinNguoiDung, @Query() q: DeXuatQueryDto) {
     const { ds, meta } = await this.deXuat.layDanhSach(nd, q);

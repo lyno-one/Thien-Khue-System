@@ -2,7 +2,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from "@nestjs/common";
 import { type de_xuat_duyet, type HangThanhVien, LoaiDeXuat, Prisma, Vai } from "@prisma/client";
 import type {
-  ChinhSachHienHanh, DeXuatChiTiet, DeXuatDuyet, DoiTacChiTietQt, DoiTacDongQt, GiaoDichDongQt, HangChoPheDuyet, KhachHangChiTietQt, KhachHangDongQt,
+  BangTyLeHoaHong, ChinhSachHienHanh, DeXuatChiTiet, DeXuatDuyet, DoiTacChiTietQt, DoiTacDongQt, GiaoDichDongQt, HangChoPheDuyet, KhachHangChiTietQt, KhachHangDongQt,
   NguoiDungChiTietQt, NguoiDungDongQt, NguoiHocDongQt, NguoiTomTatQt, NhatKyQt, SanPhamChiTietQt, SanPhamDongQt, TongQuanQuanTri, TrangThaiNguoiHocQt
 } from "@thien-khue/contracts";
 import { NhatKyService, ThongBaoService } from "./core.service";
@@ -225,6 +225,26 @@ export class DeXuatService {
     return {
       ty_le_hoa_hong: tl.map(t => ({ id: t.id, vai: t.vai, mau_id: t.mau_id, ma_mau: t.ma_mau, ty_le: Number(t.ty_le), hieu_luc_tu: t.hieu_luc_tu.toISOString(), ghi_chu: t.ghi_chu })),
       hang_thanh_vien: hang.map(h => ({ hang: h.hang, ten: h.ten, nguong_tich_luy: Number(h.nguong_tich_luy), giam_gia_phan_tram: Number(h.giam_gia_phan_tram), bat: h.bat }))
+    };
+  }
+
+  /** Bang ty le hoa hong: dang hieu luc + lich su (trang thai suy ra tu bat / hieu_luc_tu / hieu_luc_den) */
+  async layBangTyLeHoaHong(): Promise<BangTyLeHoaHong> {
+    const bay = new Date();
+    const ds = await this.repo.tyLeHoaHongTatCa();
+    return {
+      ty_le: ds.map(t => ({
+        id: t.id,
+        vai: t.vai,
+        mau_id: t.mau_id,
+        ma_mau: t.ma_mau,
+        ty_le: Number(t.ty_le),
+        hieu_luc_tu: t.hieu_luc_tu.toISOString(),
+        hieu_luc_den: t.hieu_luc_den?.toISOString() ?? null,
+        bat: t.bat,
+        ghi_chu: t.ghi_chu,
+        trang_thai: !t.bat || (t.hieu_luc_den !== null && t.hieu_luc_den <= bay) ? "DA_HET" : t.hieu_luc_tu > bay ? "CHUA_TOI" : "DANG_AP_DUNG"
+      }))
     };
   }
 

@@ -223,6 +223,24 @@ export interface ChinhSachHienHanh {
   hang_thanh_vien: { hang: HangThanhVien; ten: string; nguong_tich_luy: number; giam_gia_phan_tram: number; bat: boolean }[];
 }
 
+/** Bang ty le hoa hong day du (GET /quan-tri/phe-duyet/ty-le-hoa-hong) */
+export type TrangThaiTyLeHoaHong = "DANG_AP_DUNG" | "CHUA_TOI" | "DA_HET";
+export interface TyLeHoaHongQt {
+  id: string;
+  vai: Vai;
+  mau_id: string | null;
+  ma_mau: string | null;
+  ty_le: number;
+  hieu_luc_tu: string;
+  hieu_luc_den: string | null;
+  bat: boolean;
+  ghi_chu: string | null;
+  trang_thai: TrangThaiTyLeHoaHong;
+}
+export interface BangTyLeHoaHong {
+  ty_le: TyLeHoaHongQt[];
+}
+
 // ------------------------------------------------------------------ BANG DIEU HANH
 
 export interface TongQuanQuanTri {

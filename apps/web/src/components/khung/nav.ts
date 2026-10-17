@@ -69,6 +69,7 @@ export const NAV_APP: NhomNav[] = [
       { href: "/quan-tri", nhan: "Tổng quan điều hành", chinhXac: true, vai: ["QUAN_LY"] },
       { href: "/quan-tri/phe-duyet", nhan: "Bàn phê duyệt", vai: ["QUAN_LY"] },
       { href: "/quan-tri/ho-so", nhan: "Hồ sơ", vai: ["QUAN_LY"] },
+      { href: "/quan-tri/hoa-hong", nhan: "Tỷ lệ hoa hồng", vai: ["QUAN_LY"] },
       { href: "/quan-tri/nhat-ky", nhan: "Nhật ký", vai: ["QUAN_LY"] }
     ]
   },

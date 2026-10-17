@@ -164,6 +164,11 @@ export class DeXuatRepository {
     });
   }
 
+  /** Toan bo ty le hoa hong (ke ca da het hieu luc) — trang xem bang ty le + lich su doi */
+  tyLeHoaHongTatCa() {
+    return this.prisma.ty_le_hoa_hong.findMany({ orderBy: [{ vai: "asc" }, { hieu_luc_tu: "desc" }], take: 500 });
+  }
+
   hangThanhVienTheoThuTu() {
     return this.prisma.hang_thanh_vien_cau_hinh.findMany({ orderBy: { thu_tu: "asc" } });
   }
