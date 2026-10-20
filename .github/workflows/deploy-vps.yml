@@ -1,0 +1,50 @@
+# Tu deploy Thien Khue S len VPS OCI moi lan push main: SSH vao VPS -> git pull -> deploy/vps-trien-khai.sh
+# (build, prisma migrate deploy schema thien_khue, up -d, doi api healthy).
+# Can secret VPS_SSH_KEY + VPS_KNOWN_HOSTS (xem docs/DEPLOY.md muc 3.1). Chua co secret -> bo qua, khong loi.
+# Dung chung khoa flock /tmp/lyno-deploy.lock voi CRM / LynoMe nen push cung luc se chay lan luot.
+name: Deploy VPS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "LynoOS/**"
+      - "docs/**"
+      - "thien-khue-s-src/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Kiểm secret
+        id: kiem
+        env:
+          KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::warning::Chưa có secret VPS_SSH_KEY — bỏ qua deploy (xem docs/DEPLOY.md mục 3.1)"
+            echo "co=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "co=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy
+        if: steps.kiem.outputs.co == '1'
+        env:
+          KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          HOST: ${{ vars.VPS_HOST || '150.230.154.52' }}
+          THU_MUC: ${{ vars.VPS_THU_MUC || '~/apps/thien-khue' }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/vps && chmod 600 ~/.ssh/vps
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/vps -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 "opc@$HOST" \
+            "flock /tmp/lyno-deploy.lock bash -c 'set -e; cd $THU_MUC && git pull --ff-only && bash deploy/vps-trien-khai.sh'"

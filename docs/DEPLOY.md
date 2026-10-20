@@ -76,6 +76,23 @@ docker compose up -d
 docker image prune -f
 ```
 
+Hoặc gọn hơn: `git pull && bash deploy/vps-trien-khai.sh` (build, `migrate deploy`, `up -d`, chờ api healthy).
+
+### 3.1. Tự deploy khi push lên `main`
+
+Workflow [.github/workflows/deploy-vps.yml](../.github/workflows/deploy-vps.yml) SSH vào VPS, `git pull --ff-only` rồi chạy `deploy/vps-trien-khai.sh`. Push chỉ đổi `LynoOS/`, `docs/`, `thien-khue-s-src/` hoặc file `.md` thì không deploy. Có thể chạy tay ở tab Actions (`workflow_dispatch`). Dùng chung khoá `flock /tmp/lyno-deploy.lock` với CRM / LynoMe.
+
+Cài một lần (GitHub repo → Settings → Secrets and variables → Actions):
+
+| Loại | Tên | Giá trị |
+|---|---|---|
+| Secret | `VPS_SSH_KEY` | private key SSH vào `opc@<VPS>` (có thể dùng lại khoá deploy của CRM) |
+| Secret | `VPS_KNOWN_HOSTS` | kết quả `ssh-keyscan <IP VPS>` |
+| Variable (tuỳ chọn) | `VPS_HOST` | mặc định `150.230.154.52` |
+| Variable (tuỳ chọn) | `VPS_THU_MUC` | thư mục repo trên VPS, mặc định `~/apps/thien-khue` |
+
+Trên VPS, thư mục đó phải là bản `git clone` của repo (để `git pull --ff-only` chạy được, không có sửa đổi local), đã có `deploy/.env` và `deploy/api.env`. Repo private thì VPS cần deploy key / token để pull. Chưa có secret `VPS_SSH_KEY` thì workflow chỉ cảnh báo và bỏ qua.
+
 ## 4. Lưu ý
 
 - Giá trị `NEXT_PUBLIC_*` (trong `deploy/.env`) được **nhúng vào web lúc build**. Khi đổi chúng, chạy `docker compose build web` rồi `docker compose up -d`.
