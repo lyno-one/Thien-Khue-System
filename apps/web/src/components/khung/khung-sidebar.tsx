@@ -60,9 +60,10 @@ export function KhungSidebar({
   const { nguoiDung, coVai, dangXuat } = useXacThuc();
 
   const hien = (m: MucNav) =>
-    !m.vai?.length ||
-    coVai(...m.vai) ||
-    (!!m.kemDangHoc && !!nguoiDung?.vai_chi_tiet.some(v => m.vai!.includes(v.vai) && v.trang_thai === "DANG_HOC"));
+    (!m.chiNhanSuLyno || !!nguoiDung?.ho_so.crm_user_id) &&
+    (!m.vai?.length ||
+      coVai(...m.vai) ||
+      (!!m.kemDangHoc && !!nguoiDung?.vai_chi_tiet.some(v => m.vai!.includes(v.vai) && v.trang_thai === "DANG_HOC")));
   const dangO = (m: MucNav) => (m.chinhXac ? duongDan === m.href : duongDan === m.href || duongDan.startsWith(`${m.href}/`));
   const nhom = nav.map(n => ({ ...n, muc: n.muc.filter(hien) })).filter(n => n.muc.length);
   // Thu gon tung nhom nhu sidebar CRM; nhom chua trang dang o luon mo

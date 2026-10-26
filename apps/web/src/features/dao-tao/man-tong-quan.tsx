@@ -6,6 +6,7 @@ import { DangTai, KhungCho, Loi, lopChip, lopKicker, lopLienKet, lopThe, Nhan, N
 import { cn } from "@/lib/cn";
 import { useXacThuc } from "@/providers/auth-provider";
 import { useLoTrinh, useQuyenSku } from "./hooks";
+import { TheBaiLyno } from "./man-bai-lyno";
 import { DauBai, Kicker, OSoLieu, ThanhTienDo } from "./thanh-phan";
 import { huyHieu, nhanKhoa, nhanNutKhoa } from "./tinh-toan";
 
@@ -34,15 +35,18 @@ export function ManTongQuan() {
   const ds = lo.nhom.flatMap(n => n.khoa_hoc);
   if (!ds.length) {
     return (
-      <Trong
-        tieuDe="Chưa có khóa học cho vai trò của bạn"
-        moTa="Khi bạn được gán vai trò Sale, CSKH, CTV, Thực tập sinh hoặc KOL/KOC, lộ trình học sẽ hiện ở đây."
-        hanhDong={
-          <NutLienKet href="/hoc-vien/khoa-hoc" kieu="vien" co="nho">
-            Xem tất cả khóa học
-          </NutLienKet>
-        }
-      />
+      <div className="flex flex-col gap-6">
+        <Trong
+          tieuDe="Chưa có khóa học cho vai trò của bạn"
+          moTa="Khi bạn được gán vai trò Sale, CSKH, CTV, Thực tập sinh hoặc KOL/KOC, lộ trình học sẽ hiện ở đây."
+          hanhDong={
+            <NutLienKet href="/hoc-vien/khoa-hoc" kieu="vien" co="nho">
+              Xem tất cả khóa học
+            </NutLienKet>
+          }
+        />
+        <TheBaiLyno />
+      </div>
     );
   }
 
@@ -217,6 +221,9 @@ export function ManTongQuan() {
               ))}
             </div>
           )}
+
+          {/* Bai hoc Lyno (CRM) — chi nhan su Lyno; doc lap voi kich hoat vai Thien Khue */}
+          <TheBaiLyno />
 
           <div className={cn(lopThe, "flex flex-col gap-2 p-4 md:p-5")}>
             <Kicker>Quyền bán theo SKU</Kicker>

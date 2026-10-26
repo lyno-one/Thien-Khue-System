@@ -4,6 +4,12 @@
  */
 export type {
   BaiHocChiTiet,
+  BaiLynoChiTiet,
+  BaiLynoTrongLoTrinh,
+  KetQuaQuizBaiLyno,
+  LoTrinhBaiLyno,
+  NopQuizBaiLynoBody,
+  QuizBaiLyno,
   BaiHocTomTat,
   BaiKiemTraTomTat,
   BaiThucHanh,

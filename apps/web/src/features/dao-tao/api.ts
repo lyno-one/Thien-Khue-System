@@ -1,7 +1,8 @@
 import type { PhanTrangMeta } from "@thien-khue/contracts";
-import { api, goiApi } from "@/lib/api";
+import { api, goiApi, LoiApi } from "@/lib/api";
 import type {
   BaiHocChiTiet,
+  BaiLynoChiTiet,
   BaiThucHanh,
   BaiThucHanhChoCham,
   ChamThucHanhBody,
@@ -10,16 +11,19 @@ import type {
   KetQuaChamThucHanh,
   KetQuaHoanThanhBai,
   KetQuaNopBai,
+  KetQuaQuizBaiLyno,
   KetQuaXacNhanSku,
   KhoaHocChiTiet,
   KhoaHocTomTat,
   LoaiKhoaHoc,
+  LoTrinhBaiLyno,
   LoTrinhCuaToi,
   LuotLamTomTat,
   NopBaiKiemTraBody,
   NopThucHanhBody,
   PhieuLuyenAi,
   PhieuXemLuyenAi,
+  QuizBaiLyno,
   QuyenSkuCuaToi,
   TaoPhieuLuyenAiBody,
   TienDoLuyenAi,
@@ -61,5 +65,25 @@ export const daoTaoApi = {
   /** Mentor / quan ly: hang doi cham (co meta phan trang) */
   dsThucHanh: (q: { trang_thai?: TrangThaiThucHanh; khoa_hoc_id?: string; trang?: number; so_dong?: number }) =>
     goiApi<BaiThucHanhChoCham[], PhanTrangMeta>("GET", "/dao-tao/thuc-hanh", { query: { ...q } }),
-  chamThucHanh: (id: string, body: ChamThucHanhBody) => api.post<KetQuaChamThucHanh>(`/dao-tao/thuc-hanh/${ma(id)}/cham`, body)
+  chamThucHanh: (id: string, body: ChamThucHanhBody) => api.post<KetQuaChamThucHanh>(`/dao-tao/thuc-hanh/${ma(id)}/cham`, body),
+
+  /*
+   * Bai hoc Lyno (bai tao tren CRM, API doc song CRM /api/kb/*). Chi nhan su Lyno (co tai khoan CRM); nguoi khac 403.
+   * Khong tinh vao kich hoat vai cua Thien Khue.
+   */
+  /** 403 (khong phai nhan su Lyno) -> null de trang tong quan an the, khong bao loi */
+  baiLynoLoTrinh: async (): Promise<LoTrinhBaiLyno | null> => {
+    try {
+      return await api.get<LoTrinhBaiLyno>("/dao-tao/bai-lyno/lo-trinh");
+    } catch (e) {
+      if (e instanceof LoiApi && e.status === 403) return null;
+      throw e;
+    }
+  },
+  baiLyno: (id: string) => api.get<BaiLynoChiTiet>(`/dao-tao/bai-lyno/${ma(id)}`),
+  baiLynoDaDoc: (id: string) => api.post<void>(`/dao-tao/bai-lyno/${ma(id)}/da-doc`),
+  /** null khi bai khong co bai kiem tra */
+  baiLynoQuiz: (id: string) => api.get<QuizBaiLyno | null>(`/dao-tao/bai-lyno/${ma(id)}/quiz`),
+  baiLynoNopQuiz: (quizId: string, traLoi: Record<string, number>) =>
+    api.post<KetQuaQuizBaiLyno>(`/dao-tao/bai-lyno/quiz/${ma(quizId)}/nop`, { traLoi })
 };

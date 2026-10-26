@@ -18,6 +18,8 @@ export interface MucNav {
   chinhXac?: boolean;
   /** Hien ca khi vai dang DANG_HOC (vd thuc tap sinh vao muc Thuc tap truoc khi kich hoat) */
   kemDangHoc?: boolean;
+  /** Chi hien voi nhan su Lyno (ho so co crm_user_id) — vd bai hoc soan tren CRM */
+  chiNhanSuLyno?: boolean;
 }
 
 export interface NhomNav {
@@ -35,6 +37,7 @@ export const NAV_APP: NhomNav[] = [
     muc: [
       { href: "/hoc-vien", nhan: "Tổng quan học tập", chinhXac: true },
       { href: "/hoc-vien/khoa-hoc", nhan: "Khóa học" },
+      { href: "/hoc-vien/bai-hoc-lyno", nhan: "Bài học Lyno", chiNhanSuLyno: true },
       { href: "/hoc-vien/bai-kiem-tra", nhan: "Bài kiểm tra" },
       { href: "/hoc-vien/chung-chi", nhan: "Chứng chỉ" },
       { href: "/hoc-vien/quyen-sku", nhan: "Quyền SKU" },

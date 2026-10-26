@@ -16,8 +16,10 @@ import { SanPhamMinhHoa } from "./san-pham-minh-hoa";
 import { DauBai, Kicker, ThanhTienDo } from "./thanh-phan";
 import { baiChuaXong, boTieuDeTrung, cauThayDoi, nhanThoiLuong, phangBai, phanTram } from "./tinh-toan";
 
-/** URL nhung video: YouTube -> iframe embed; file .mp4/.webm -> <video>; con lai -> lien ket */
-function phanTichVideo(url: string): { kieu: "iframe" | "video" | "lien-ket"; src: string } | null {
+export type VideoDaPhanTich = { kieu: "iframe" | "video" | "lien-ket"; src: string };
+
+/** URL nhung video: YouTube -> iframe embed; file .mp4/.webm -> <video>; con lai -> lien ket. Chi nhan http(s). Dung chung voi bai Lyno. */
+export function phanTichVideo(url: string): VideoDaPhanTich | null {
   let u: URL;
   try {
     u = new URL(url);
@@ -43,15 +45,14 @@ function NutPhat() {
   );
 }
 
-/** Khung video bai hoc: video that tren nen muc toi; chua co video -> khung chinh-nhat, nut phat xanh */
-function KhungVideo({ bai }: { bai: BaiHocChiTiet }) {
-  const v = bai.video_url ? phanTichVideo(bai.video_url) : null;
-  if (v?.kieu === "iframe") {
+/** Video nhung (iframe YouTube / the <video>) tren nen muc toi; kieu lien-ket -> null (noi goi tu hien nut mo) */
+export function VideoNhung({ v, tieuDe }: { v: VideoDaPhanTich; tieuDe: string }) {
+  if (v.kieu === "iframe") {
     return (
       <div className="aspect-video overflow-hidden rounded-xl bg-muc-900">
         <iframe
           src={v.src}
-          title={`Video: ${bai.tieu_de}`}
+          title={`Video: ${tieuDe}`}
           className="h-full w-full border-0"
           allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -59,9 +60,16 @@ function KhungVideo({ bai }: { bai: BaiHocChiTiet }) {
       </div>
     );
   }
-  if (v?.kieu === "video") {
+  if (v.kieu === "video") {
     return <video src={v.src} controls preload="metadata" className="aspect-video w-full rounded-xl bg-muc-900" />;
   }
+  return null;
+}
+
+/** Khung video bai hoc: video that tren nen muc toi; chua co video -> khung chinh-nhat, nut phat xanh */
+function KhungVideo({ bai }: { bai: BaiHocChiTiet }) {
+  const v = bai.video_url ? phanTichVideo(bai.video_url) : null;
+  if (v && v.kieu !== "lien-ket") return <VideoNhung v={v} tieuDe={bai.tieu_de} />;
   return (
     <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl border border-vien bg-chinh-nhat px-4 text-center">
       {v ? (

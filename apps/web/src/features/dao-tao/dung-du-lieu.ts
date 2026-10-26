@@ -119,10 +119,19 @@ export const KHOA = {
   baiHoc: (id: string) => `dao-tao:bai-hoc:${id}`,
   luyenAi: (khoaHocId: string) => `dao-tao:luyen-ai:${khoaHocId}`,
   chungChi: "dao-tao:chung-chi",
-  quyenSku: "dao-tao:quyen-sku"
+  quyenSku: "dao-tao:quyen-sku",
+  /** Bai hoc Lyno (CRM) — tach khoi tien do LMS cua Thien Khue */
+  loTrinhLyno: "dao-tao:bai-lyno:lo-trinh",
+  baiLyno: (id: string) => `dao-tao:bai-lyno:bai:${id}`,
+  quizLyno: (id: string) => `dao-tao:bai-lyno:quiz:${id}`
 };
 
 /** Sau moi thao tac lam doi tien do (hoc xong bai, nop bai, xac nhan SKU): lam moi moi thu lien quan */
 export function lamMoiTienDo() {
   lamMoi(KHOA.loTrinh, KHOA.dsKhoaHoc, KHOA.moiKhoaHoc, KHOA.chungChi, KHOA.quyenSku);
+}
+
+/** Sau khi danh dau da hoc / nop quiz bai Lyno: lam moi lo trinh Lyno (the tong quan + danh sach) va chinh bai do */
+export function lamMoiBaiLyno(baiId: string) {
+  lamMoi(KHOA.loTrinhLyno, KHOA.baiLyno(baiId));
 }
