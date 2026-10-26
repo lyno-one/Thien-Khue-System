@@ -93,6 +93,11 @@ export class KhachRepository {
 `tongMuaHopLe(sdt)` (đơn hợp lệ = `BAN_HANG` và không `huy`/`hoan`), `layKhachDuSoLanMua(soLan)`, `layNhanSuCrm(userId)`, `layNhanSuTheoNhom(nhom)`.
 Cần truy vấn CRM mới → ghi vào "Cần đổi chung" (agent nền / tích hợp thêm vào đây), không tự viết SQL vào `public`.
 
+## CrmApiClient (gọi CRM apps/api bằng token người dùng)
+
+`goi(token, method, path, { body, query })` (bóc `{ data }`, lỗi CRM → cùng status, 5xx → 502, không tới được → 503), `taoDon`, `layDon`, `doiTrangThaiDon`;
+bài học Lyno (`/api/kb/*`): `layLoTrinhKb`, `layBaiKb`, `danhDauDaDocKb`, `layQuizKb`, `nopQuizKb` — dùng ở `BaiLynoService` (`/api/dao-tao/bai-lyno/*`, chỉ nhân sự CRM).
+
 ## Đăng nhập lần đầu
 
 JwtGuard xác thực token qua JWKS → `NguoiDungService.layTuToken`: chưa có `ho_so` thì tạo; nhân sự CRM đang làm → gắn `crm_user_id`, vai theo `mapVaiCrm` (admin → ADMIN, manager → QUAN_LY: `HOAT_DONG`; nhóm SALE / CSKH → SALE / CSKH: `DANG_HOC` — học trước khi bán); người khác → `KHACH`. Ghi `lich_su_vai_tro` + `nhat_ky`.

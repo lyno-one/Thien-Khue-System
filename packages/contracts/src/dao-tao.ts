@@ -793,6 +793,79 @@ export interface TienDoLuyenAi {
   phien: PhienLuyenAi[];
 }
 
+// ================================================================== BAI HOC LYNO (bai hoc tao tren CRM, /kb cua CRM)
+// Thien Khue KHONG sao chep: doc / ghi song qua CRM API /api/kb/* bang token cua chinh nguoi dung (CrmApiClient).
+// CRM tu chon bai theo nhom quyen phong ban -> chuc danh va tu tinh tien do. Chi nhan su CRM (crm_user_id) moi goi duoc.
+// Bai Lyno KHONG tinh vao dieu kien kich hoat vai cua Thien Khue (hoc truoc khi ban, XetDat) — hai luong doc lap.
+
+/** Mot bai trong lo trinh CRM (GET /api/kb/lo-trinh cua CRM) */
+export interface BaiLynoTrongLoTrinh {
+  id: string;
+  tieu_de: string;
+  thu_tu: number;
+  bat: boolean;
+  vi_tri: string | null;
+  bat_buoc: boolean;
+  /** Link YouTube dang watch?v= (CRM chuan hoa) hoac null */
+  video_url: string | null;
+  coQuiz: boolean;
+  daDau: boolean;
+  daDoc: boolean;
+  /** Diem cao nhat (0..100) hoac null khi chua lam */
+  diem: number | null;
+  /** Co quiz dang bat -> phai dat; khong co quiz -> da doc */
+  daXong: boolean;
+}
+
+/** GET /api/dao-tao/bai-lyno/lo-trinh */
+export interface LoTrinhBaiLyno {
+  viTri: string | null;
+  tongBatBuoc: number;
+  xongBatBuoc: number;
+  baiHoc: BaiLynoTrongLoTrinh[];
+}
+
+/** GET /api/dao-tao/bai-lyno/:id */
+export interface BaiLynoChiTiet {
+  bai: {
+    id: string;
+    tieu_de: string;
+    /** Markdown */
+    noi_dung: string;
+    thu_tu: number;
+    bat: boolean;
+    vi_tri: string | null;
+    bat_buoc: boolean;
+    video_url: string | null;
+  };
+  daDoc: boolean;
+}
+
+/** GET /api/dao-tao/bai-lyno/:id/quiz (null khi bai khong co quiz) — khong kem dap an */
+export interface QuizBaiLyno {
+  quiz: { id: string; bai_id: string; tieu_de: string; /** 0..100 */ nguong_dau: number; bat: boolean };
+  cauHoi: { id: string; cau: string; lua_chon: string[] }[];
+}
+
+/** POST /api/dao-tao/bai-lyno/quiz/:quizId/nop — traLoi: cauHoiId -> chi so lua chon (tu 0) */
+export interface NopQuizBaiLynoBody {
+  traLoi: Record<string, number>;
+}
+
+export interface KetQuaQuizBaiLyno {
+  diem: number;
+  dung: number;
+  tong: number;
+  dau: boolean;
+  nguongDau: number;
+  /** CRM co the tra {} (khong lo dap an) */
+  chiTiet: Record<string, { dung: boolean; dap_an: number | null; giai_thich: string | null }>;
+}
+
+/** So cau hoi / chi so lua chon toi da nhan khi nop quiz Lyno (chan body rac truoc khi goi CRM) */
+export const SO_CAU_QUIZ_LYNO_TOI_DA = 200;
+export const CHI_SO_LUA_CHON_LYNO_TOI_DA = 19;
+
 /*
  * BANG ROUTE (/api/dao-tao/...)
  * Nguoi hoc (dang nhap):
@@ -822,6 +895,12 @@ export interface TienDoLuyenAi {
  *   POST   luyen-ai/ket-qua                  -> PhanHoiKetQuaLuyenAi (HMAC — chi Sales Training; body KetQuaLuyenAiBody)
  *   POST   luyen-ai/phien/:id/phieu-xem      -> PhieuXemLuyenAi (Bearer chu phien / MENTOR / QUAN_LY; han 2 phut)
  *   GET    luyen-ai/phieu-xem/:ma            -> NguCanhPhieuXemLuyenAi (HMAC — chi Sales Training; dung mot lan; het han / da dung -> 410)
+ * Bai hoc Lyno (bai tao tren CRM — chi nhan su CRM, nguoi khac 403; goi CRM /api/kb/* bang token nguoi dung, loi CRM tra nguyen):
+ *   GET    bai-lyno/lo-trinh                 -> LoTrinhBaiLyno
+ *   GET    bai-lyno/:id                      -> BaiLynoChiTiet (bai tat / khong co -> 404 cua CRM)
+ *   POST   bai-lyno/:id/da-doc               -> 204 (bai khong co quiz)
+ *   GET    bai-lyno/:id/quiz                 -> QuizBaiLyno | null
+ *   POST   bai-lyno/quiz/:quizId/nop         -> KetQuaQuizBaiLyno (body NopQuizBaiLynoBody)
  * Quan tri noi dung (QUAN_LY, ADMIN, THIEN_KHUE):
  *   GET    quan-tri/khoa-hoc                 -> KhoaHocQuanTri[] + meta
  *   POST   quan-tri/khoa-hoc                 -> KhoaHocQuanTri

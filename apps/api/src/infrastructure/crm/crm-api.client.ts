@@ -90,4 +90,31 @@ export class CrmApiClient {
   doiTrangThaiDon<T = unknown>(token: string, donId: string, sang: string, lyDoHoan?: string | null): Promise<T> {
     return this.goi<T>(token, "POST", `/api/don-hang/${encodeURIComponent(donId)}/change-status`, { body: { sang, lyDoHoan } });
   }
+
+  // ---------------------------------------------------------------- Bai hoc Lyno (/kb cua CRM, quyen "user" ben CRM)
+
+  /** Lo trinh bai hoc CRM chon cho nguoi dung (theo nhom quyen phong ban -> chuc danh) kem tien do */
+  layLoTrinhKb<T = unknown>(token: string): Promise<T> {
+    return this.goi<T>(token, "GET", "/api/kb/lo-trinh");
+  }
+
+  /** Noi dung mot bai (bai tat -> 404 voi nhan vien) */
+  layBaiKb<T = unknown>(token: string, baiId: string): Promise<T> {
+    return this.goi<T>(token, "GET", `/api/kb/bai/${encodeURIComponent(baiId)}`);
+  }
+
+  /** Danh dau da doc bai khong co quiz (CRM tra 204) */
+  danhDauDaDocKb(token: string, baiId: string): Promise<void> {
+    return this.goi<void>(token, "POST", `/api/kb/bai/${encodeURIComponent(baiId)}/da-doc`);
+  }
+
+  /** Quiz cua bai (khong kem dap an) hoac null */
+  layQuizKb<T = unknown>(token: string, baiId: string): Promise<T> {
+    return this.goi<T>(token, "GET", `/api/kb/bai/${encodeURIComponent(baiId)}/quiz`);
+  }
+
+  /** Nop quiz — CRM cham va luu luot lam */
+  nopQuizKb<T = unknown>(token: string, quizId: string, traLoi: Record<string, number>): Promise<T> {
+    return this.goi<T>(token, "POST", `/api/kb/quiz/${encodeURIComponent(quizId)}/nop`, { body: { traLoi } });
+  }
 }

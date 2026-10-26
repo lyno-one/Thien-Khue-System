@@ -8,6 +8,8 @@ import { QuyenSkuService } from "../services/dao-tao-quyen-sku.service";
 import { DaoTaoLuyenAiController } from "../controllers/dao-tao-luyen-ai.controller";
 import { LuyenAiService } from "../services/dao-tao-luyen-ai.service";
 import { HmacStGuard } from "../common/guards/hmac-st.guard";
+import { DaoTaoBaiLynoController } from "../controllers/dao-tao-bai-lyno.controller";
+import { BaiLynoService } from "../services/dao-tao-bai-lyno.service";
 import {
   DuLieuHocRepository, HocVienRepository, KiemTraRepository, LuyenAiRepository, QuanTriNoiDungRepository, QuyenSkuRepository, ThucHanhRepository,
   TienDoDoiRepository, XetDatRepository
@@ -19,7 +21,7 @@ import {
  *  - hoac @UseGuards(QuyenSkuGuard) + @CanQuyenSku("BAN", "body.mau_id") tren route.
  */
 @Module({
-  controllers: [DaoTaoController, DaoTaoQuanTriController, DaoTaoLuyenAiController],
+  controllers: [DaoTaoController, DaoTaoQuanTriController, DaoTaoLuyenAiController, DaoTaoBaiLynoController],
   providers: [
     QuyenSkuService,
     QuyenSkuGuard,
@@ -30,6 +32,7 @@ import {
     TienDoDoiService,
     QuanTriNoiDungService,
     LuyenAiService,
+    BaiLynoService,
     HmacStGuard,
     DuLieuHocRepository,
     QuyenSkuRepository,
