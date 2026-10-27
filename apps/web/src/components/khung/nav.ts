@@ -42,7 +42,8 @@ export const NAV_APP: NhomNav[] = [
       { href: "/hoc-vien/chung-chi", nhan: "Chứng chỉ" },
       { href: "/hoc-vien/quyen-sku", nhan: "Quyền SKU" },
       { href: "/hoc-vien/cham-bai", nhan: "Chấm bài", vai: ["MENTOR", "QUAN_LY"] },
-      { href: "/hoc-vien/quan-tri", nhan: "Điều hành học viện", vai: ["MENTOR", "QUAN_LY"] }
+      { href: "/hoc-vien/quan-tri", nhan: "Điều hành học viện", vai: ["MENTOR", "QUAN_LY"], chinhXac: true },
+      { href: "/hoc-vien/quan-tri/khoa-hoc", nhan: "Quản trị khóa học", vai: ["QUAN_LY"] }
     ]
   },
   {
