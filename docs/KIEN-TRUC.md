@@ -198,3 +198,8 @@ pnpm --filter web start              # next start -p 3300
 
 - Storefront: `/san-pham/<SKU>?mgt=<mã>` ghi lượt click và nhớ mã 30 ngày → form "Tư vấn cho tôi" gửi kèm `ma_gioi_thieu` vào lead. `/vip`, `/than-thien` lấy ngưỡng hạng thật từ `GET /api/khach-doi-tac/hang/cau-hinh`. Có `sitemap.xml`, `robots.txt`.
 - Response API: thành công `{ data, meta? }`, lỗi `{ error: { code, message, details? } }` (giống CRM). Hướng dẫn chi tiết: `apps/api/README.md`, `apps/web/README.md`.
+
+
+## Ngoại lệ LYNO Friends (16/11/2026)
+
+Theo luồng mới chủ dự án chốt: khách tự nguyện đăng ký học tại `/lyno-friends`, nhận thư xác nhận email rồi mới vào học. Chỉ luồng này được dùng Supabase Auth admin để mời học viên; vẫn giữ tắt đăng ký Auth đại trà. Vai thêm mới chỉ là CTV `DANG_HOC`, không mở quyền làm việc và không mở lại vai bị khoá. Học hết bài và đạt từng bài kiểm tra sản phẩm từ 90% mới được mở Affi và nhận link đúng SKU; xem [LYNO-FRIENDS.md](LYNO-FRIENDS.md). Quy định không tự đăng ký ở mục 4 tiếp tục áp cho các luồng nhân sự khác.

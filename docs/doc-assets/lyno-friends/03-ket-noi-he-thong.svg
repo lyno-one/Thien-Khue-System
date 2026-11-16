@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+<title id="title">03 · Thiên Khuê S và Affiliate phối hợp ra sao?</title><desc id="desc">Khách chỉ bấm mở Affi. Hai backend tự đối chiếu kết quả học với nhau.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#60758c" stroke-width="1.5"/></marker></defs>
+<rect width="1200" height="900" rx="20" fill="#f5f7fb"/>
+<text x="40" y="48" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="29" font-weight="700" text-anchor="start">03 · Thiên Khuê S và Affiliate phối hợp ra sao?</text>
+<text x="40" y="81" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="start">Khách chỉ bấm mở Affi. Hai backend tự đối chiếu kết quả học với nhau.</text>
+<rect x="40" y="115" width="300" height="105" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="152" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">KHÁCH HÀNG</text>
+<text x="63" y="187" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Đăng ký, học, bấm mở Affi</text>
+<rect x="450" y="115" width="300" height="105" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="473" y="152" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">THIÊN KHUÊ S</text>
+<text x="473" y="187" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Giữ hồ sơ và kết quả học</text>
+<rect x="860" y="115" width="300" height="105" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="883" y="152" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">AFFILIATE / AFFI</text>
+<text x="883" y="187" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Cấp cổng và link giới thiệu</text>
+<path d="M190 220 V805" stroke="#c3cede" stroke-width="2" stroke-dasharray="6 7"/>
+<path d="M600 220 V805" stroke="#c3cede" stroke-width="2" stroke-dasharray="6 7"/>
+<path d="M1010 220 V805" stroke="#c3cede" stroke-width="2" stroke-dasharray="6 7"/>
+<text x="395.0" y="257" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="middle">1. Bấm “Mở Affi”</text>
+<path d="M190 270 L600 270" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="805.0" y="342" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="middle">2. Yêu cầu mở cổng theo ID học viên</text>
+<path d="M600 355 L1010 355" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="805.0" y="427" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="middle">3. Hỏi lại: học viên đủ điều kiện mã nào?</text>
+<path d="M1010 440 L600 440" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="805.0" y="512" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="middle">4. Trả danh sách SKU đã học và thi đạt</text>
+<path d="M600 525 L1010 525" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="805.0" y="662" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="middle">5. Trả link đăng nhập Affi một lần</text>
+<path d="M1010 675 L600 675" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="395.0" y="742" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="middle">6. Cho khách mở cổng Affi</text>
+<path d="M600 755 L190 755" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="820" y="555" width="350" height="76" rx="15" fill="#eaf6ef" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="843" y="592" fill="#167451" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">Cấp / dùng lại tài khoản</text>
+<text x="40" y="844" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" text-anchor="start">Kết quả học do Thiên Khuê S quyết định; trình duyệt không tự gửi điểm để xin cấp quyền.</text>
+<text x="40" y="876" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="start">Cổng Affi chỉ hiện link sản phẩm đã đạt. Hai backend dùng khóa tích hợp riêng để xác minh.</text>
+</svg>

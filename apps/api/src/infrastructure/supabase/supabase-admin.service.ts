@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { layCauHinh } from "../../config/cau-hinh";
 
@@ -18,6 +18,14 @@ export class SupabaseAdminService {
       });
     }
     return this.client;
+  }
+
+  /** Ngoai le LYNO Friends: chi moi hoc vien xac nhan email; khong cap vai lam viec. */
+  async moiHocVienFriends(email: string, hoTen: string): Promise<void> {
+    const redirectTo = new URL("/lyno-friends", process.env.THIEN_KHUE_WEB_URL || "http://localhost:3300").toString();
+    const { error } = await this.layClient().auth.admin.inviteUserByEmail(email.trim().toLowerCase(), { redirectTo, data: { full_name: hoTen.trim(), lyno_friends: true } });
+    // Cung mot thong bao cho email cu / moi, khong lo danh sach tai khoan.
+    if (error && error.status !== 422 && error.code !== "email_exists") throw new ServiceUnavailableException("Chưa gửi được email xác nhận, vui lòng thử lại sau");
   }
 
   /** Lay user Auth theo id */

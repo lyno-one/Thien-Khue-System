@@ -1,3 +1,4 @@
+import { LynoFriendsModule } from "./modules/lyno-friends.module";
 import { Module } from "@nestjs/common";
 import { CoreModule } from "./modules/core.module";
 import { BanHangModule } from "./modules/ban-hang.module";
@@ -10,6 +11,6 @@ import { QuanTriModule } from "./modules/quan-tri.module";
 
 /** Agent module KHONG sua file nay — can dang ky them gi thi ghi vao ket qua tra ve */
 @Module({
-  imports: [CoreModule, HoSoModule, DaoTaoModule, CongKhaiModule, BanHangModule, MangLuoiModule, KhachDoiTacModule, QuanTriModule]
+  imports: [LynoFriendsModule, CoreModule, HoSoModule, DaoTaoModule, CongKhaiModule, BanHangModule, MangLuoiModule, KhachDoiTacModule, QuanTriModule]
 })
 export class AppModule {}
