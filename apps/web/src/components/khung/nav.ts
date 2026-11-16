@@ -35,6 +35,7 @@ export const NAV_APP: NhomNav[] = [
   {
     tieuDe: "Học viện",
     muc: [
+      { href: "/lyno-friends", nhan: "LYNO Friends / Affi" },
       { href: "/hoc-vien", nhan: "Tổng quan học tập", chinhXac: true },
       { href: "/hoc-vien/khoa-hoc", nhan: "Khóa học" },
       { href: "/hoc-vien/bai-hoc-lyno", nhan: "Bài học Lyno", chiNhanSuLyno: true },

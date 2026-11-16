@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="760" viewBox="0 0 1100 760" role="img" aria-labelledby="title desc">
+<title id="title">01 · Khách đi qua những bước nào?</title><desc id="desc">Tài khoản học và quyền Affi được mở ở hai thời điểm khác nhau.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#60758c" stroke-width="1.5"/></marker></defs>
+<rect width="1100" height="760" rx="20" fill="#f5f7fb"/>
+<text x="40" y="48" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="29" font-weight="700" text-anchor="start">01 · Khách đi qua những bước nào?</text>
+<text x="40" y="81" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="start">Tài khoản học và quyền Affi được mở ở hai thời điểm khác nhau.</text>
+<rect x="40" y="120" width="475" height="225" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="157" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">1. MUA HÀNG</text>
+<text x="63" y="192" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Khách mua đồ Thiên Khuê S / LYNO.</text>
+<text x="63" y="221" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">CRM xác nhận giao hàng thành công.</text>
+<text x="63" y="250" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Đơn có hội thoại Zalo phù hợp</text>
+<text x="63" y="279" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">mới tự xếp lời mời học.</text>
+<rect x="585" y="120" width="475" height="225" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="608" y="157" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">2. NHẬN LỜI MỜI QUA ZALO</text>
+<text x="608" y="192" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Hệ thống soạn tin → nhân viên duyệt gửi.</text>
+<text x="608" y="221" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Tin chỉ chứa lời mời và link vào học.</text>
+<text x="608" y="250" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Khách tự quyết định có tham gia không.</text>
+<text x="608" y="279" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Chưa cấp tài khoản hoặc mã Affi.</text>
+<rect x="585" y="420" width="475" height="225" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="608" y="457" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">3. TỰ ĐĂNG KÝ VÀ VÀO HỌC</text>
+<text x="608" y="492" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Đăng ký / đăng nhập tài khoản học.</text>
+<text x="608" y="521" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Khách mới xác nhận email, đặt mật khẩu.</text>
+<text x="608" y="550" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Xác nhận tự nguyện, bổ sung điện thoại.</text>
+<text x="608" y="579" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Học bài và thi theo từng mã sản phẩm.</text>
+<rect x="40" y="420" width="475" height="225" rx="15" fill="#eaf6ef" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="457" fill="#167451" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">4. ĐẠT ĐIỀU KIỆN → MỞ AFFI</text>
+<text x="63" y="492" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Học đủ bài + thi đạt từ 90%.</text>
+<text x="63" y="521" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Khách bấm “Mở Affi”.</text>
+<text x="63" y="550" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Hệ thống xác minh rồi mở cổng Affi.</text>
+<text x="63" y="579" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Chỉ hiện link của các mã đã đạt.</text>
+<path d="M515 232 L585 232" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M822 345 L822 420" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M585 530 L515 530" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="40" y="694" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" text-anchor="start">Khách không muốn tham gia → dừng ở lời mời. Chưa đạt bài học / bài thi → tiếp tục học.</text>
+<text x="40" y="725" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="start">Hiện tại: lời mời Zalo chờ duyệt; khách chủ động bấm nút để mở Affi sau khi đủ điều kiện.</text>
+</svg>

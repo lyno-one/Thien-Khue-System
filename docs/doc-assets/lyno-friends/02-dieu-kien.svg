@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1110" viewBox="0 0 1100 1110" role="img" aria-labelledby="title desc">
+<title id="title">02 · Khi nào mới được nhận link Affi?</title><desc id="desc">Kiểm tra theo từng mã sản phẩm. Tất cả điều kiện bên trái phải đạt.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#60758c" stroke-width="1.5"/></marker></defs>
+<rect width="1100" height="1110" rx="20" fill="#f5f7fb"/>
+<text x="40" y="48" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="29" font-weight="700" text-anchor="start">02 · Khi nào mới được nhận link Affi?</text>
+<text x="40" y="81" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="start">Kiểm tra theo từng mã sản phẩm. Tất cả điều kiện bên trái phải đạt.</text>
+<rect x="40" y="120" width="650" height="112" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="157" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">1. ĐÃ TỰ NGUYỆN ĐĂNG KÝ</text>
+<text x="63" y="192" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Có hồ sơ, đồng ý tham gia; vai CTV không bị khóa.</text>
+<rect x="755" y="120" width="305" height="112" rx="15" fill="#fff0f1" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="778" y="157" fill="#ae3845" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">CHƯA ĐẠT</text>
+<text x="778" y="192" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Chưa đăng ký / vai bị khóa</text>
+<text x="778" y="221" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">→ chưa mở Affi.</text>
+<path d="M690 177 L755 177" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M365 232 L365 270" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="270" width="650" height="112" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="307" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">2. HOÀN TẤT PHẦN HỌC BẮT BUỘC</text>
+<text x="63" y="342" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Đủ bài nền tảng, nghiệp vụ, sản phẩm và thực hành nếu có.</text>
+<rect x="755" y="270" width="305" height="112" rx="15" fill="#fff0f1" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="778" y="307" fill="#ae3845" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">CHƯA ĐẠT</text>
+<text x="778" y="342" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Còn bài hoặc thực hành</text>
+<text x="778" y="371" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">→ hoàn thành phần còn thiếu.</text>
+<path d="M690 327 L755 327" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M365 382 L365 420" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="420" width="650" height="112" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="457" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">3. TỪNG BÀI THI SẢN PHẨM ĐẠT ≥ 90%</text>
+<text x="63" y="492" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Điểm một đề không bù cho đề khác; đúng phiên bản học.</text>
+<rect x="755" y="420" width="305" height="112" rx="15" fill="#fff0f1" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="778" y="457" fill="#ae3845" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">CHƯA ĐẠT</text>
+<text x="778" y="492" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Có đề dưới 90%</text>
+<text x="778" y="521" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">→ học và thi lại.</text>
+<path d="M690 477 L755 477" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M365 532 L365 570" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="40" y="570" width="650" height="112" rx="15" fill="#fff" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="607" fill="#245bb2" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">4. QUYỀN MÃ SẢN PHẨM CÒN HIỆU LỰC</text>
+<text x="63" y="642" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Quyền SKU ở trạng thái HOAT_DONG.</text>
+<rect x="755" y="570" width="305" height="112" rx="15" fill="#fff0f1" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="778" y="607" fill="#ae3845" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">CHƯA ĐẠT</text>
+<text x="778" y="642" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Thu hồi / cần học lại</text>
+<text x="778" y="671" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">→ chưa được dùng link mã đó.</text>
+<path d="M690 627 L755 627" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M365 682 L365 740" fill="none" stroke="#60758c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="385" y="717" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="16" font-weight="400" text-anchor="start">Đủ điều kiện</text>
+<rect x="40" y="740" width="1020" height="108" rx="15" fill="#eaf6ef" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="777" fill="#167451" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">BẤM “MỞ AFFI” → NHẬN LINK CỦA MÃ ĐÃ ĐẠT</text>
+<text x="63" y="812" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Có ít nhất một SKU đủ điều kiện và điện thoại hợp lệ; không tự ghép tài khoản trùng điện thoại.</text>
+<rect x="40" y="880" width="490" height="128" rx="15" fill="#eaf6ef" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="63" y="917" fill="#167451" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">VÍ DỤ: AB0483</text>
+<text x="63" y="952" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Đã học đủ bài, thi đạt 95%, quyền còn hiệu lực.</text>
+<text x="63" y="981" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">→ Có thể nhận và dùng link AB0483.</text>
+<rect x="570" y="880" width="490" height="128" rx="15" fill="#fff0f1" stroke="#d9e1ec" stroke-width="1.5"/>
+<text x="593" y="917" fill="#ae3845" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" text-anchor="start">VÍ DỤ: AB0482</text>
+<text x="593" y="952" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">Chưa học hoặc thi mới đạt 85%.</text>
+<text x="593" y="981" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="400" text-anchor="start">→ Chưa được nhận link AB0482.</text>
+<text x="40" y="1050" fill="#172b45" font-family="Segoe UI,Arial,sans-serif" font-size="22" font-weight="700" text-anchor="start">Học đạt mã A không đồng nghĩa được giới thiệu mã B.</text>
+<text x="40" y="1080" fill="#526477" font-family="Segoe UI,Arial,sans-serif" font-size="17" font-weight="400" text-anchor="start">Quyền được xác minh lại với cache tối đa 60 giây; lỗi xác minh lại thì đóng quyền.</text>
+</svg>
